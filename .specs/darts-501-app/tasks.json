@@ -1,0 +1,464 @@
+{
+  "project": "darts-501-app",
+  "spec": ".specs/darts-501-app/spec.md",
+  "developmentMethodology": "TDD (RED-GREEN-REFACTOR cycle)",
+  "tasks": [
+    {
+      "id": "setup-001",
+      "phase": "Project Setup",
+      "title": "Clean scaffold and configure SvelteKit 2 + Svelte 5 + Tailwind v4 + Drizzle ORM + PostgreSQL",
+      "description": "Remove PocketBase artifacts (pb_data/, pb_migrations/, pocketbase npm package). Configure the SvelteKit project with Tailwind CSS v4 plugin before sveltekit() in vite.config.ts. Install drizzle-orm, postgres, and drizzle-kit. Set up .env with DATABASE_URL pointing to Railway PostgreSQL. Create drizzle.config.ts targeting the darts schema. Configure TypeScript strict mode. Install font packages or configure CDN imports for Geist Sans + Clash Display. Create the full directory structure per the spec.",
+      "acceptanceCriteria": [
+        "TDD: Write test that verifies vite.config.ts has tailwindcss() before sveltekit()",
+        "TDD: Write test that verifies .env contains DATABASE_URL pointing to Railway PostgreSQL",
+        "TDD: Test that the dev server starts without errors",
+        "PocketBase directories and npm package are fully removed",
+        "drizzle-orm and postgres are in package.json dependencies",
+        "drizzle-kit is in package.json devDependencies",
+        "drizzle.config.ts exists with schema: './src/lib/db/schema.ts', dialect: 'postgresql', schemaFilter: ['darts']",
+        "All spec directories exist: src/lib/db/, src/lib/game/, src/lib/components/{dartboard,scoring,match,stats,ui}/, src/routes/api/",
+        "Fonts (Geist Sans, Clash Display) are configured in app.html or app.css"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "FR-1"
+    },
+    {
+      "id": "setup-002",
+      "phase": "Project Setup",
+      "title": "Create Drizzle ORM schema definitions for all PostgreSQL tables in darts schema",
+      "description": "Create src/lib/db/schema.ts with Drizzle ORM pgTable definitions for all 6 tables: players, matches, match_players, legs, turns, player_stats. Every table is in the 'darts' schema. Use pgTable with schema name parameter. All IDs are UUID with default gen_random_uuid(). Foreign keys reference the darts schema tables. CHECK constraints for multiplier values (0-3), darts_thrown (1-3), match status enum. Create indexes for common query patterns. Export TypeScript types from the schema.",
+      "acceptanceCriteria": [
+        "TDD: Write test that schema.ts exports all 6 table definitions (players, matches, match_players, legs, turns, player_stats)",
+        "TDD: Test that players table has id (UUID PK), name (VARCHAR UNIQUE), created_at, updated_at columns",
+        "TDD: Test that turns table has all 12 dart columns (dart1_score, dart1_multiplier, dart1_segment, dart2_*, dart3_*)",
+        "TDD: Test that match_players has foreign key to darts.matches and darts.players",
+        "TDD: Test that match status has CHECK constraint for 'in_progress', 'completed', 'abandoned'",
+        "TDD: Test that multiplier columns have CHECK constraint for 0,1,2,3",
+        "All tables specify schema: 'darts'",
+        "Indexes defined for: players name (LOWER), matches status, turns player+created, match_players match_id"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "FR-1, FR-6"
+    },
+    {
+      "id": "setup-003",
+      "phase": "Project Setup",
+      "title": "Build Drizzle client initialization and DatabaseService class",
+      "description": "Create src/lib/db/index.ts for Drizzle client initialization (postgres connection from DATABASE_URL, set search_path to darts). Create src/lib/db/database-service.ts with the full DatabaseService class implementing all CRUD methods: createPlayer, getPlayer, getPlayerByName (case-insensitive via LOWER()), getAllPlayers, createMatch, getMatch, updateMatch, getActiveMatches, addMatchPlayer, getMatchPlayers, createLeg, updateLegWinner, getMatchLegs, addTurn, getLegTurns, getPlayerTurns, getPlayerLastNTurns, getPlayerStats, updatePlayerStats, recomputePlayerStats, completeMatch (transactional). Create src/lib/db/types.ts re-exporting Drizzle inferred types.",
+      "acceptanceCriteria": [
+        "TDD: Write test that DatabaseService connects to PostgreSQL using DATABASE_URL from env",
+        "TDD: Test that search_path is set to darts on connection initialization",
+        "TDD: Test createPlayer inserts into darts.players and returns typed Player object",
+        "TDD: Test getPlayerByName performs case-insensitive lookup via LOWER(name) = LOWER($1)",
+        "TDD: Test createMatch inserts into darts.matches and returns typed Match object",
+        "TDD: Test addTurn inserts into darts.turns with all 12 dart fields populated",
+        "TDD: Test getPlayerLastNTurns returns last N turns ordered by created_at DESC",
+        "TDD: Test completeMatch runs inside a transaction (match update + stats update are atomic)",
+        "TDD: Test recomputePlayerStats aggregates from turns table correctly",
+        "All methods return Drizzle-inferred TypeScript types, not raw rows"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "FR-1, FR-6"
+    },
+    {
+      "id": "setup-004",
+      "phase": "Project Setup",
+      "title": "Push schema to Railway PostgreSQL and create SvelteKit API routes",
+      "description": "Run drizzle-kit push to create the darts schema and all tables in the Railway PostgreSQL database. Create all server routes under src/routes/api/: players/+server.ts (GET list, POST create), players/[id]/+server.ts (GET by id), matches/+server.ts (GET list, POST create), matches/[id]/+server.ts (GET, PATCH update), matches/[id]/legs/+server.ts (GET list, POST create), matches/[id]/turns/+server.ts (GET list, POST create), stats/[playerId]/+server.ts (GET stats). Each route uses DatabaseService and returns typed JSON. Verify tables exist in darts schema after push.",
+      "acceptanceCriteria": [
+        "TDD: Write test that POST /api/players with {name: 'Phil'} creates a player and returns 201",
+        "TDD: Test GET /api/players returns array of Player objects",
+        "TDD: Test POST /api/matches with valid config returns 201 with Match object",
+        "TDD: Test GET /api/stats/[playerId] returns PlayerStats object",
+        "TDD: Test that duplicate player name (case-insensitive) returns existing player (not error)",
+        "TDD: Test drizzle-kit push creates darts schema and all 6 tables with correct columns",
+        "All routes use proper HTTP status codes (200, 201, 400, 404, 500)",
+        "DatabaseService is instantiated per-request or via singleton with connection pooling"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "FR-1, FR-2, FR-6"
+    },
+    {
+      "id": "core-001",
+      "phase": "Core Game Logic",
+      "title": "Implement score calculation engine",
+      "description": "Build src/lib/game/scoring.ts with pure functions: calculateDartScore(segment, multiplier) → number, calculateTurnScore(darts: DartData[]) → number, detectBust(remainingScore, turnScore, lastDartMultiplier) → boolean, detectCheckout(remainingScore, turnScore, lastDartMultiplier) → boolean, getRemainingScore(currentRemaining, turnScore, isBust) → number. All functions are pure TypeScript with no side effects or UI dependencies.",
+      "acceptanceCriteria": [
+        "TDD: Test calculateDartScore(20, 3) === 60 (treble 20)",
+        "TDD: Test calculateDartScore(25, 2) === 50 (double bull / inner bull)",
+        "TDD: Test calculateDartScore(25, 1) === 25 (outer bull)",
+        "TDD: Test calculateDartScore(20, 0) === 0 (miss)",
+        "TDD: Test calculateTurnScore([T20, T20, T20]) === 180",
+        "TDD: Test detectBust(50, 60, 1) === true (overshoot)",
+        "TDD: Test detectBust(1, 1, 1) === true (cannot checkout on 1 with single)",
+        "TDD: Test detectBust(40, 40, 2) === false (valid double-out)",
+        "TDD: Test detectBust(40, 40, 1) === true (reached 0 without double)",
+        "TDD: Test detectCheckout(50, 50, 2) === true (bullseye checkout)",
+        "TDD: Test detectCheckout(40, 40, 2) === true (double checkout)",
+        "TDD: Test detectCheckout(40, 40, 1) === false (not a double)",
+        "TDD: Test getRemainingScore(361, 60, false) === 301",
+        "TDD: Test getRemainingScore(40, 60, true) === 40 (bust reverts)",
+        "TDD: Refactor after all tests pass"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "FR-4"
+    },
+    {
+      "id": "core-002",
+      "phase": "Core Game Logic",
+      "title": "Implement match progression state machine",
+      "description": "Build src/lib/game/match-engine.ts with the full match state machine. Uses Svelte 5 $state() runes for reactive game state. Functions: createMatchState(config, players) → MatchState, processTurn(state, turnData) → MatchState, advancePlayer(state) → MatchState, completeLeg(state) → MatchState, completeSet(state) → MatchState, completeMatch(state) → MatchState. The state machine tracks: current player index, remaining scores per player, current set/leg numbers, legs won per player per set, sets won per player, throw order. Leg winner throws first in next leg.",
+      "acceptanceCriteria": [
+        "TDD: Test createMatchState initializes all players with starting_score remaining",
+        "TDD: Test processTurn with a non-bust turn reduces the correct player's remaining score",
+        "TDD: Test processTurn with a bust turn reverts the player's remaining score",
+        "TDD: Test advancePlayer rotates through all players in throw order",
+        "TDD: Test completeLeg increments leg count for winner",
+        "TDD: Test completeSet when player reaches legs_per_set wins: resets legs, increments sets",
+        "TDD: Test completeMatch when player reaches sets_per_match",
+        "TDD: Test that leg winner is set as first thrower in next leg",
+        "TDD: Test that set winner is set as first thrower in first leg of next set",
+        "TDD: Test abandon match sets status to 'abandoned'",
+        "TDD: Test 2-player, 3-player, and 4-player rotation",
+        "TDD: Refactor after all tests pass"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "FR-5"
+    },
+    {
+      "id": "core-003",
+      "phase": "Core Game Logic",
+      "title": "Implement statistics calculation engine",
+      "description": "Build src/lib/game/stats-engine.ts with pure functions for computing stats from turn data. Functions: computeTurnStats(turn) → TurnStats, computeLegStats(turns, playerIds) → Record<string, LegStats>, computeAllTimeStats(turns, legs, matches, playerId) → PlayerStats, computeLast20LegsStats(turns, legs, playerId) → PlayerStats. Detect 180 (all 3 darts T20), 140+ (turn >= 140), 100+ (turn >= 100). Handle division by zero for checkout % when no attempts. Handle empty data gracefully.",
+      "acceptanceCriteria": [
+        "TDD: Test computeTurnStats identifies a 180 (T20+T20+T20)",
+        "TDD: Test computeTurnStats identifies 140+ (T20+T20+20 = 140)",
+        "TDD: Test computeTurnStats identifies 100+ (T20+T20+S20 = 100)",
+        "TDD: Test computeAllTimeStats calculates correct 3-dart average",
+        "TDD: Test computeAllTimeStats calculates checkout % as successes/attempts",
+        "TDD: Test computeAllTimeStats tracks highest finish from checkout turns",
+        "TDD: Test computeAllTimeStats returns 0 for all values when turns array is empty",
+        "TDD: Test computeAllTimeStats guards against division by zero for averages",
+        "TDD: Test computeLast20LegsStats only includes the most recent 20 completed legs",
+        "TDD: Test computeLast20LegsStats with fewer than 20 legs returns available data",
+        "TDD: Test computeLast20LegsStats with exactly 20 legs uses all of them",
+        "TDD: Test computeLast20LegsStats with 25 legs only uses last 20",
+        "TDD: Refactor after all tests pass"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "FR-6"
+    },
+    {
+      "id": "core-004",
+      "phase": "Core Game Logic",
+      "title": "Implement checkout suggestions engine",
+      "description": "Build src/lib/game/checkout-suggestions.ts. Given a remaining score and number of darts remaining (1, 2, or 3), return an array of possible finish combinations. Each suggestion is an array of DartData objects. Prioritize common finishes. Know that the highest possible finish is 170 (T20+T20+Bull). Scores of 1, or odd numbers above 40 that can't be reached, are impossible finishes.",
+      "acceptanceCriteria": [
+        "TDD: Test getCheckoutSuggestions(170, 3) returns [[T20, T20, Bull]]",
+        "TDD: Test getCheckoutSuggestions(100, 2) returns [[T20, D20]]",
+        "TDD: Test getCheckoutSuggestions(40, 1) returns [[D20]]",
+        "TDD: Test getCheckoutSuggestions(50, 1) returns [[Bull]]",
+        "TDD: Test getCheckoutSuggestions(2, 1) returns [[D1]]",
+        "TDD: Test getCheckoutSuggestions(1, 3) returns [] (impossible)",
+        "TDD: Test getCheckoutSuggestions(159, 3) returns [] (impossible with 3 darts)",
+        "TDD: Test getCheckoutSuggestions(60, 2) returns [[S20, D20]]",
+        "TDD: Test that all suggestions end with a double or bull",
+        "TDD: Refactor after all tests pass"
+      ],
+      "priority": 2,
+      "status": "pending",
+      "mapsTo": "FR-4"
+    },
+    {
+      "id": "ui-001",
+      "phase": "UI - Design System Foundation",
+      "title": "Build reusable DoubleBezel, PillButton, EyebrowTag, AnimatedNumber, FloatingNav components",
+      "description": "Create the core design system components in src/lib/components/ui/. DoubleBezel: outer shell (bg-black/5 dark:bg-white/5, ring-1 ring-black/5 dark:ring-white/10, p-1.5, rounded-[2rem]) wrapping an inner core (bg-white dark:bg-[#1C1C1C], shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)], rounded-[calc(2rem-0.375rem)]). PillButton: rounded-full px-6 py-3 with active:scale-[0.98] and optional trailing icon island. EyebrowTag: rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-medium. AnimatedNumber: number display that animates on value change with scale pulse. FloatingNav: mt-6 mx-auto w-max rounded-full backdrop-blur-xl detached pill navbar.",
+      "acceptanceCriteria": [
+        "TDD: Write test that DoubleBezel renders with outer shell and inner core divs",
+        "TDD: Test DoubleBezel applies dark mode classes when html has class 'dark'",
+        "TDD: Test PillButton fires onclick callback",
+        "TDD: Test PillButton applies active:scale-[0.98] class",
+        "TDD: Test EyebrowTag renders text in uppercase tracking-[0.2em]",
+        "TDD: Test AnimatedNumber renders the number value",
+        "TDD: Test FloatingNav renders navigation links",
+        "All transitions use cubic-bezier(0.32,0.72,0,1) — never linear or ease-in-out",
+        "No banned fonts (Inter, Roboto, Arial, Open Sans, Helvetica)",
+        "No generic 1px solid gray borders — only ring hairlines",
+        "No harsh drop shadows — only diffused ambient shadows"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "Design System"
+    },
+    {
+      "id": "ui-002",
+      "phase": "UI - Root Layout",
+      "title": "Build root layout with FloatingNav, dark mode, fonts, and global CSS",
+      "description": "Create src/routes/+layout.svelte with: font imports (Geist Sans for body, Clash Display for headings, Geist Mono for data), FloatingNav component, dark mode toggle, design token CSS custom properties, entry animation setup. The layout uses min-h-[100dvh] (never h-screen). CSS includes noise/grain overlay via fixed pointer-events-none pseudo-element. Global styles set banned font overrides.",
+      "acceptanceCriteria": [
+        "TDD: Write test that layout renders without errors",
+        "TDD: Test that Geist Sans font is loaded and applied to body",
+        "TDD: Test that Clash Display font is applied to h1, h2, h3",
+        "TDD: Test dark mode toggle adds/removes 'dark' class on html element",
+        "TDD: Test that nav links point to /, /match/setup, /players, /history",
+        "Layout uses min-h-[100dvh] not h-screen",
+        "Noise overlay is fixed, pointer-events-none",
+        "Custom cubic-bezier transition defined in CSS custom properties"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "Design System, FR-1"
+    },
+    {
+      "id": "ui-003",
+      "phase": "UI - Home Page",
+      "title": "Build cinematic home/landing page",
+      "description": "Create src/routes/+page.svelte. Massive 'DARTS' heading in Clash Display 900 weight, floating above ambient gradient. Two primary CTAs in double-bezel cards: 'New Match' and 'Player Stats'. Below: recent matches list loaded from server load function hitting /api/matches. Entry animations: fade-up from translate-y-16 blur-md opacity-0 over 800ms+. Mobile: single column with px-4 py-8. Eyebrow tag above heading: 'DARTS SCORING APP'.",
+      "acceptanceCriteria": [
+        "TDD: Write test that home page renders 'DARTS' heading",
+        "TDD: Test that 'New Match' link navigates to /match/setup",
+        "TDD: Test that 'Player Stats' link navigates to /players",
+        "TDD: Test that recent matches are loaded from API and displayed",
+        "Heading uses Clash Display font at text-7xl or larger",
+        "Entry animation applies fade-up with blur transition",
+        "Mobile collapses to single column with px-4 py-8",
+        "Section padding is minimum py-24"
+      ],
+      "priority": 2,
+      "status": "pending",
+      "mapsTo": "FR-1"
+    },
+    {
+      "id": "ui-004",
+      "phase": "UI - Player Management",
+      "title": "Build player list page with create and search",
+      "description": "Create src/routes/players/+page.svelte. Loads all players from /api/players on mount. Shows player list as tappable double-bezel cards with name and brief stat summary. Create new player form at top with text input and PillButton. Search/filter input that filters displayed players by name (client-side). Empty state when no players exist: inviting message encouraging first player creation. Uses $state() for reactive search and form state.",
+      "acceptanceCriteria": [
+        "TDD: Write test that player list loads from /api/players on mount",
+        "TDD: Test creating a new player with a name POSTs to /api/players and refreshes list",
+        "TDD: Test that duplicate name (case-insensitive) returns existing player",
+        "TDD: Test search input filters the displayed player list",
+        "TDD: Test empty state shows when no players exist",
+        "Player cards show name and at least matches_played stat",
+        "All components use Svelte 5 $props() not export let"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "FR-1"
+    },
+    {
+      "id": "ui-005",
+      "phase": "UI - Player Profile & Stats",
+      "title": "Build player profile page with all-time and last-20-legs stats",
+      "description": "Create src/routes/players/[id]/+page.svelte. Loads player info and stats from /api/stats/[playerId]. Displays all-time stats in a double-bezel card with eyebrow tag 'ALL TIME'. Displays last-20-legs stats in a separate card with eyebrow tag 'LAST 20 LEGS' (only if >20 legs played; otherwise shows note 'X more legs needed'). Stats shown: 3-dart avg (large monospace), checkout % (progress bar), 180s/140s/100s (badge counts), highest finish, legs W/L, sets W/L, matches W/L. Match history for this player listed below stats.",
+      "acceptanceCriteria": [
+        "TDD: Write test that player profile loads stats from API",
+        "TDD: Test all-time stats display correctly with correct values",
+        "TDD: Test last-20-legs section shows note when < 20 legs played",
+        "TDD: Test last-20-legs section shows stats when >= 20 legs played",
+        "TDD: Test match history lists matches for this player",
+        "Stats use Geist Mono font for numbers",
+        "Checkout % shown with visual progress bar"
+      ],
+      "priority": 2,
+      "status": "pending",
+      "mapsTo": "FR-6, FR-8"
+    },
+    {
+      "id": "ui-006",
+      "phase": "UI - Match Setup",
+      "title": "Build match configuration page with player selection",
+      "description": "Create src/routes/match/setup/+page.svelte. Step 1: Select 2-4 players from existing players (loaded from /api/players). Show players as tappable pills; selected players get accent highlight. Drag or arrow buttons to set throw order. Step 2: Configure match — starting score (301/501/701/1001 as option cards), legs per set (1/3/5/7), sets per match (1/3/5/7), double-in toggle. Step 3: Review and start — creates match via POST /api/matches, then POST /api/matches/[id]/legs for first leg, navigates to /match/[id]. Validation: cannot proceed with < 2 players.",
+      "acceptanceCriteria": [
+        "TDD: Write test that match setup renders player selection and config options",
+        "TDD: Test selecting a player highlights them with accent color",
+        "TDD: Test validation prevents proceeding with < 2 players",
+        "TDD: Test submitting creates match via POST /api/matches",
+        "TDD: Test match_players rows are created for each selected player",
+        "TDD: Test that starting score defaults to 501",
+        "TDD: Test that legs_per_set defaults to 3 and sets_per_match defaults to 1",
+        "Config options displayed as tappable double-bezel option cards"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "FR-2"
+    },
+    {
+      "id": "ui-007",
+      "phase": "UI - Scoring Interface",
+      "title": "Build dart scoring input component with segment/multiplier entry",
+      "description": "Create src/lib/components/scoring/DartInput.svelte. Segment buttons for 1-20 and Bull, arranged in a grid. Multiplier selector: S (single), D (double), T (treble), Miss — as pill buttons. Shows current 3 darts entered with segment and multiplier. Calculates and shows running turn total. QuickScore buttons for common totals (180, 140, 100, 85, 60, 45, 41, 40, 26, 25, 20) as a secondary input mode. Keyboard shortcuts: 1-9 for segments, 0 for 10, b for bull, d for double, t for treble, m for miss, Enter to submit turn, Backspace to undo last dart. Submit turn fires callback with DartData[] array.",
+      "acceptanceCriteria": [
+        "TDD: Write test that tapping segment 20 then T shows T20 selected",
+        "TDD: Test selecting T20 + T20 + T20 shows turn total of 180",
+        "TDD: Test that 4th dart cannot be entered (max 3 darts per turn)",
+        "TDD: Test QuickScore button for 60 enters equivalent of T20",
+        "TDD: Test Miss button enters 0 score dart",
+        "TDD: Test Backspace removes last entered dart",
+        "TDD: Test Enter submits turn with callback containing DartData array",
+        "Component uses $state() for currentDarts, $derived() for turnTotal",
+        "All buttons are PillButton components with haptic press feedback"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "FR-3"
+    },
+    {
+      "id": "ui-008",
+      "phase": "UI - Active Match Page",
+      "title": "Build active match page with bento grid layout and live scoring",
+      "description": "Create src/routes/match/[id]/+page.svelte. Bento grid layout: top-left (col-span-8) has ScoreDisplay showing remaining score in text-8xl Clash Display with pulse animation on change, plus DartInput component. Top-right (col-span-4) has MatchScoreboard showing sets/legs for each player in stacked double-bezel cards. Bottom-left (col-span-8) has TurnHistory showing all turns for current leg. Bottom-right (col-span-4) has StatsPanel (from ui-009). Handles bust (red flash, score revert animation), checkout (celebration state), leg/set/match completion (UI transitions). Uses match-engine.ts state machine for all game logic. Persists each turn to PostgreSQL via POST /api/matches/[id]/turns.",
+      "acceptanceCriteria": [
+        "TDD: Write test that match page loads with correct initial remaining scores from DB",
+        "TDD: Test submitting a turn updates remaining score in UI and persists to PostgreSQL",
+        "TDD: Test bust detection shows red flash indicator and reverts score",
+        "TDD: Test checkout shows celebration state and advances leg",
+        "TDD: Test set completion shows result and resets legs",
+        "TDD: Test match completion shows final result with navigation to detail page",
+        "TDD: Test turn history shows all turns for current leg with correct data",
+        "TDD: Test abandon match button sets status to 'abandoned' in PostgreSQL",
+        "Mobile collapses to single-column grid-cols-1 with px-4",
+        "Remaining score uses text-8xl Clash Display with pulse on change"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "FR-4, FR-5"
+    },
+    {
+      "id": "ui-009",
+      "phase": "UI - Stats Display",
+      "title": "Build in-match stats panel with all-time and last-20-legs",
+      "description": "Create src/lib/components/stats/StatsPanel.svelte, AllTimeStats.svelte, Last20LegsStats.svelte, StatBadge.svelte. Collapsible panel below scoring area showing current player's stats loaded from /api/stats/[playerId]. All-time stats in double-bezel card with eyebrow tag 'ALL TIME'. Last-20-legs stats in separate card with eyebrow tag 'LAST 20 LEGS' (only if >20 legs played). Stats: 3-dart avg (large Geist Mono), checkout % (progress bar), 180s/140s/100s (badge counts), highest finish. Stats update after each turn completes.",
+      "acceptanceCriteria": [
+        "TDD: Write test that StatsPanel renders all-time stats for current player",
+        "TDD: Test that last-20-legs stats show only when > 20 legs played total",
+        "TDD: Test that stats update after a turn is submitted",
+        "TDD: Test checkout suggestions appear when remaining score <= 170",
+        "TDD: Test panel can be collapsed/expanded via toggle",
+        "Stats include: 3-dart avg, checkout %, 180s, 140s, 100s, highest finish",
+        "Last-20-legs section clearly labeled with eyebrow tag",
+        "Stats use Geist Mono for number display"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "FR-7"
+    },
+    {
+      "id": "ui-010",
+      "phase": "UI - Match History",
+      "title": "Build match history and detail pages",
+      "description": "Create src/routes/history/+page.svelte: list all matches from PostgreSQL with date, players, result, status. Filter by player. Sorted by date DESC. Click to view src/routes/match/[id]/detail/+page.svelte with turn-by-turn breakdown showing every dart thrown. Show stats summary per match. Abandoned matches shown with distinct styling (muted/italic).",
+      "acceptanceCriteria": [
+        "TDD: Write test that history page lists matches from /api/matches",
+        "TDD: Test filtering matches by player works",
+        "TDD: Test match detail page shows all legs and turns from PostgreSQL",
+        "TDD: Test turn-by-turn breakdown shows correct dart data",
+        "TDD: Test that abandoned matches are shown with appropriate status styling",
+        "History sorted by created_at descending (most recent first)"
+      ],
+      "priority": 2,
+      "status": "pending",
+      "mapsTo": "FR-8"
+    },
+    {
+      "id": "ui-011",
+      "phase": "UI - Visual Dartboard",
+      "title": "Build interactive visual dartboard component",
+      "description": "Create src/lib/components/dartboard/Dartboard.svelte. SVG-based dartboard with all 20 segments, doubles ring, trebles ring, outer bull (25), inner bull (50). Clicking a segment selects it for the current dart with the active multiplier. Visual feedback: highlighted segment on hover/tap. Responsive: scales to container. Segments colored with proper dartboard coloring. Used as an alternative input method alongside the button grid.",
+      "acceptanceCriteria": [
+        "TDD: Write test that Dartboard component renders without errors",
+        "TDD: Test clicking a segment fires the correct segment/multiplier callback",
+        "TDD: Test that doubles ring is visually distinct from trebles",
+        "TDD: Test that bull and double-bull areas are clickable",
+        "Dartboard is responsive and scales to container size",
+        "Visual feedback on tap/click (highlight segment)"
+      ],
+      "priority": 3,
+      "status": "pending",
+      "mapsTo": "FR-3"
+    },
+    {
+      "id": "integ-001",
+      "phase": "Integration",
+      "title": "Wire up full match flow end-to-end with PostgreSQL persistence",
+      "description": "Integrate all components: player selection → match config → active scoring → stats display → match completion → history. Ensure data flows correctly through PostgreSQL at every step. Verify that match state can be resumed after page refresh by loading from DB. Test full match: create 2 players, start best-of-3-legs match, play through turns with busts and checkouts, complete match, verify stats updated in darts.player_stats, view match in history.",
+      "acceptanceCriteria": [
+        "TDD: Write E2E test: create player → start match → throw darts → complete leg → complete match",
+        "TDD: Test that all data persists correctly in PostgreSQL after match (check darts.turns, darts.legs, darts.matches)",
+        "TDD: Test that player stats are updated in darts.player_stats after match completion",
+        "TDD: Test match can be resumed after page refresh (state loaded from PostgreSQL)",
+        "TDD: Test that completeMatch transaction atomically updates match + stats",
+        "Full flow works without console errors"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "FR-1, FR-2, FR-3, FR-4, FR-5, FR-6"
+    },
+    {
+      "id": "integ-002",
+      "phase": "Integration",
+      "title": "Implement match state persistence and resume from PostgreSQL",
+      "description": "Ensure in-progress matches are saved to PostgreSQL so they can be resumed if the browser is closed or refreshed. On the home page, show in-progress matches with a 'Resume' link. On match page load, query darts.legs and darts.turns to reconstruct the exact game state: remaining scores, current player, set/leg counts. Allow abandoning a match which sets status to 'abandoned' in darts.matches.",
+      "acceptanceCriteria": [
+        "TDD: Write test that in-progress match can be loaded from PostgreSQL",
+        "TDD: Test that resuming a match restores exact state: current player, remaining scores, leg/set counts",
+        "TDD: Test that in-progress matches appear on home page",
+        "TDD: Test abandon match updates darts.matches status to 'abandoned'",
+        "No data loss on page refresh — all turns are in PostgreSQL"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "mapsTo": "FR-5"
+    },
+    {
+      "id": "polish-001",
+      "phase": "Polish",
+      "title": "Add dark mode polish, animations, and responsive refinements",
+      "description": "Implement full dark mode support with the design token system. Add subtle animations for score changes (scale pulse), leg wins (celebration), 180s (special highlight). Ensure full responsive behavior on mobile (375px), tablet (768px), desktop (1280px). Verify all motion uses cubic-bezier(0.32,0.72,0,1) and GPU-safe transform/opacity only.",
+      "acceptanceCriteria": [
+        "TDD: Write test that dark mode toggle changes CSS class on html element",
+        "TDD: Test that all pages render correctly at mobile (375px), tablet (768px), desktop (1280px)",
+        "Score changes animate smoothly with scale pulse",
+        "Dark mode uses ring-white/10 hairlines and bg-white/5 surface layers",
+        "All transitions use custom cubic-bezier — no linear or ease-in-out"
+      ],
+      "priority": 3,
+      "status": "pending",
+      "mapsTo": "Design System"
+    },
+    {
+      "id": "polish-002",
+      "phase": "Polish",
+      "title": "Write seed data script for demo and testing",
+      "description": "Create a script (src/lib/db/seed.ts, runnable via npm run db:seed) that populates PostgreSQL with sample players, matches, and turns. At least 3 players with 5+ matches each. Some players should have >20 legs for last-20-legs stats testing. Include realistic dart patterns (mix of trebles, doubles, busts, checkouts). Stats should be recomputed after seeding.",
+      "acceptanceCriteria": [
+        "TDD: Write test that seed script creates valid data in all darts.* tables",
+        "TDD: Test that seeded data produces realistic stats when recomputed",
+        "Script creates at least 3 players with 5+ matches each",
+        "Some players have > 20 legs for last-20-legs stats testing",
+        "Seed script is idempotent (can run multiple times without duplicates)"
+      ],
+      "priority": 3,
+      "status": "pending",
+      "mapsTo": "FR-6"
+    }
+  ],
+  "tddWorkflow": {
+    "enforced": true,
+    "cycle": "RED-GREEN-REFACTOR",
+    "rules": [
+      "Write test first (RED) - test must fail",
+      "Write minimal code to pass (GREEN) - no optimization",
+      "Refactor only after test passes (REFACTOR) - maintain quality",
+      "All tasks must follow TDD cycle as acceptance criteria"
+    ]
+  }
+}

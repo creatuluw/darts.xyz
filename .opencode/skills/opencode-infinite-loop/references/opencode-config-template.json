@@ -1,0 +1,63 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "looper",
+  "agent": {
+    "looper": {
+      "description": "Autonomous loop orchestrator. Reads SPEC.md and PROMPT.md each iteration, delegates tasks to planner and builder subagents, commits after each completed acceptance criterion, and outputs <promise>COMPLETE</promise> when all criteria pass.",
+      "mode": "primary",
+      "model": "anthropic/claude-sonnet-4-5",
+      "temperature": 0.2,
+      "permission": {
+        "bash": "allow",
+        "edit": "allow",
+        "read": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "list": "allow",
+        "webfetch": "allow",
+        "task": "allow",
+        "lsp": "allow",
+        "question": "deny",
+        "doom_loop": "allow",
+        "external_directory": "allow"
+      }
+    },
+    "planner": {
+      "description": "Read-only planning subagent. Given a SPEC.md, produces a prioritized ordered task breakdown (3-7 tasks) scoped to 1-2 files each. Does not write or execute any code. Priority order: critical bugs > missing tests > code quality > docs gaps > performance > feature gaps > refactoring.",
+      "mode": "subagent",
+      "model": "anthropic/claude-haiku-3-5",
+      "temperature": 0.4,
+      "permission": {
+        "bash": "deny",
+        "edit": "deny",
+        "read": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "list": "allow",
+        "webfetch": "allow",
+        "task": "deny",
+        "lsp": "allow",
+        "question": "deny"
+      }
+    },
+    "builder": {
+      "description": "Full-access implementation subagent. Executes a single scoped task: writes code following project style, runs tests and linter, verifies output, and reports completion with a brief summary. Never marks a task complete unless tests pass.",
+      "mode": "subagent",
+      "model": "anthropic/claude-sonnet-4-5",
+      "temperature": 0.15,
+      "permission": {
+        "bash": "allow",
+        "edit": "allow",
+        "read": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "list": "allow",
+        "webfetch": "allow",
+        "task": "deny",
+        "lsp": "allow",
+        "question": "deny",
+        "doom_loop": "allow"
+      }
+    }
+  }
+}
