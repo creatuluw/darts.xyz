@@ -23,3 +23,13 @@ i want you to simulate the following flow of playing a game:
 ###################################################################
 
 Change the name of the button with: "Submit Turn" into: Sla op
+
+The colors of the dartboard component are:
+
+- black: #1E2122
+- white/cream: #FCE7BC
+- green: #389535
+- red: #E63723
+- metal wires: #A9B1B2
+
+###################################################################

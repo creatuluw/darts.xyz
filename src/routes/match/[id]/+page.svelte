@@ -46,6 +46,9 @@
     let currentDarts = $state<DartData[]>([]);
     let showCheckout = $state(false);
 
+    // Active tab state
+    let activeTab = $state<'board' | 'turns' | 'stats'>('board');
+
     // Accumulates turns from ALL legs for full-match stats
     let allMatchTurns = $state<TurnRecord[]>([]);
 
@@ -884,31 +887,6 @@
             <!-- CENTER: Score Display + Input + Turn History  -->
             <!-- ============================================ -->
             <div class="lg:col-span-6 order-3 lg:order-none space-y-3">
-                <!-- Score Display -->
-                <DoubleBezel>
-                    <div class="text-center">
-                        <div
-                            class="text-xs text-zinc-400 uppercase tracking-wider mb-1"
-                        >
-                            {currentPlayer?.name}'s turn
-                        </div>
-                        <div
-                            class="font-display font-black text-6xl md:text-7xl lg:text-8xl tracking-tight leading-none"
-                        >
-                            <AnimatedNumber value={currentPlayerRemaining} />
-                        </div>
-                        <div
-                            class="mt-2 text-sm text-zinc-500 inline-flex items-center gap-1 justify-center {currentDarts.length >
-                            0
-                                ? ''
-                                : 'invisible'}"
-                        >
-                            Turn: {turnTotal}
-                            <IconArrowRight size={14} />
-                            {currentPlayerRemaining - turnTotal}
-                        </div>
-                    </div>
-                </DoubleBezel>
 
                 <!-- Dartboard Input -->
                 <DoubleBezel>
