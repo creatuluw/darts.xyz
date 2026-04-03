@@ -655,19 +655,19 @@ let activeTab = $state<'board' | 'turns' | 'stats'>('board');
             <div class="flex justify-center gap-2">
                 <button
                     onclick={() => activeTab = 'board'}
-                    class="px-3 py-1.5 text-sm font-medium rounded transition-colors {activeTab === 'board' ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}"
+                    class="px-3 py-1.5 text-sm font-medium rounded transition-colors cursor-pointer {activeTab === 'board' ? 'bg-white text-zinc-900 font-semibold' : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
                 >
                     Board
                 </button>
                 <button
                     onclick={() => activeTab = 'turns'}
-                    class="px-3 py-1.5 text-sm font-medium rounded transition-colors {activeTab === 'turns' ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}"
+                    class="px-3 py-1.5 text-sm font-medium rounded transition-colors cursor-pointer {activeTab === 'turns' ? 'bg-white text-zinc-900 font-semibold' : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
                 >
                     Turns
                 </button>
                 <button
                     onclick={() => activeTab = 'stats'}
-                    class="px-3 py-1.5 text-sm font-medium rounded transition-colors {activeTab === 'stats' ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}"
+                    class="px-3 py-1.5 text-sm font-medium rounded transition-colors cursor-pointer {activeTab === 'stats' ? 'bg-white text-zinc-900 font-semibold' : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
                 >
                     Stats
                 </button>
