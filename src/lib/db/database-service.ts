@@ -54,7 +54,7 @@ export class DatabaseService {
     const mp = await db
       .select({ matchId: schema.matchPlayers.matchId })
       .from(schema.matchPlayers)
-      .where(eq(schema.matchPlayers.playerId, playerId));
+      .where(eq(schema.matchPlayers.playerId, id));
     const matchIds = mp.map((m) => m.matchId);
 
     // Delete turns for this player
@@ -294,6 +294,10 @@ export class DatabaseService {
       .from(schema.turns)
       .where(eq(schema.turns.legId, legId))
       .orderBy(schema.turns.turnNumber);
+  }
+
+  async deleteTurn(turnId: string) {
+    await db.delete(schema.turns).where(eq(schema.turns.id, turnId));
   }
 
   async getPlayerTurns(playerId: string, limit?: number) {

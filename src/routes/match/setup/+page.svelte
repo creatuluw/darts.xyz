@@ -207,18 +207,20 @@
                 <span class="text-sm">Double-in rule</span>
             </div>
         </div>
-    </DoubleBezel>
 
-    <!-- Start -->
-    <div class="text-center">
-        <PillButton
-            onclick={startMatch}
-            disabled={selectedPlayers.length < 2 || starting}
-        >
-            {starting ? "Starting..." : "Start Match"}
-        </PillButton>
+        <!-- Start Match Button -->
+        <div class="mt-6 flex justify-end">
+            <PillButton
+                onclick={startMatch}
+                disabled={selectedPlayers.length < 2 || starting}
+            >
+                {starting ? "Starting..." : "Start Match"}
+            </PillButton>
+        </div>
         {#if selectedPlayers.length < 2}
-            <p class="text-zinc-400 text-sm mt-2">Select at least 2 players</p>
+            <p class="text-zinc-400 text-sm mt-2 text-right">
+                Select at least 2 players
+            </p>
         {/if}
-    </div>
+    </DoubleBezel>
 </div>

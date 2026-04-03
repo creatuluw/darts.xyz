@@ -21,9 +21,11 @@
     let matchId = $derived($page.params.id);
     let matchData = $state<any>(null);
     let playerNames = $state<Record<string, string>>({});
+    let legTurns = $state<Record<string, any[]>>({});
     let loading = $state(true);
     let showDeleteConfirm = $state(false);
     let deleting = $state(false);
+    let showDebug = $state(false);
 
     onMount(async () => {
         const res = await fetch(`/api/matches/${matchId}`);
@@ -39,6 +41,21 @@
                 } catch {
                     playerNames[mp.playerId] =
                         mp.playerId.substring(0, 8) + "…";
+                }
+            }
+        }
+
+        // Fetch turns for each leg
+        if (matchData?.legs) {
+            for (const leg of matchData.legs) {
+                try {
+                    const tRes = await fetch(
+                        `/api/matches/${matchId}/turns?legId=${leg.id}`,
+                    );
+                    const tData = await tRes.json();
+                    legTurns[leg.id] = tData;
+                } catch {
+                    legTurns[leg.id] = [];
                 }
             }
         }
@@ -72,6 +89,42 @@
 
     function getPlayerName(id: string): string {
         return playerNames[id] || id.substring(0, 8) + "…";
+    }
+
+    function getCurrentSetInfo() {
+        if (!matchData?.legs) return null;
+        const legs = matchData.legs;
+        // Find the highest set number
+        const maxSet = Math.max(...legs.map((l: any) => l.setNumber));
+        // Find legs in the current (highest) set
+        const currentSetLegs = legs.filter((l: any) => l.setNumber === maxSet);
+        // Find incomplete leg in current set
+        const incompleteLeg = currentSetLegs.find((l: any) => !l.winnerId);
+        // Count completed legs per player in current set
+        const player1Legs = currentSetLegs.filter(
+            (l: any) =>
+                l.winnerId &&
+                l.winnerId === matchData.matchPlayers?.[0]?.playerId,
+        ).length;
+        const player2Legs = currentSetLegs.filter(
+            (l: any) =>
+                l.winnerId &&
+                l.winnerId === matchData.matchPlayers?.[1]?.playerId,
+        ).length;
+        return {
+            currentSet: maxSet,
+            currentLeg: incompleteLeg?.legNumber || currentSetLegs.length + 1,
+            player1LegsInSet: player1Legs,
+            player2LegsInSet: player2Legs,
+            incompleteLegId: incompleteLeg?.id,
+        };
+    }
+
+    function formatDart(segment: number, multiplier: number): string {
+        if (segment === 0) return "";
+        if (segment === 25 && multiplier === 2) return "Bull";
+        const prefix = multiplier === 3 ? "T" : multiplier === 2 ? "D" : "";
+        return `${prefix}${segment}`;
     }
 
     function getStatusInfo(status: string) {
@@ -236,6 +289,313 @@
                                     In progress
                                 {/if}
                             </div>
+                        </div>
+                    </DoubleBezel>
+                {/each}
+            </div>
+
+            <!-- Match State Summary -->
+            <EyebrowTag class="mb-3 mt-8">Match State Summary</EyebrowTag>
+            <DoubleBezel>
+                <div class="space-y-4">
+                    <!-- Current Set/Leg Info -->
+                    {#if matchData.legs && matchData.legs.length > 0}
+                        {@const setInfo = getCurrentSetInfo()}
+                        <div
+                            class="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4 border-b border-zinc-200 dark:border-zinc-700"
+                        >
+                            <div>
+                                <div
+                                    class="text-xs text-zinc-400 uppercase tracking-wider"
+                                >
+                                    Current Set
+                                </div>
+                                <div
+                                    class="text-2xl font-bold text-zinc-900 dark:text-white"
+                                >
+                                    {setInfo?.currentSet || 1}
+                                </div>
+                            </div>
+                            <div>
+                                <div
+                                    class="text-xs text-zinc-400 uppercase tracking-wider"
+                                >
+                                    Current Leg
+                                </div>
+                                <div
+                                    class="text-2xl font-bold text-zinc-900 dark:text-white"
+                                >
+                                    {setInfo?.currentLeg || 1}
+                                </div>
+                            </div>
+                            <div>
+                                <div
+                                    class="text-xs text-zinc-400 uppercase tracking-wider"
+                                >
+                                    Legs in Set
+                                </div>
+                                <div
+                                    class="text-lg font-mono text-zinc-700 dark:text-zinc-300"
+                                >
+                                    {setInfo?.player1LegsInSet || 0} - {setInfo?.player2LegsInSet ||
+                                        0}
+                                </div>
+                            </div>
+                            <div>
+                                <div
+                                    class="text-xs text-zinc-400 uppercase tracking-wider"
+                                >
+                                    Status
+                                </div>
+                                <div
+                                    class="text-sm font-medium {matchData.match
+                                        .status === 'in_progress'
+                                        ? 'text-emerald-500'
+                                        : 'text-zinc-500'}"
+                                >
+                                    {matchData.match.status === "in_progress"
+                                        ? "In Progress"
+                                        : matchData.match.status}
+                                </div>
+                            </div>
+                        </div>
+                    {/if}
+
+                    <!-- Player Scores (Cumulative) -->
+                    <div
+                        class="grid grid-cols-2 gap-4 pb-4 border-b border-zinc-200 dark:border-zinc-700"
+                    >
+                        {#each matchData.matchPlayers || [] as mp, i}
+                            <div
+                                class="p-3 bg-zinc-50 dark:bg-white/5 rounded-lg"
+                            >
+                                <div class="text-sm font-medium mb-2">
+                                    {getPlayerName(mp.playerId)}
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-sm">
+                                    <div>
+                                        <span class="text-zinc-400">Sets:</span>
+                                        <span class="ml-1 font-mono font-bold"
+                                            >{mp.setsWon || 0}</span
+                                        >
+                                    </div>
+                                    <div>
+                                        <span class="text-zinc-400"
+                                            >Legs (total):</span
+                                        >
+                                        <span class="ml-1 font-mono font-bold"
+                                            >{mp.legsWon || 0}</span
+                                        >
+                                    </div>
+                                    <div>
+                                        <span class="text-zinc-400"
+                                            >Throw Order:</span
+                                        >
+                                        <span class="ml-1 font-mono"
+                                            >{mp.throwOrder}</span
+                                        >
+                                    </div>
+                                    {#if matchData.match.winnerId === mp.playerId}
+                                        <div
+                                            class="col-span-2 text-amber-500 font-medium"
+                                        >
+                                            ★ Winner
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+
+                    <!-- All Legs Breakdown -->
+                    <div
+                        class="pb-4 border-b border-zinc-200 dark:border-zinc-700"
+                    >
+                        <div
+                            class="text-xs text-zinc-400 uppercase tracking-wider mb-2"
+                        >
+                            All Legs
+                        </div>
+                        <div class="space-y-1 max-h-48 overflow-y-auto">
+                            {#each matchData.legs || [] as leg}
+                                <div
+                                    class="flex items-center justify-between text-sm py-1 px-2 bg-zinc-50 dark:bg-white/5 rounded"
+                                >
+                                    <span class="font-mono text-xs">
+                                        Set {leg.setNumber} · Leg {leg.legNumber}
+                                    </span>
+                                    <span
+                                        class="text-xs {leg.winnerId
+                                            ? 'text-emerald-500'
+                                            : 'text-zinc-400'}"
+                                    >
+                                        {leg.winnerId
+                                            ? getPlayerName(leg.winnerId) +
+                                              " won"
+                                            : "In progress"}
+                                    </span>
+                                </div>
+                            {/each}
+                        </div>
+                    </div>
+
+                    <!-- Raw Match Data -->
+                    <div>
+                        <button
+                            onclick={() => (showDebug = !showDebug)}
+                            class="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 flex items-center gap-1"
+                        >
+                            {showDebug ? "Hide" : "Show"} Raw Match Data
+                            <span
+                                class="transform transition-transform {showDebug
+                                    ? 'rotate-180'
+                                    : ''}">▼</span
+                            >
+                        </button>
+                        {#if showDebug}
+                            <pre
+                                class="mt-2 text-xs bg-zinc-900 text-zinc-100 p-3 rounded overflow-x-auto max-h-96 overflow-y-auto">
+{JSON.stringify(
+                                    {
+                                        match: matchData.match,
+                                        matchPlayers:
+                                            matchData.matchPlayers?.map(
+                                                (mp: any) => ({
+                                                    ...mp,
+                                                    playerName: getPlayerName(
+                                                        mp.playerId,
+                                                    ),
+                                                }),
+                                            ),
+                                        legs: matchData.legs?.map((l: any) => ({
+                                            ...l,
+                                            winnerName: l.winnerId
+                                                ? getPlayerName(l.winnerId)
+                                                : null,
+                                        })),
+                                        totalLegs: matchData.legs?.length || 0,
+                                        completedLegs:
+                                            matchData.legs?.filter(
+                                                (l: any) => l.winnerId,
+                                            ).length || 0,
+                                    },
+                                    null,
+                                    2,
+                                )}
+                            </pre>
+                        {/if}
+                    </div>
+                </div>
+            </DoubleBezel>
+
+            <!-- Match Details -->
+            <EyebrowTag class="mb-3 mt-8">Match Details</EyebrowTag>
+            <div class="space-y-4">
+                {#each matchData.legs as leg}
+                    <DoubleBezel>
+                        <div class="space-y-3">
+                            <div
+                                class="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-700 pb-2"
+                            >
+                                <span class="font-semibold"
+                                    >Set {leg.setNumber} · Leg {leg.legNumber}</span
+                                >
+                                {#if leg.winnerId}
+                                    <span
+                                        class="text-emerald-600 dark:text-emerald-400 text-sm font-medium"
+                                        >Winner: {getPlayerName(
+                                            leg.winnerId,
+                                        )}</span
+                                    >
+                                {:else}
+                                    <span class="text-zinc-400 text-sm"
+                                        >In progress</span
+                                    >
+                                {/if}
+                            </div>
+
+                            <!-- Turns for this leg -->
+                            {#if legTurns[leg.id] && legTurns[leg.id].length > 0}
+                                <div class="space-y-1">
+                                    <div
+                                        class="grid grid-cols-6 gap-2 text-xs text-zinc-400 font-medium pb-1"
+                                    >
+                                        <span class="col-span-1">Player</span>
+                                        <span class="col-span-3 text-center"
+                                            >Darts</span
+                                        >
+                                        <span class="col-span-1 text-center"
+                                            >Total</span
+                                        >
+                                        <span class="col-span-1 text-right"
+                                            >Remaining</span
+                                        >
+                                    </div>
+                                    {#each legTurns[leg.id] as turn}
+                                        <div
+                                            class="grid grid-cols-6 gap-2 text-sm py-1.5 border-b border-zinc-100 dark:border-zinc-800 last:border-0"
+                                        >
+                                            <span
+                                                class="col-span-1 font-medium truncate"
+                                                title={getPlayerName(
+                                                    turn.playerId,
+                                                )}
+                                            >
+                                                {getPlayerName(turn.playerId)}
+                                            </span>
+                                            <span
+                                                class="col-span-3 text-center font-mono text-xs"
+                                            >
+                                                {#if turn.dart1Segment > 0}
+                                                    {formatDart(
+                                                        turn.dart1Segment,
+                                                        turn.dart1Multiplier,
+                                                    )}
+                                                {/if}
+                                                {#if turn.dart2Segment > 0}
+                                                    {" "}
+                                                    {formatDart(
+                                                        turn.dart2Segment,
+                                                        turn.dart2Multiplier,
+                                                    )}
+                                                {/if}
+                                                {#if turn.dart3Segment > 0}
+                                                    {" "}
+                                                    {formatDart(
+                                                        turn.dart3Segment,
+                                                        turn.dart3Multiplier,
+                                                    )}
+                                                {/if}
+                                                {#if turn.dartsThrown === 0 || (turn.dart1Segment === 0 && turn.dart2Segment === 0 && turn.dart3Segment === 0)}
+                                                    <span class="text-zinc-500"
+                                                        >MISS</span
+                                                    >
+                                                {/if}
+                                                {#if turn.isBust}
+                                                    <span
+                                                        class="text-red-500 ml-1"
+                                                        >(BUST)</span
+                                                    >
+                                                {/if}
+                                            </span>
+                                            <span
+                                                class="col-span-1 text-center font-mono"
+                                                >{turn.totalScore}</span
+                                            >
+                                            <span
+                                                class="col-span-1 text-right font-mono"
+                                                >{turn.remainingScore}</span
+                                            >
+                                        </div>
+                                    {/each}
+                                </div>
+                            {:else}
+                                <div
+                                    class="text-zinc-400 text-sm text-center py-2"
+                                >
+                                    No turns recorded
+                                </div>
+                            {/if}
                         </div>
                     </DoubleBezel>
                 {/each}
