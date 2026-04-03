@@ -46,10 +46,10 @@
     let currentDarts = $state<DartData[]>([]);
     let showCheckout = $state(false);
 
-    // Active tab state
-    let activeTab = $state<'board' | 'turns' | 'stats'>('board');
+// Active tab state
+let activeTab = $state<'board' | 'turns' | 'stats'>('board');
 
-    // Accumulates turns from ALL legs for full-match stats
+    // Active tab state
     let allMatchTurns = $state<TurnRecord[]>([]);
 
     // Current player info
@@ -644,20 +644,42 @@
             </div>
         {/if}
 
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-4">
+        <!-- Header with Tabs -->
+        <div class="grid grid-cols-3 items-center mb-4">
             <div>
                 <EyebrowTag
                     >Set {matchState.currentLeg.setNumber} · Leg
                     {matchState.currentLeg.legNumber}</EyebrowTag
                 >
             </div>
-            <button
-                onclick={handleAbandon}
-                class="text-xs text-zinc-400 hover:text-red-500 transition-colors"
-            >
-                Abandon
-            </button>
+            <div class="flex justify-center gap-2">
+                <button
+                    onclick={() => activeTab = 'board'}
+                    class="px-3 py-1.5 text-sm font-medium rounded transition-colors {activeTab === 'board' ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}"
+                >
+                    Board
+                </button>
+                <button
+                    onclick={() => activeTab = 'turns'}
+                    class="px-3 py-1.5 text-sm font-medium rounded transition-colors {activeTab === 'turns' ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}"
+                >
+                    Turns
+                </button>
+                <button
+                    onclick={() => activeTab = 'stats'}
+                    class="px-3 py-1.5 text-sm font-medium rounded transition-colors {activeTab === 'stats' ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}"
+                >
+                    Stats
+                </button>
+            </div>
+            <div class="flex justify-end">
+                <button
+                    onclick={handleAbandon}
+                    class="text-xs text-zinc-400 hover:text-red-500 transition-colors"
+                >
+                    Abandon
+                </button>
+            </div>
         </div>
 
         <!-- 3-Column Bento Grid -->
@@ -891,7 +913,7 @@
                 <!-- Dartboard Input -->
                 <DoubleBezel>
                     <div class="space-y-3">
-                        <div class="max-w-sm mx-auto">
+                        <div class="w-full">
                             <Dartboard
                                 onHit={addDart}
                                 disabled={currentDarts.length >= 3}
