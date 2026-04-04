@@ -352,6 +352,30 @@ export class DatabaseService {
       .where(inArray(schema.matches.id, matchIds))
       .orderBy(desc(schema.matches.createdAt));
   }
+
+  async getMatchPlayerEntries(playerId: string) {
+    return db
+      .select()
+      .from(schema.matchPlayers)
+      .where(eq(schema.matchPlayers.playerId, playerId));
+  }
+
+  async getAllLegsForMatches(matchIds: string[]) {
+    if (matchIds.length === 0) return [];
+    return db
+      .select()
+      .from(schema.legs)
+      .where(inArray(schema.legs.matchId, matchIds))
+      .orderBy(schema.legs.setNumber, schema.legs.legNumber);
+  }
+
+  async getAllTurnsForPlayer(playerId: string) {
+    return db
+      .select()
+      .from(schema.turns)
+      .where(eq(schema.turns.playerId, playerId))
+      .orderBy(schema.turns.createdAt);
+  }
 }
 
 export const dbService = new DatabaseService();

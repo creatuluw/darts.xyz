@@ -9,6 +9,7 @@
         IconPlayerPlay,
         IconArrowUp,
         IconArrowDown,
+        IconTrash,
     } from "@tabler/icons-svelte";
     import {
         DoubleBezel,
@@ -45,12 +46,30 @@
     // Dart input state
     let currentDarts = $state<DartData[]>([]);
     let showCheckout = $state(false);
+    let showDeleteConfirm = $state(false);
 
-// Active tab state
-let activeTab = $state<'board' | 'turns' | 'stats'>('board');
+    // Active tab state
+    let activeTab = $state<"board" | "turns" | "stats">("board");
 
     // Active tab state
     let allMatchTurns = $state<TurnRecord[]>([]);
+    let allLegsData = $state<any[]>([]);
+
+    interface TurnWithLeg extends TurnRecord {
+        setNumber: number;
+        legNumber: number;
+    }
+
+    let allTurnsWithLeg: TurnWithLeg[] = $derived(
+        allMatchTurns.map((t) => {
+            const leg = allLegsData.find((l: any) => l.id === t.legId);
+            return {
+                ...t,
+                setNumber: leg?.setNumber ?? 0,
+                legNumber: leg?.legNumber ?? 0,
+            };
+        })
+    );
 
     // Current player info
     let currentPlayer = $derived(
@@ -199,6 +218,7 @@ let activeTab = $state<'board' | 'turns' | 'stats'>('board');
         // Fetch all legs and turns for resume logic
         const legsRes = await fetch(`/api/matches/${matchId}/legs`);
         const allLegs: any[] = await legsRes.json();
+        allLegsData = allLegs;
 
         const turnsRes = await fetch(`/api/matches/${matchId}/turns`);
         const allTurns: any[] = await turnsRes.json();
@@ -312,6 +332,7 @@ let activeTab = $state<'board' | 'turns' | 'stats'>('board');
 
             // Convert API turns to TurnRecord format for current leg
             const turnRecords: TurnRecord[] = currentLegTurns.map((t: any) => ({
+                id: t.id,
                 playerId: t.playerId,
                 turnNumber: t.turnNumber,
                 darts: [
@@ -357,6 +378,8 @@ let activeTab = $state<'board' | 'turns' | 'stats'>('board');
 
             // Build allMatchTurns from ALL turns across all legs
             allMatchTurns = allTurns.map((t: any) => ({
+                id: t.id,
+                legId: t.legId,
                 playerId: t.playerId,
                 turnNumber: t.turnNumber,
                 darts: [
@@ -492,35 +515,41 @@ let activeTab = $state<'board' | 'turns' | 'stats'>('board');
         // Find the DB leg record for the turn's leg
         const legsRes = await fetch(`/api/matches/${matchId}/legs`);
         const legs = await legsRes.json();
+        allLegsData = legs;
         const targetLegData = legs.find(
             (l: any) =>
                 l.setNumber === persistSetNum && l.legNumber === persistLegNum,
         );
 
         if (targetLegData) {
-            // Persist turn
-            await fetch("/api/matches/" + matchId + "/turns", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    legId: targetLegData.id,
-                    playerId: lastTurn.playerId,
-                    turnNumber: lastTurn.turnNumber,
-                    dart1Score: lastTurn.darts[0]?.score ?? 0,
-                    dart1Multiplier: lastTurn.darts[0]?.multiplier ?? 0,
-                    dart1Segment: lastTurn.darts[0]?.segment ?? 0,
-                    dart2Score: lastTurn.darts[1]?.score ?? 0,
-                    dart2Multiplier: lastTurn.darts[1]?.multiplier ?? 0,
-                    dart2Segment: lastTurn.darts[1]?.segment ?? 0,
-                    dart3Score: lastTurn.darts[2]?.score ?? 0,
-                    dart3Multiplier: lastTurn.darts[2]?.multiplier ?? 0,
-                    dart3Segment: lastTurn.darts[2]?.segment ?? 0,
-                    totalScore: lastTurn.totalScore,
-                    remainingScore: lastTurn.remainingScore,
-                    isBust: lastTurn.isBust,
-                    dartsThrown: lastTurn.dartsThrown,
-                }),
-            });
+            const persistRes = await fetch(
+                "/api/matches/" + matchId + "/turns",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        legId: targetLegData.id,
+                        playerId: lastTurn.playerId,
+                        turnNumber: lastTurn.turnNumber,
+                        dart1Score: lastTurn.darts[0]?.score ?? 0,
+                        dart1Multiplier: lastTurn.darts[0]?.multiplier ?? 0,
+                        dart1Segment: lastTurn.darts[0]?.segment ?? 0,
+                        dart2Score: lastTurn.darts[1]?.score ?? 0,
+                        dart2Multiplier: lastTurn.darts[1]?.multiplier ?? 0,
+                        dart2Segment: lastTurn.darts[1]?.segment ?? 0,
+                        dart3Score: lastTurn.darts[2]?.score ?? 0,
+                        dart3Multiplier: lastTurn.darts[2]?.multiplier ?? 0,
+                        dart3Segment: lastTurn.darts[2]?.segment ?? 0,
+                        totalScore: lastTurn.totalScore,
+                        remainingScore: lastTurn.remainingScore,
+                        isBust: lastTurn.isBust,
+                        dartsThrown: lastTurn.dartsThrown,
+                    }),
+                },
+            );
+            const persisted = await persistRes.json();
+            lastTurn.id = persisted.id;
+            lastTurn.legId = targetLegData.id;
         }
 
         // Handle leg completion — persist winner & scores, create next leg
@@ -609,6 +638,32 @@ let activeTab = $state<'board' | 'turns' | 'stats'>('board');
         });
         goto("/");
     }
+
+    async function deleteLastTurn() {
+        if (!matchState) return;
+        const turns = matchState.currentLeg.turns;
+        if (turns.length === 0) return;
+
+        const lastTurn = turns[turns.length - 1];
+        if (lastTurn.id) {
+            await fetch(`/api/matches/${matchId}/turns?id=${lastTurn.id}`, {
+                method: "DELETE",
+            });
+        }
+
+        matchState.currentLeg.turns = turns.slice(0, -1);
+        allMatchTurns = allMatchTurns.slice(0, -1);
+
+        const lastPlayerIdx = matchState.players.findIndex(
+            (p) => p.id === lastTurn.playerId,
+        );
+        matchState.currentLeg.currentPlayerIndex = lastPlayerIdx;
+
+        matchState.players[lastPlayerIdx].remainingScore =
+            turns.length > 1
+                ? turns[turns.length - 2].remainingScore
+                : matchState.config.startingScore;
+    }
 </script>
 
 <svelte:head>
@@ -654,20 +709,29 @@ let activeTab = $state<'board' | 'turns' | 'stats'>('board');
             </div>
             <div class="flex justify-center gap-2">
                 <button
-                    onclick={() => activeTab = 'board'}
-                    class="px-3 py-1.5 text-sm font-medium rounded transition-colors cursor-pointer {activeTab === 'board' ? 'bg-white text-zinc-900 font-semibold' : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
+                    onclick={() => (activeTab = "board")}
+                    class="px-6 py-1.5 text-sm font-medium rounded transition-colors cursor-pointer border border-[#E2DFD8] {activeTab ===
+                    'board'
+                        ? 'bg-white text-zinc-900 font-semibold'
+                        : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
                 >
                     Board
                 </button>
                 <button
-                    onclick={() => activeTab = 'turns'}
-                    class="px-3 py-1.5 text-sm font-medium rounded transition-colors cursor-pointer {activeTab === 'turns' ? 'bg-white text-zinc-900 font-semibold' : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
+                    onclick={() => (activeTab = "turns")}
+                    class="px-6 py-1.5 text-sm font-medium rounded transition-colors cursor-pointer border border-[#E2DFD8] {activeTab ===
+                    'turns'
+                        ? 'bg-white text-zinc-900 font-semibold'
+                        : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
                 >
                     Turns
                 </button>
                 <button
-                    onclick={() => activeTab = 'stats'}
-                    class="px-3 py-1.5 text-sm font-medium rounded transition-colors cursor-pointer {activeTab === 'stats' ? 'bg-white text-zinc-900 font-semibold' : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
+                    onclick={() => (activeTab = "stats")}
+                    class="px-6 py-1.5 text-sm font-medium rounded transition-colors cursor-pointer border border-[#E2DFD8] {activeTab ===
+                    'stats'
+                        ? 'bg-white text-zinc-900 font-semibold'
+                        : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
                 >
                     Stats
                 </button>
@@ -702,7 +766,7 @@ let activeTab = $state<'board' | 'turns' | 'stats'>('board');
                     <DoubleBezel>
                         <div class="text-center">
                             <div
-                                class="font-display font-black text-5xl tracking-tight leading-none {p1Active
+                                class="font-display font-black text-8xl tracking-tight leading-none {p1Active
                                     ? 'text-emerald-600 dark:text-emerald-400'
                                     : ''}"
                             >
@@ -751,7 +815,7 @@ let activeTab = $state<'board' | 'turns' | 'stats'>('board');
                                 <span
                                     >Avg
                                     <span class="font-mono font-medium"
-                                        >{p1LifetimeAvg}</span
+                                        >{p1Stats.threeDartAvg.toFixed(1)}</span
                                     ></span
                                 >
                             </div>
@@ -902,6 +966,97 @@ let activeTab = $state<'board' | 'turns' | 'stats'>('board');
                             </div>
                         </div>
                     </DoubleBezel>
+
+                    <!-- Player 1 Last 3 Turns -->
+                    <DoubleBezel>
+                        <EyebrowTag class="mb-2">Last 3 Turns</EyebrowTag>
+                        <div class="mt-2 space-y-1.5">
+                            {#each [...allMatchTurns]
+                                .filter((t) => t.playerId === p1.id)
+                                .slice(-3)
+                                .reverse() as turn, ri}
+                                <div
+                                    class="flex items-center justify-between gap-1.5 text-xs"
+                                >
+                                    <div
+                                        class="flex items-center gap-1 font-mono"
+                                    >
+                                        {#each turn.darts as dart}
+                                            <span
+                                                class="rounded px-1.5 py-0.5 bg-zinc-100 dark:bg-white/10 {turn.isBust
+                                                    ? 'opacity-50'
+                                                    : ''}"
+                                            >
+                                                {dart.multiplier === 3
+                                                    ? "T"
+                                                    : dart.multiplier === 2
+                                                      ? "D"
+                                                      : ""}{dart.segment === 25
+                                                    ? dart.multiplier === 2
+                                                        ? "Bull"
+                                                        : "25"
+                                                    : dart.segment}
+                                            </span>
+                                        {/each}
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="font-mono font-medium {turn.isBust
+                                                ? 'text-red-500'
+                                                : ''}"
+                                        >
+                                            {#if turn.isBust}<span
+                                                    class="text-[9px] font-bold"
+                                                    >BUST</span
+                                                >
+                                            {/if}{turn.totalScore}
+                                        </span>
+                                        <span class="text-zinc-400"
+                                            >→ {turn.remainingScore}</span
+                                        >
+                                        {#if ri === 0}
+                                            {#if showDeleteConfirm}
+                                                <div
+                                                    class="flex items-center gap-1"
+                                                >
+                                                    <button
+                                                        onclick={() => {
+                                                            deleteLastTurn();
+                                                            showDeleteConfirm = false;
+                                                        }}
+                                                        class="text-[10px] font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer"
+                                                        >Delete</button
+                                                    >
+                                                    <button
+                                                        onclick={() =>
+                                                            (showDeleteConfirm = false)}
+                                                        class="text-[10px] text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer"
+                                                        >Cancel</button
+                                                    >
+                                                </div>
+                                            {:else}
+                                                <button
+                                                    onclick={() =>
+                                                        (showDeleteConfirm = true)}
+                                                    class="text-zinc-300 hover:text-red-500 transition-colors cursor-pointer"
+                                                    title="Delete last turn"
+                                                >
+                                                    <IconTrash size={12} />
+                                                </button>
+                                            {/if}
+                                        {/if}
+                                    </div>
+                                </div>
+                            {/each}
+                            {#if allMatchTurns.filter((t) => t.playerId === p1.id).length === 0}
+                                <div
+                                    class="text-zinc-400 text-center py-1 text-xs"
+                                >
+                                    No turns yet
+                                </div>
+                            {/if}
+                        </div>
+                    </DoubleBezel>
                 </div>
             {/if}
 
@@ -909,175 +1064,154 @@ let activeTab = $state<'board' | 'turns' | 'stats'>('board');
             <!-- CENTER: Score Display + Input + Turn History  -->
             <!-- ============================================ -->
             <div class="lg:col-span-6 order-3 lg:order-none space-y-3">
-
-                <!-- Dartboard Input -->
-                <DoubleBezel>
-                    <div class="space-y-3">
-                        <div class="w-full">
-                            <Dartboard
-                                onHit={addDart}
-                                disabled={currentDarts.length >= 3}
-                            />
-                        </div>
-
-                        <!-- Current Darts -->
-                        <div
-                            class="flex items-center justify-center gap-2 min-h-8 {currentDarts.length >
-                            0
-                                ? ''
-                                : 'invisible'}"
-                        >
-                            {#each currentDarts as dart, i}
-                                <span
-                                    class="rounded-[5px] px-2.5 py-1 text-xs font-mono bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
-                                >
-                                    {dart.multiplier === 3
-                                        ? "T"
-                                        : dart.multiplier === 2
-                                          ? "D"
-                                          : ""}{dart.segment === 25
-                                        ? dart.multiplier === 2
-                                            ? "Bull"
-                                            : "25"
-                                        : dart.segment}
-                                    <span
-                                        class="text-zinc-400 dark:text-zinc-500 ml-1"
-                                        >({dart.score})</span
-                                    >
-                                </span>
-                            {/each}
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex items-center justify-center gap-2">
-                            <button
-                                onclick={() => addDart(0, 0 as Multiplier)}
-                                disabled={currentDarts.length >= 3}
-                                class="rounded px-3 py-1 text-xs font-bold bg-zinc-100 dark:bg-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/15 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                                >Miss</button
-                            >
-                            <button
-                                onclick={removeLastDart}
-                                disabled={currentDarts.length === 0}
-                                class="rounded px-3 py-1 text-xs font-bold bg-zinc-100 dark:bg-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/15 disabled:opacity-30 disabled:pointer-events-none transition-colors inline-flex items-center gap-1"
-                                ><IconArrowBack size={12} /> Undo</button
-                            >
-                            <PillButton
-                                onclick={submitCurrentTurn}
-                                disabled={currentDarts.length === 0}
-                            >
-                                Submit ({currentDarts.length})
-                            </PillButton>
-                        </div>
-                    </div>
-                </DoubleBezel>
-
-                <!-- Checkout Suggestions -->
-                {#if checkoutOptions.length > 0}
+                {#if activeTab === "board"}
+                    <!-- Dartboard Input -->
                     <DoubleBezel>
-                        <EyebrowTag class="mb-2">Checkout</EyebrowTag>
-                        <div class="space-y-1 mt-2">
-                            {#each checkoutOptions as opt}
-                                <div
-                                    class="text-sm font-mono text-emerald-600 dark:text-emerald-400"
+                        <div class="space-y-0">
+                            <div class="w-full">
+                                <Dartboard
+                                    onHit={addDart}
+                                    disabled={currentDarts.length >= 3}
+                                />
+                            </div>
+
+                            <!-- Current Darts -->
+                            <div
+                                class="flex items-center justify-center gap-2 min-h-8 {currentDarts.length >
+                                0
+                                    ? ''
+                                    : 'invisible'}"
+                            >
+                                {#each currentDarts as dart, i}
+                                    <span
+                                        class="rounded-[5px] px-2.5 py-1 text-xs font-mono bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
+                                    >
+                                        {dart.multiplier === 3
+                                            ? "T"
+                                            : dart.multiplier === 2
+                                              ? "D"
+                                              : ""}{dart.segment === 25
+                                            ? dart.multiplier === 2
+                                                ? "Bull"
+                                                : "25"
+                                            : dart.segment}
+                                        <span
+                                            class="text-zinc-400 dark:text-zinc-500 ml-1"
+                                            >({dart.score})</span
+                                        >
+                                    </span>
+                                {/each}
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex items-center justify-center gap-2">
+                                <button
+                                    onclick={() => addDart(0, 0 as Multiplier)}
+                                    disabled={currentDarts.length >= 3}
+                                    class="rounded px-3 py-1 text-xs font-bold bg-zinc-100 dark:bg-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/15 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                    >Miss</button
                                 >
-                                    {opt.description}
+                                <button
+                                    onclick={removeLastDart}
+                                    disabled={currentDarts.length === 0}
+                                    class="rounded px-3 py-1 text-xs font-bold bg-zinc-100 dark:bg-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/15 disabled:opacity-30 disabled:pointer-events-none transition-colors inline-flex items-center gap-1"
+                                    ><IconArrowBack size={12} /> Undo</button
+                                >
+                                <PillButton
+                                    onclick={submitCurrentTurn}
+                                    disabled={currentDarts.length === 0}
+                                >
+                                    Submit ({currentDarts.length})
+                                </PillButton>
+                            </div>
+                        </div>
+                    </DoubleBezel>
+
+                    <!-- Checkout Suggestions -->
+                    {#if checkoutOptions.length > 0}
+                        <DoubleBezel>
+                            <EyebrowTag class="mb-2">Checkout</EyebrowTag>
+                            <div class="space-y-1 mt-2">
+                                {#each checkoutOptions as opt}
+                                    <div
+                                        class="text-sm font-mono text-emerald-600 dark:text-emerald-400"
+                                    >
+                                        {opt.description}
+                                    </div>
+                                {/each}
+                            </div>
+                        </DoubleBezel>
+                    {/if}
+                {:else if activeTab === "turns"}
+                    <!-- Turn History — Grouped by Set > Leg -->
+                    <DoubleBezel>
+                        <EyebrowTag class="mb-2">Turn History</EyebrowTag>
+                        <div class="mt-3 space-y-4">
+                            {#each [...new Set(allTurnsWithLeg.map((t) => t.setNumber))]
+                                .sort((a, b) => b - a) as setNum}
+                                {@const setTurns = allTurnsWithLeg.filter((t) => t.setNumber === setNum)}
+                                {@const legsInSet = [...new Set(setTurns.map((t) => t.legNumber))].sort((a, b) => b - a)}
+                                <div>
+                                    <div class="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold mb-2">Set {setNum}</div>
+                                    {#each legsInSet as legNum}
+                                        {@const legTurns = setTurns.filter((t) => t.legNumber === legNum)}
+                                        <div class="mb-3">
+                                            <div class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1.5 pl-1">Leg {legNum}</div>
+                                            <table class="w-full text-sm">
+                                                <thead>
+                                                    <tr class="text-[10px] uppercase tracking-wider text-zinc-400 border-b border-zinc-100 dark:border-white/5">
+                                                        <th class="text-left pb-2 pr-2">Player</th>
+                                                        <th class="text-center pb-2 px-1">D1</th>
+                                                        <th class="text-center pb-2 px-1">D2</th>
+                                                        <th class="text-center pb-2 px-1">D3</th>
+                                                        <th class="text-center pb-2 px-1">Tot</th>
+                                                        <th class="text-right pb-2 pl-2">Left</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {#each [...legTurns].reverse() as turn}
+                                                        {@const isCurrentPlayer = turn.playerId === currentPlayer?.id}
+                                                        {@const playerName = matchState.players.find((p) => p.id === turn.playerId)?.name ?? "?"}
+                                                        <tr class="border-b border-zinc-50 dark:border-white/5 last:border-0 transition-colors {isCurrentPlayer ? 'bg-emerald-50/60 dark:bg-emerald-500/5' : ''}">
+                                                            <td class="py-1.5 pr-2">
+                                                                <span class="font-medium text-xs {isCurrentPlayer ? 'text-emerald-600 dark:text-emerald-400' : ''}">
+                                                                    {#if isCurrentPlayer}
+                                                                        <IconPlayerPlay size={10} class="inline -mt-0.5 mr-0.5" />
+                                                                    {/if}
+                                                                    {playerName}
+                                                                </span>
+                                                            </td>
+                                                            <td class="py-1.5 px-1 text-center font-mono text-xs">{formatDart(turn.darts[0])}</td>
+                                                            <td class="py-1.5 px-1 text-center font-mono text-xs">{formatDart(turn.darts[1])}</td>
+                                                            <td class="py-1.5 px-1 text-center font-mono text-xs">{formatDart(turn.darts[2])}</td>
+                                                            <td class="py-1.5 px-1 text-center font-mono text-xs font-medium {turn.isBust ? 'text-red-500' : ''}">
+                                                                {#if turn.isBust}
+                                                                    <span class="text-red-500 text-[9px] font-bold">BUST</span><br />
+                                                                {/if}
+                                                                {turn.totalScore}
+                                                            </td>
+                                                            <td class="py-1.5 pl-2 text-right font-mono text-xs font-medium">{turn.remainingScore}</td>
+                                                        </tr>
+                                                    {/each}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {/each}
                                 </div>
                             {/each}
+                            {#if allTurnsWithLeg.length === 0}
+                                <div class="text-zinc-400 text-center py-2 text-sm">No turns yet</div>
+                            {/if}
+                        </div>
+                    </DoubleBezel>
+                {:else if activeTab === "stats"}
+                    <DoubleBezel>
+                        <div class="text-center text-zinc-400 py-8">
+                            <p class="text-lg font-medium mb-2">Stats</p>
+                            <p class="text-sm">Stats component coming soon</p>
                         </div>
                     </DoubleBezel>
                 {/if}
-
-                <!-- Turn History — Table -->
-                <DoubleBezel>
-                    <EyebrowTag class="mb-2">Turn History</EyebrowTag>
-                    <div class="mt-3">
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr
-                                    class="text-[10px] uppercase tracking-wider text-zinc-400 border-b border-zinc-100 dark:border-white/5"
-                                >
-                                    <th class="text-left pb-2 pr-2">Player</th>
-                                    <th class="text-center pb-2 px-1">D1</th>
-                                    <th class="text-center pb-2 px-1">D2</th>
-                                    <th class="text-center pb-2 px-1">D3</th>
-                                    <th class="text-center pb-2 px-1">Tot</th>
-                                    <th class="text-right pb-2 pl-2">Left</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {#each [...matchState.currentLeg.turns].reverse() as turn}
-                                    {@const isCurrentPlayer =
-                                        turn.playerId === currentPlayer?.id}
-                                    {@const playerName =
-                                        matchState.players.find(
-                                            (p) => p.id === turn.playerId,
-                                        )?.name ?? "?"}
-                                    <tr
-                                        class="border-b border-zinc-50 dark:border-white/5 last:border-0 transition-colors {isCurrentPlayer
-                                            ? 'bg-emerald-50/60 dark:bg-emerald-500/5'
-                                            : ''}"
-                                    >
-                                        <td class="py-1.5 pr-2">
-                                            <span
-                                                class="font-medium text-xs {isCurrentPlayer
-                                                    ? 'text-emerald-600 dark:text-emerald-400'
-                                                    : ''}"
-                                            >
-                                                {#if isCurrentPlayer}
-                                                    <IconPlayerPlay
-                                                        size={10}
-                                                        class="inline -mt-0.5 mr-0.5"
-                                                    />
-                                                {/if}
-                                                {playerName}
-                                            </span>
-                                        </td>
-                                        <td
-                                            class="py-1.5 px-1 text-center font-mono text-xs"
-                                        >
-                                            {formatDart(turn.darts[0])}
-                                        </td>
-                                        <td
-                                            class="py-1.5 px-1 text-center font-mono text-xs"
-                                        >
-                                            {formatDart(turn.darts[1])}
-                                        </td>
-                                        <td
-                                            class="py-1.5 px-1 text-center font-mono text-xs"
-                                        >
-                                            {formatDart(turn.darts[2])}
-                                        </td>
-                                        <td
-                                            class="py-1.5 px-1 text-center font-mono text-xs font-medium {turn.isBust
-                                                ? 'text-red-500'
-                                                : ''}"
-                                        >
-                                            {#if turn.isBust}
-                                                <span
-                                                    class="text-red-500 text-[9px] font-bold"
-                                                    >BUST</span
-                                                >
-                                                <br />
-                                            {/if}
-                                            {turn.totalScore}
-                                        </td>
-                                        <td
-                                            class="py-1.5 pl-2 text-right font-mono text-xs font-medium"
-                                        >
-                                            {turn.remainingScore}
-                                        </td>
-                                    </tr>
-                                {/each}
-                            </tbody>
-                        </table>
-                        {#if matchState.currentLeg.turns.length === 0}
-                            <div class="text-zinc-400 text-center py-2 text-sm">
-                                No turns yet
-                            </div>
-                        {/if}
-                    </div>
-                </DoubleBezel>
             </div>
 
             <!-- ============================================ -->
@@ -1098,7 +1232,7 @@ let activeTab = $state<'board' | 'turns' | 'stats'>('board');
                     <DoubleBezel>
                         <div class="text-center">
                             <div
-                                class="font-display font-black text-5xl tracking-tight leading-none {p2Active
+                                class="font-display font-black text-8xl tracking-tight leading-none {p2Active
                                     ? 'text-emerald-600 dark:text-emerald-400'
                                     : ''}"
                             >
@@ -1147,7 +1281,7 @@ let activeTab = $state<'board' | 'turns' | 'stats'>('board');
                                 <span
                                     >Avg
                                     <span class="font-mono font-medium"
-                                        >{p2LifetimeAvg}</span
+                                        >{p2Stats.threeDartAvg.toFixed(1)}</span
                                     ></span
                                 >
                             </div>
@@ -1296,6 +1430,97 @@ let activeTab = $state<'board' | 'turns' | 'stats'>('board');
                                     >
                                 </div>
                             </div>
+                        </div>
+                    </DoubleBezel>
+
+                    <!-- Player 2 Last 3 Turns -->
+                    <DoubleBezel>
+                        <EyebrowTag class="mb-2">Last 3 Turns</EyebrowTag>
+                        <div class="mt-2 space-y-1.5">
+                            {#each [...allMatchTurns]
+                                .filter((t) => t.playerId === p2.id)
+                                .slice(-3)
+                                .reverse() as turn, ri}
+                                <div
+                                    class="flex items-center justify-between gap-1.5 text-xs"
+                                >
+                                    <div
+                                        class="flex items-center gap-1 font-mono"
+                                    >
+                                        {#each turn.darts as dart}
+                                            <span
+                                                class="rounded px-1.5 py-0.5 bg-zinc-100 dark:bg-white/10 {turn.isBust
+                                                    ? 'opacity-50'
+                                                    : ''}"
+                                            >
+                                                {dart.multiplier === 3
+                                                    ? "T"
+                                                    : dart.multiplier === 2
+                                                      ? "D"
+                                                      : ""}{dart.segment === 25
+                                                    ? dart.multiplier === 2
+                                                        ? "Bull"
+                                                        : "25"
+                                                    : dart.segment}
+                                            </span>
+                                        {/each}
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="font-mono font-medium {turn.isBust
+                                                ? 'text-red-500'
+                                                : ''}"
+                                        >
+                                            {#if turn.isBust}<span
+                                                    class="text-[9px] font-bold"
+                                                    >BUST</span
+                                                >
+                                            {/if}{turn.totalScore}
+                                        </span>
+                                        <span class="text-zinc-400"
+                                            >→ {turn.remainingScore}</span
+                                        >
+                                        {#if ri === 0}
+                                            {#if showDeleteConfirm}
+                                                <div
+                                                    class="flex items-center gap-1"
+                                                >
+                                                    <button
+                                                        onclick={() => {
+                                                            deleteLastTurn();
+                                                            showDeleteConfirm = false;
+                                                        }}
+                                                        class="text-[10px] font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer"
+                                                        >Delete</button
+                                                    >
+                                                    <button
+                                                        onclick={() =>
+                                                            (showDeleteConfirm = false)}
+                                                        class="text-[10px] text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer"
+                                                        >Cancel</button
+                                                    >
+                                                </div>
+                                            {:else}
+                                                <button
+                                                    onclick={() =>
+                                                        (showDeleteConfirm = true)}
+                                                    class="text-zinc-300 hover:text-red-500 transition-colors cursor-pointer"
+                                                    title="Delete last turn"
+                                                >
+                                                    <IconTrash size={12} />
+                                                </button>
+                                            {/if}
+                                        {/if}
+                                    </div>
+                                </div>
+                            {/each}
+                            {#if allMatchTurns.filter((t) => t.playerId === p2.id).length === 0}
+                                <div
+                                    class="text-zinc-400 text-center py-1 text-xs"
+                                >
+                                    No turns yet
+                                </div>
+                            {/if}
                         </div>
                     </DoubleBezel>
                 </div>

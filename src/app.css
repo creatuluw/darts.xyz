@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Lekton:ital,wght@0,400;0,700;1,400&family=Oregano:ital@0;1&display=swap');
 @import "tailwindcss";
 
 /* Prevent scrollbar-induced layout shifts */
@@ -7,9 +8,22 @@ body {
 }
 
 @theme {
-    --font-sans: "Geist Sans", system-ui, sans-serif;
-    --font-display: "Clash Display", system-ui, sans-serif;
-    --font-mono: "Geist Mono", ui-monospace, monospace;
+    --font-sans: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-mono: "Lekton", ui-monospace, monospace;
+    --font-accent: "Oregano", cursive, sans-serif;
+
+    --color-emerald-50: #eef7ee;
+    --color-emerald-100: #d5edd5;
+    --color-emerald-200: #aedbae;
+    --color-emerald-300: #7ec47e;
+    --color-emerald-400: #50a850;
+    --color-emerald-500: #3A9434;
+    --color-emerald-600: #2d7a28;
+    --color-emerald-700: #266122;
+    --color-emerald-800: #214e1f;
+    --color-emerald-900: #1c401c;
+    --color-emerald-950: #0d230d;
 }
 
 /* Custom transition */

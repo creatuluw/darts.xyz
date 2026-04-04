@@ -83,27 +83,62 @@
         </div>
 
         <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-8">
+        <div class="grid grid-cols-3 gap-3 mt-8">
             <DoubleBezel>
                 <div class="text-center">
                     <div
-                        class="text-xs text-zinc-400 uppercase tracking-wider mb-1"
+                        class="text-3xl font-display font-bold"
+                    >
+                        {stats?.matchesPlayed ?? 0}
+                        <span class="text-zinc-400 text-lg font-medium"
+                            >({stats?.matchesWon ?? 0})</span
+                        >
+                    </div>
+                    <div
+                        class="text-xs text-zinc-400 uppercase tracking-wider mt-1"
                     >
                         Matches
                     </div>
-                    <AnimatedNumber value={stats?.matchesPlayed ?? 0} />
                 </div>
             </DoubleBezel>
             <DoubleBezel>
                 <div class="text-center">
                     <div
-                        class="text-xs text-zinc-400 uppercase tracking-wider mb-1"
+                        class="text-3xl font-display font-bold"
                     >
-                        Matches Won
+                        {stats?.setsPlayed ?? 0}
+                        <span class="text-zinc-400 text-lg font-medium"
+                            >({stats?.setsWon ?? 0})</span
+                        >
                     </div>
-                    <AnimatedNumber value={stats?.matchesWon ?? 0} />
+                    <div
+                        class="text-xs text-zinc-400 uppercase tracking-wider mt-1"
+                    >
+                        Sets
+                    </div>
                 </div>
             </DoubleBezel>
+            <DoubleBezel>
+                <div class="text-center">
+                    <div
+                        class="text-3xl font-display font-bold"
+                    >
+                        {stats?.legsPlayed ?? 0}
+                        <span class="text-zinc-400 text-lg font-medium"
+                            >({stats?.legsWon ?? 0})</span
+                        >
+                    </div>
+                    <div
+                        class="text-xs text-zinc-400 uppercase tracking-wider mt-1"
+                    >
+                        Legs
+                    </div>
+                </div>
+            </DoubleBezel>
+        </div>
+
+        <!-- Avg & Checkout -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
             <DoubleBezel>
                 <div class="text-center">
                     <div

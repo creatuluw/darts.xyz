@@ -47,7 +47,9 @@ export interface LegState {
 
 // Turn record (stored)
 export interface TurnRecord {
-  playerId: string;
+    id?: string;
+    legId?: string;
+    playerId: string;
   turnNumber: number;
   darts: DartData[];
   totalScore: number;

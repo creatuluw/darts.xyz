@@ -1,8 +1,8 @@
-when in http://localhost:5173/match/setup i want the start match button with info text to be in the top-right of the Match Format panel
+[x] when in http://localhost:5173/match/setup i want the start match button with info text to be in the top-right of the Match Format panel
 
 ###################################################################
 
-also the rules for taking turns are:
+[x] also the rules for taking turns are:
 
 - every leg the player who did not start the previous leg will start
 - when a new set starts the player who did not start the previous set starts the new set
@@ -11,7 +11,7 @@ Analyze if we have implemented this logic like this
 
 ###################################################################
 
-i want you to simulate the following flow of playing a game:
+[x] i want you to simulate the following flow of playing a game:
 
 - choose 501 with 3 legs per set and play 3 sets with two players
 - simulate the turns using all turn-leg-set-match logic
@@ -22,9 +22,9 @@ i want you to simulate the following flow of playing a game:
 
 ###################################################################
 
-Change the name of the button with: "Submit Turn" into: Sla op
+[x] Change the name of the button with: "Submit Turn" into: Sla op
 
-The colors of the dartboard component are:
+[x] I want the colors of the dartboard component are:
 
 - black: #1E2122
 - white/cream: #FCE7BC
