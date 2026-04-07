@@ -7,3 +7,8 @@ export const GET: RequestHandler = async ({ params }) => {
   if (!player) return json({ error: "Player not found" }, { status: 404 });
   return json(player);
 };
+
+export const DELETE: RequestHandler = async ({ params }) => {
+  await dbService.softDeletePlayer(params.id);
+  return json({ success: true });
+};

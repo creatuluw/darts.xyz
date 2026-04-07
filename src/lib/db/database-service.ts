@@ -1,5 +1,5 @@
 import { db, schema } from "./index";
-import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, isNull } from "drizzle-orm";
 
 export class DatabaseService {
   // === PLAYERS ===
@@ -23,7 +23,7 @@ export class DatabaseService {
     const result = await db
       .select()
       .from(schema.players)
-      .where(eq(schema.players.id, id))
+      .where(and(eq(schema.players.id, id), isNull(schema.players.deletedAt)))
       .limit(1);
     return result[0] || null;
   }
@@ -32,7 +32,12 @@ export class DatabaseService {
     const result = await db
       .select()
       .from(schema.players)
-      .where(sql`LOWER(${schema.players.name}) = LOWER(${name})`)
+      .where(
+        and(
+          sql`LOWER(${schema.players.name}) = LOWER(${name})`,
+          isNull(schema.players.deletedAt),
+        ),
+      )
       .limit(1);
     return result[0] || null;
   }
@@ -41,63 +46,21 @@ export class DatabaseService {
     return db
       .select()
       .from(schema.players)
+      .where(isNull(schema.players.deletedAt))
       .orderBy(desc(schema.players.createdAt));
   }
 
+  async softDeletePlayer(id: string) {
+    // Soft delete: set deletedAt timestamp, preserve all match/replay data
+    await db
+      .update(schema.players)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(eq(schema.players.id, id));
+  }
+
   async deletePlayer(id: string) {
-    // Delete player stats
-    await db
-      .delete(schema.playerStats)
-      .where(eq(schema.playerStats.playerId, id));
-
-    // Get all match IDs for this player
-    const mp = await db
-      .select({ matchId: schema.matchPlayers.matchId })
-      .from(schema.matchPlayers)
-      .where(eq(schema.matchPlayers.playerId, id));
-    const matchIds = mp.map((m) => m.matchId);
-
-    // Delete turns for this player
-    await db.delete(schema.turns).where(eq(schema.turns.playerId, id));
-
-    // Null out leg winner references
-    await db
-      .update(schema.legs)
-      .set({ winnerId: null })
-      .where(eq(schema.legs.winnerId, id));
-
-    // Delete match player entries
-    await db
-      .delete(schema.matchPlayers)
-      .where(eq(schema.matchPlayers.playerId, id));
-
-    // Delete any now-orphaned matches (matches with no remaining players)
-    if (matchIds.length > 0) {
-      for (const matchId of matchIds) {
-        const remaining = await db
-          .select({ id: schema.matchPlayers.id })
-          .from(schema.matchPlayers)
-          .where(eq(schema.matchPlayers.matchId, matchId));
-        if (remaining.length === 0) {
-          // Cascade delete legs → turns, then match
-          const matchLegs = await db
-            .select({ id: schema.legs.id })
-            .from(schema.legs)
-            .where(eq(schema.legs.matchId, matchId));
-          const legIds = matchLegs.map((l) => l.id);
-          if (legIds.length > 0) {
-            await db
-              .delete(schema.turns)
-              .where(inArray(schema.turns.legId, legIds));
-          }
-          await db.delete(schema.legs).where(eq(schema.legs.matchId, matchId));
-          await db.delete(schema.matches).where(eq(schema.matches.id, matchId));
-        }
-      }
-    }
-
-    // Finally delete the player
-    await db.delete(schema.players).where(eq(schema.players.id, id));
+    // Alias to softDeletePlayer for backwards compatibility
+    return this.softDeletePlayer(id);
   }
 
   // === MATCHES ===

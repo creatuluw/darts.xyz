@@ -61,6 +61,11 @@
       "sourceType": "github",
       "computedHash": "3aa58992f0fd9673b975cd48cd4f8ae4b4976fd5cdd9f20e26d3d447aee317fb"
     },
+    "text-to-speech": {
+      "source": "elevenlabs/skills",
+      "sourceType": "github",
+      "computedHash": "dccf9155f284345ade4a5af5d3c3db5d5da77856011ff92fff725160b0df8370"
+    },
     "user-guide-writing": {
       "source": "supercent-io/skills-template",
       "sourceType": "github",

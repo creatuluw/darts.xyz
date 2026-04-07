@@ -28,6 +28,7 @@ export const players = darts.table(
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => ({
     nameLowerIdx: index("idx_players_name_lower").on(sql`LOWER(${table.name})`),

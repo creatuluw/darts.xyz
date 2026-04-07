@@ -36,6 +36,27 @@
         Multiplier,
         TurnRecord,
     } from "$lib/game";
+    import {
+        announceScore,
+        announceBust,
+        announceCheckout,
+        announce180,
+        announceGameOn,
+        announceLegWinner,
+        announceSetWinner,
+        announceMatchWinner,
+        announceNextLeg,
+        announceNextSet,
+        announceFirstThrow,
+        initDartsCaller,
+    } from "$lib/utils/darts-caller";
+    import {
+        voiceSettings,
+        VOICE_OPTIONS,
+        getVoicePrefix,
+    } from "$lib/stores/voice-settings";
+    import { addToast } from "$lib/stores/toast";
+    import { StyledSelect } from "$lib/components/ui";
 
     let matchId = $derived($page.params.id as string);
     let matchState = $state<MatchState | null>(null);
@@ -49,7 +70,38 @@
     let showDeleteConfirm = $state(false);
 
     // Active tab state
-    let activeTab = $state<"board" | "turns" | "stats">("board");
+    let activeTab = $state<"board" | "turns" | "stats" | "settings">("board");
+
+    // In-game voice setting
+    let inGameVoiceId = $state("jack");
+    let inGameVoiceOptions = VOICE_OPTIONS.map((v) => ({
+        value: v.id,
+        label: v.name,
+        previewSrc: `/audio/${v.prefix}score-26.mp3`,
+    }));
+
+    // Sync store → local voice state
+    $effect(() => {
+        const unsubscribe = voiceSettings.subscribe((value) => {
+            inGameVoiceId = value;
+        });
+        return unsubscribe;
+    });
+
+    // When voice changes in-game, persist and reinitialize caller
+    $effect(() => {
+        if (inGameVoiceId) {
+            voiceSettings.set(inGameVoiceId);
+            const setting = VOICE_OPTIONS.find((v) => v.id === inGameVoiceId);
+            if (setting) {
+                initDartsCaller({
+                    profile: "dartsCaller",
+                    voicePrefix: setting.prefix,
+                });
+                addToast(`Caller voice changed to ${setting.name}`, "success");
+            }
+        }
+    });
 
     // Active tab state
     let allMatchTurns = $state<TurnRecord[]>([]);
@@ -68,7 +120,7 @@
                 setNumber: leg?.setNumber ?? 0,
                 legNumber: leg?.legNumber ?? 0,
             };
-        })
+        }),
     );
 
     // Current player info
@@ -193,6 +245,14 @@
     }
 
     onMount(async () => {
+        // Initialize TTS in background with voice prefix from settings
+        import("$lib/utils/darts-caller").then(({ initDartsCaller }) => {
+            initDartsCaller({
+                profile: "dartsCaller",
+                voicePrefix: getVoicePrefix(),
+            });
+        });
+
         const res = await fetch(`/api/matches/${matchId}`);
         const data = await res.json();
         matchData = data;
@@ -222,6 +282,11 @@
 
         const turnsRes = await fetch(`/api/matches/${matchId}/turns`);
         const allTurns: any[] = await turnsRes.json();
+
+        // Announce GAME ON for fresh matches (no turns yet)
+        if (allTurns.length === 0) {
+            announceGameOn();
+        }
 
         const config = {
             startingScore: Number(data.match.startingScore) as
@@ -626,6 +691,47 @@
         }
 
         currentDarts = [];
+
+        // Announce the score like a darts caller
+        if (lastTurn) {
+            const playerName =
+                matchState?.players.find((p) => p.id === prePlayerId)?.name ??
+                "Unknown";
+
+            // Announce score
+            if (lastTurn.totalScore === 180) {
+                announce180();
+            } else if (lastTurn.totalScore > 0) {
+                announceScore(lastTurn.totalScore);
+            }
+
+            // Handle bust or checkout
+            if (lastTurn.isBust) {
+                setTimeout(() => announceBust(), 300);
+            } else if (checkoutHappened) {
+                setTimeout(() => announceCheckout(playerName), 300);
+                setTimeout(() => announceLegWinner(playerName), 600);
+
+                // Detect and announce set winner
+                // If set number changed, the previous set just ended
+                if (postLeg.setNumber !== preLegSetNum) {
+                    const setWinnerName = playerName;
+                    setTimeout(() => announceSetWinner(setWinnerName), 1000);
+                    setTimeout(() => announceNextSet(), 1300);
+                }
+
+                setTimeout(() => announceNextLeg(), 1600);
+            }
+        }
+
+        // Announce match winner (after all leg/set announcements complete)
+        if (matchEnded) {
+            const winnerId = matchState?.winnerId;
+            const winner = matchState?.players.find((p) => p.id === winnerId);
+            if (winner) {
+                setTimeout(() => announceMatchWinner(winner.name), 2500);
+            }
+        }
     }
 
     async function handleAbandon() {
@@ -734,6 +840,15 @@
                         : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
                 >
                     Stats
+                </button>
+                <button
+                    onclick={() => (activeTab = "settings")}
+                    class="px-6 py-1.5 text-sm font-medium rounded transition-colors cursor-pointer border border-[#E2DFD8] {activeTab ===
+                    'settings'
+                        ? 'bg-white text-zinc-900 font-semibold'
+                        : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
+                >
+                    Settings
                 </button>
             </div>
             <div class="flex justify-end">
@@ -1147,50 +1262,133 @@
                     <DoubleBezel>
                         <EyebrowTag class="mb-2">Turn History</EyebrowTag>
                         <div class="mt-3 space-y-4">
-                            {#each [...new Set(allTurnsWithLeg.map((t) => t.setNumber))]
-                                .sort((a, b) => b - a) as setNum}
-                                {@const setTurns = allTurnsWithLeg.filter((t) => t.setNumber === setNum)}
-                                {@const legsInSet = [...new Set(setTurns.map((t) => t.legNumber))].sort((a, b) => b - a)}
+                            {#each [...new Set(allTurnsWithLeg.map((t) => t.setNumber))].sort((a, b) => b - a) as setNum}
+                                {@const setTurns = allTurnsWithLeg.filter(
+                                    (t) => t.setNumber === setNum,
+                                )}
+                                {@const legsInSet = [
+                                    ...new Set(
+                                        setTurns.map((t) => t.legNumber),
+                                    ),
+                                ].sort((a, b) => b - a)}
                                 <div>
-                                    <div class="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold mb-2">Set {setNum}</div>
+                                    <div
+                                        class="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold mb-2"
+                                    >
+                                        Set {setNum}
+                                    </div>
                                     {#each legsInSet as legNum}
-                                        {@const legTurns = setTurns.filter((t) => t.legNumber === legNum)}
+                                        {@const legTurns = setTurns.filter(
+                                            (t) => t.legNumber === legNum,
+                                        )}
                                         <div class="mb-3">
-                                            <div class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1.5 pl-1">Leg {legNum}</div>
+                                            <div
+                                                class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1.5 pl-1"
+                                            >
+                                                Leg {legNum}
+                                            </div>
                                             <table class="w-full text-sm">
                                                 <thead>
-                                                    <tr class="text-[10px] uppercase tracking-wider text-zinc-400 border-b border-zinc-100 dark:border-white/5">
-                                                        <th class="text-left pb-2 pr-2">Player</th>
-                                                        <th class="text-center pb-2 px-1">D1</th>
-                                                        <th class="text-center pb-2 px-1">D2</th>
-                                                        <th class="text-center pb-2 px-1">D3</th>
-                                                        <th class="text-center pb-2 px-1">Tot</th>
-                                                        <th class="text-right pb-2 pl-2">Left</th>
+                                                    <tr
+                                                        class="text-[10px] uppercase tracking-wider text-zinc-400 border-b border-zinc-100 dark:border-white/5"
+                                                    >
+                                                        <th
+                                                            class="text-left pb-2 pr-2"
+                                                            >Player</th
+                                                        >
+                                                        <th
+                                                            class="text-center pb-2 px-1"
+                                                            >D1</th
+                                                        >
+                                                        <th
+                                                            class="text-center pb-2 px-1"
+                                                            >D2</th
+                                                        >
+                                                        <th
+                                                            class="text-center pb-2 px-1"
+                                                            >D3</th
+                                                        >
+                                                        <th
+                                                            class="text-center pb-2 px-1"
+                                                            >Tot</th
+                                                        >
+                                                        <th
+                                                            class="text-right pb-2 pl-2"
+                                                            >Left</th
+                                                        >
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {#each [...legTurns].reverse() as turn}
-                                                        {@const isCurrentPlayer = turn.playerId === currentPlayer?.id}
-                                                        {@const playerName = matchState.players.find((p) => p.id === turn.playerId)?.name ?? "?"}
-                                                        <tr class="border-b border-zinc-50 dark:border-white/5 last:border-0 transition-colors {isCurrentPlayer ? 'bg-emerald-50/60 dark:bg-emerald-500/5' : ''}">
-                                                            <td class="py-1.5 pr-2">
-                                                                <span class="font-medium text-xs {isCurrentPlayer ? 'text-emerald-600 dark:text-emerald-400' : ''}">
+                                                        {@const isCurrentPlayer =
+                                                            turn.playerId ===
+                                                            currentPlayer?.id}
+                                                        {@const playerName =
+                                                            matchState.players.find(
+                                                                (p) =>
+                                                                    p.id ===
+                                                                    turn.playerId,
+                                                            )?.name ?? "?"}
+                                                        <tr
+                                                            class="border-b border-zinc-50 dark:border-white/5 last:border-0 transition-colors {isCurrentPlayer
+                                                                ? 'bg-emerald-50/60 dark:bg-emerald-500/5'
+                                                                : ''}"
+                                                        >
+                                                            <td
+                                                                class="py-1.5 pr-2"
+                                                            >
+                                                                <span
+                                                                    class="font-medium text-xs {isCurrentPlayer
+                                                                        ? 'text-emerald-600 dark:text-emerald-400'
+                                                                        : ''}"
+                                                                >
                                                                     {#if isCurrentPlayer}
-                                                                        <IconPlayerPlay size={10} class="inline -mt-0.5 mr-0.5" />
+                                                                        <IconPlayerPlay
+                                                                            size={10}
+                                                                            class="inline -mt-0.5 mr-0.5"
+                                                                        />
                                                                     {/if}
                                                                     {playerName}
                                                                 </span>
                                                             </td>
-                                                            <td class="py-1.5 px-1 text-center font-mono text-xs">{formatDart(turn.darts[0])}</td>
-                                                            <td class="py-1.5 px-1 text-center font-mono text-xs">{formatDart(turn.darts[1])}</td>
-                                                            <td class="py-1.5 px-1 text-center font-mono text-xs">{formatDart(turn.darts[2])}</td>
-                                                            <td class="py-1.5 px-1 text-center font-mono text-xs font-medium {turn.isBust ? 'text-red-500' : ''}">
+                                                            <td
+                                                                class="py-1.5 px-1 text-center font-mono text-xs"
+                                                                >{formatDart(
+                                                                    turn
+                                                                        .darts[0],
+                                                                )}</td
+                                                            >
+                                                            <td
+                                                                class="py-1.5 px-1 text-center font-mono text-xs"
+                                                                >{formatDart(
+                                                                    turn
+                                                                        .darts[1],
+                                                                )}</td
+                                                            >
+                                                            <td
+                                                                class="py-1.5 px-1 text-center font-mono text-xs"
+                                                                >{formatDart(
+                                                                    turn
+                                                                        .darts[2],
+                                                                )}</td
+                                                            >
+                                                            <td
+                                                                class="py-1.5 px-1 text-center font-mono text-xs font-medium {turn.isBust
+                                                                    ? 'text-red-500'
+                                                                    : ''}"
+                                                            >
                                                                 {#if turn.isBust}
-                                                                    <span class="text-red-500 text-[9px] font-bold">BUST</span><br />
+                                                                    <span
+                                                                        class="text-red-500 text-[9px] font-bold"
+                                                                        >BUST</span
+                                                                    ><br />
                                                                 {/if}
                                                                 {turn.totalScore}
                                                             </td>
-                                                            <td class="py-1.5 pl-2 text-right font-mono text-xs font-medium">{turn.remainingScore}</td>
+                                                            <td
+                                                                class="py-1.5 pl-2 text-right font-mono text-xs font-medium"
+                                                                >{turn.remainingScore}</td
+                                                            >
                                                         </tr>
                                                     {/each}
                                                 </tbody>
@@ -1200,7 +1398,11 @@
                                 </div>
                             {/each}
                             {#if allTurnsWithLeg.length === 0}
-                                <div class="text-zinc-400 text-center py-2 text-sm">No turns yet</div>
+                                <div
+                                    class="text-zinc-400 text-center py-2 text-sm"
+                                >
+                                    No turns yet
+                                </div>
                             {/if}
                         </div>
                     </DoubleBezel>
@@ -1209,6 +1411,72 @@
                         <div class="text-center text-zinc-400 py-8">
                             <p class="text-lg font-medium mb-2">Stats</p>
                             <p class="text-sm">Stats component coming soon</p>
+                        </div>
+                    </DoubleBezel>
+                {:else if activeTab === "settings"}
+                    <DoubleBezel>
+                        <div class="space-y-6">
+                            <div class="flex items-center gap-2 text-amber-500">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.5"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path
+                                        d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+                                    />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                                <h2 class="font-display font-bold text-lg">
+                                    Settings
+                                </h2>
+                            </div>
+
+                            <!-- Voice Selection -->
+                            <div class="space-y-3">
+                                <div
+                                    class="flex items-center gap-2 text-zinc-400"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="18"
+                                        height="18"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <polygon
+                                            points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"
+                                        />
+                                        <path
+                                            d="M15.54 8.46a5 5 0 0 1 0 7.07"
+                                        />
+                                        <path
+                                            d="M19.07 4.93a10 10 0 0 1 0 14.14"
+                                        />
+                                    </svg>
+                                    <span class="text-sm font-medium"
+                                        >Caller Voice</span
+                                    >
+                                </div>
+                                <p class="text-xs text-zinc-500">
+                                    Change the announcer voice during the match.
+                                    Tap the play button to preview.
+                                </p>
+                                <StyledSelect
+                                    options={inGameVoiceOptions}
+                                    bind:value={inGameVoiceId}
+                                />
+                            </div>
                         </div>
                     </DoubleBezel>
                 {/if}

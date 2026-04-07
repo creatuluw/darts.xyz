@@ -1,6 +1,6 @@
 <script lang="ts">
     import "../app.css";
-    import { FloatingNav } from "$lib/components/ui";
+    import { FloatingNav, Toast } from "$lib/components/ui";
 
     let { children } = $props();
 </script>
@@ -16,4 +16,5 @@
     <main class="pt-24 pb-16 px-4 md:px-8 max-w-7xl mx-auto">
         {@render children()}
     </main>
+    <Toast />
 </div>

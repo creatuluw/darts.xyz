@@ -6,6 +6,7 @@
         IconTarget,
         IconUsers,
         IconHistory,
+        IconArchive,
     } from "@tabler/icons-svelte";
 
     let currentPath = derived(page, ($page) => $page.url.pathname);
@@ -15,6 +16,7 @@
         { href: "/match/setup", label: "New Match", icon: IconTarget },
         { href: "/players", label: "Players", icon: IconUsers },
         { href: "/history", label: "History", icon: IconHistory },
+        { href: "/archive", label: "Archive", icon: IconArchive },
     ];
 </script>
 
