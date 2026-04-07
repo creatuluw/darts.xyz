@@ -1,0 +1,69 @@
+[2026-04-07T15:41:07.063159] Starting full rebuild
+[2026-04-07T15:41:07.063159] Discovering source files in src/ directories...
+[2026-04-07T15:41:08.387289] Discovered 50 source files in src/ directories
+[2026-04-07T15:41:08.387289] Processing: src\app.d.ts
+[2026-04-07T15:41:08.389281] Processing: src\lib\components\ui\AnimatedNumber.svelte
+[2026-04-07T15:41:08.389281] Processing: src\lib\components\ui\Dartboard.svelte
+[2026-04-07T15:41:08.390281] Processing: src\lib\components\ui\DoubleBezel.svelte
+[2026-04-07T15:41:08.390281] Processing: src\lib\components\ui\EyebrowTag.svelte
+[2026-04-07T15:41:08.390281] Processing: src\lib\components\ui\FloatingNav.svelte
+[2026-04-07T15:41:08.391283] Processing: src\lib\components\ui\index.ts
+[2026-04-07T15:41:08.391283] Processing: src\lib\components\ui\PillButton.svelte
+[2026-04-07T15:41:08.392281] Processing: src\lib\components\ui\StatBadge.svelte
+[2026-04-07T15:41:08.392281] Processing: src\lib\components\ui\StyledSelect.svelte
+[2026-04-07T15:41:08.392281] Processing: src\lib\components\ui\Toast.svelte
+[2026-04-07T15:41:08.393292] Processing: src\lib\components\ui\Tooltip.svelte
+[2026-04-07T15:41:08.393292] Processing: src\lib\db\database-service.ts
+[2026-04-07T15:41:08.394503] Processing: src\lib\db\index.ts
+[2026-04-07T15:41:08.394503] Processing: src\lib\db\init.ts
+[2026-04-07T15:41:08.395599] Processing: src\lib\db\schema.ts
+[2026-04-07T15:41:08.395599] Processing: src\lib\db\verify.ts
+[2026-04-07T15:41:08.396618] Processing: src\lib\game\checkout-suggestions.ts
+[2026-04-07T15:41:08.397607] Processing: src\lib\game\index.ts
+[2026-04-07T15:41:08.397607] Processing: src\lib\game\match-engine.ts
+[2026-04-07T15:41:08.398608] Processing: src\lib\game\scoring.ts
+[2026-04-07T15:41:08.399603] Processing: src\lib\game\stats-engine.ts
+[2026-04-07T15:41:08.400606] Processing: src\lib\game\types.ts
+[2026-04-07T15:41:08.400606] Processing: src\lib\index.ts
+[2026-04-07T15:41:08.400606] Processing: src\lib\stores\toast.ts
+[2026-04-07T15:41:08.400606] Processing: src\lib\stores\voice-settings.ts
+[2026-04-07T15:41:08.401607] Processing: src\lib\utils\audio-effects.ts
+[2026-04-07T15:41:08.401607] Processing: src\lib\utils\darts-caller.ts
+[2026-04-07T15:41:08.402661] Processing: src\routes\+layout.svelte
+[2026-04-07T15:41:08.403664] Processing: src\routes\+page.svelte
+[2026-04-07T15:41:08.403664] Processing: src\routes\api\insights\[playerId]\+server.ts
+[2026-04-07T15:41:08.404661] Processing: src\routes\api\matches\+server.ts
+[2026-04-07T15:41:08.404661] Processing: src\routes\api\matches\[id]\+server.ts
+[2026-04-07T15:41:08.405661] Processing: src\routes\api\matches\[id]\legs\+server.ts
+[2026-04-07T15:41:08.405661] Processing: src\routes\api\matches\[id]\players\[playerId]\+server.ts
+[2026-04-07T15:41:08.407148] Processing: src\routes\api\matches\[id]\turns\+server.ts
+[2026-04-07T15:41:08.407148] Processing: src\routes\api\matches\with-players\+server.ts
+[2026-04-07T15:41:08.408167] Processing: src\routes\api\players\+server.ts
+[2026-04-07T15:41:08.408167] Processing: src\routes\api\players\[id]\+server.ts
+[2026-04-07T15:41:08.408167] Processing: src\routes\api\players\[id]\matches\+server.ts
+[2026-04-07T15:41:08.409678] Processing: src\routes\api\players\archived\+server.ts
+[2026-04-07T15:41:08.410696] Processing: src\routes\api\players\archived\[id]\restore\+server.ts
+[2026-04-07T15:41:08.410696] Processing: src\routes\api\stats\[playerId]\+server.ts
+[2026-04-07T15:41:08.411689] Processing: src\routes\archive\+page.svelte
+[2026-04-07T15:41:08.411689] Processing: src\routes\history\+page.svelte
+[2026-04-07T15:41:08.411689] Processing: src\routes\history\[id]\+page.svelte
+[2026-04-07T15:41:08.412697] Processing: src\routes\match\[id]\+page.svelte
+[2026-04-07T15:41:08.414695] Processing: src\routes\match\setup\+page.svelte
+[2026-04-07T15:41:08.414695] Processing: src\routes\players\+page.svelte
+[2026-04-07T15:41:08.415695] Processing: src\routes\players\[id]\+page.svelte
+[2026-04-07T15:41:08.415695] Building relations...
+[2026-04-07T15:41:08.533995] Validating graph...
+[2026-04-07T15:41:08.533995] No constraint violations found
+[2026-04-07T15:41:08.533995] Writing graph.json...
+[2026-04-07T15:41:08.537001] Wrote graph.json (97.6KB)
+[2026-04-07T15:41:08.537001] Generating index.md...
+[2026-04-07T15:41:08.537999] Generating file-tree.md...
+[2026-04-07T15:41:08.539007] Wrote file-tree.md (7.1KB)
+[2026-04-07T15:41:08.539007] Generating files.md with AI summaries...
+[2026-04-07T15:41:08.539007] Calculating file usage counts...
+[2026-04-07T15:41:08.540008]   Processed 50/50 files...
+[2026-04-07T15:41:08.541999] Wrote files.json (6.4KB) with 50 file summaries
+[2026-04-07T15:41:08.541999] Checking AGENTS.md integration...
+[2026-04-07T15:41:08.541999] [WARN] AGENTS.md not found
+[2026-04-07T15:41:08.541999] [INFO] Please create AGENTS.md or add the Codebase Graph section manually
+[2026-04-07T15:41:08.543007] Build complete

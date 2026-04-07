@@ -1,0 +1,3021 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "generated_at": "2026-04-07T15:41:08.533995",
+    "root_directory": "darts.xyz",
+    "total_files": 50,
+    "total_entities": 98,
+    "total_relations": 271
+  },
+  "entities": {
+    "CodeFile": [
+      {
+        "id": "src\\app.d.ts",
+        "path": "src\\app.d.ts",
+        "language": "typescript",
+        "size": 274,
+        "last_modified": "2026-04-03T16:53:59.485557",
+        "imports": [],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\components\\ui\\AnimatedNumber.svelte",
+        "path": "src\\lib\\components\\ui\\AnimatedNumber.svelte",
+        "language": "svelte",
+        "size": 627,
+        "last_modified": "2026-04-03T18:30:57.502532",
+        "imports": [],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\components\\ui\\Dartboard.svelte",
+        "path": "src\\lib\\components\\ui\\Dartboard.svelte",
+        "language": "svelte",
+        "size": 9018,
+        "last_modified": "2026-04-04T13:21:43.777671",
+        "imports": [
+          "$lib/game"
+        ],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\components\\ui\\DoubleBezel.svelte",
+        "path": "src\\lib\\components\\ui\\DoubleBezel.svelte",
+        "language": "svelte",
+        "size": 518,
+        "last_modified": "2026-04-03T19:21:00.463619",
+        "imports": [],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\components\\ui\\EyebrowTag.svelte",
+        "path": "src\\lib\\components\\ui\\EyebrowTag.svelte",
+        "language": "svelte",
+        "size": 333,
+        "last_modified": "2026-04-03T17:31:34.855250",
+        "imports": [],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\components\\ui\\FloatingNav.svelte",
+        "path": "src\\lib\\components\\ui\\FloatingNav.svelte",
+        "language": "svelte",
+        "size": 1631,
+        "last_modified": "2026-04-07T10:31:55.600195",
+        "imports": [
+          "$app/stores",
+          "svelte/store"
+        ],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\components\\ui\\index.ts",
+        "path": "src\\lib\\components\\ui\\index.ts",
+        "language": "typescript",
+        "size": 606,
+        "last_modified": "2026-04-07T14:47:37.549046",
+        "imports": [],
+        "exports": [
+          "StatBadge",
+          "DoubleBezel",
+          "StyledSelect",
+          "EyebrowTag",
+          "Toast",
+          "Dartboard",
+          "Tooltip",
+          "FloatingNav",
+          "AnimatedNumber",
+          "PillButton"
+        ]
+      },
+      {
+        "id": "src\\lib\\components\\ui\\PillButton.svelte",
+        "path": "src\\lib\\components\\ui\\PillButton.svelte",
+        "language": "svelte",
+        "size": 1174,
+        "last_modified": "2026-04-03T17:31:34.657776",
+        "imports": [],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\components\\ui\\StatBadge.svelte",
+        "path": "src\\lib\\components\\ui\\StatBadge.svelte",
+        "language": "svelte",
+        "size": 441,
+        "last_modified": "2026-04-03T17:31:44.794650",
+        "imports": [],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\components\\ui\\StyledSelect.svelte",
+        "path": "src\\lib\\components\\ui\\StyledSelect.svelte",
+        "language": "svelte",
+        "size": 6837,
+        "last_modified": "2026-04-07T14:53:44.798229",
+        "imports": [
+          "svelte"
+        ],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\components\\ui\\Toast.svelte",
+        "path": "src\\lib\\components\\ui\\Toast.svelte",
+        "language": "svelte",
+        "size": 1405,
+        "last_modified": "2026-04-07T14:54:42.538548",
+        "imports": [
+          "svelte/transition",
+          "$lib/stores/toast"
+        ],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\components\\ui\\Tooltip.svelte",
+        "path": "src\\lib\\components\\ui\\Tooltip.svelte",
+        "language": "svelte",
+        "size": 1357,
+        "last_modified": "2026-04-04T13:04:26.357680",
+        "imports": [],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\db\\database-service.ts",
+        "path": "src\\lib\\db\\database-service.ts",
+        "language": "typescript",
+        "size": 8568,
+        "last_modified": "2026-04-07T10:15:15.915241",
+        "imports": [
+          "drizzle-orm",
+          "src\\lib\\db\\index.ts"
+        ],
+        "exports": [
+          "dbService",
+          "DatabaseService"
+        ]
+      },
+      {
+        "id": "src\\lib\\db\\index.ts",
+        "path": "src\\lib\\db\\index.ts",
+        "language": "typescript",
+        "size": 556,
+        "last_modified": "2026-04-03T18:34:56.707752",
+        "imports": [
+          "postgres",
+          "src\\lib\\db\\schema.ts",
+          "$env/static/private",
+          "drizzle-orm/postgres-js"
+        ],
+        "exports": [
+          "db",
+          "schema"
+        ]
+      },
+      {
+        "id": "src\\lib\\db\\init.ts",
+        "path": "src\\lib\\db\\init.ts",
+        "language": "typescript",
+        "size": 522,
+        "last_modified": "2026-04-03T17:42:18.627075",
+        "imports": [
+          "postgres"
+        ],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\db\\schema.ts",
+        "path": "src\\lib\\db\\schema.ts",
+        "language": "typescript",
+        "size": 6861,
+        "last_modified": "2026-04-07T10:20:01.171511",
+        "imports": [
+          "drizzle-orm"
+        ],
+        "exports": [
+          "matchPlayers",
+          "matches",
+          "turns",
+          "players",
+          "legs",
+          "playerStats"
+        ]
+      },
+      {
+        "id": "src\\lib\\db\\verify.ts",
+        "path": "src\\lib\\db\\verify.ts",
+        "language": "typescript",
+        "size": 2165,
+        "last_modified": "2026-04-03T17:35:55.351777",
+        "imports": [
+          "postgres",
+          "dotenv/config"
+        ],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\game\\checkout-suggestions.ts",
+        "path": "src\\lib\\game\\checkout-suggestions.ts",
+        "language": "typescript",
+        "size": 5670,
+        "last_modified": "2026-04-03T17:31:28.716757",
+        "imports": [
+          "src\\lib\\game\\scoring.ts",
+          "src\\lib\\game\\types.ts"
+        ],
+        "exports": [
+          "canCheckout",
+          "getCheckoutSuggestions"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\index.ts",
+        "path": "src\\lib\\game\\index.ts",
+        "language": "typescript",
+        "size": 156,
+        "last_modified": "2026-04-03T18:09:48.530584",
+        "imports": [],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\game\\match-engine.ts",
+        "path": "src\\lib\\game\\match-engine.ts",
+        "language": "typescript",
+        "size": 5965,
+        "last_modified": "2026-04-03T17:31:26.842063",
+        "imports": [
+          "src\\lib\\game\\scoring.ts",
+          "src\\lib\\game\\types.ts"
+        ],
+        "exports": [
+          "getScoreDisplay",
+          "completeLeg",
+          "submitTurn",
+          "completeMatch",
+          "createMatchState",
+          "abandonMatch",
+          "completeSet"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\scoring.ts",
+        "path": "src\\lib\\game\\scoring.ts",
+        "language": "typescript",
+        "size": 2800,
+        "last_modified": "2026-04-03T17:31:37.256355",
+        "imports": [
+          "src\\lib\\game\\types.ts"
+        ],
+        "exports": [
+          "detectBust",
+          "detectCheckout",
+          "processTurn",
+          "calculateDartScore",
+          "createDart",
+          "getRemainingScore",
+          "calculateTurnScore"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\stats-engine.ts",
+        "path": "src\\lib\\game\\stats-engine.ts",
+        "language": "typescript",
+        "size": 6016,
+        "last_modified": "2026-04-03T17:31:26.100987",
+        "imports": [
+          "src\\lib\\game\\types.ts"
+        ],
+        "exports": [
+          "computeStatsFromTurns",
+          "createEmptyStats",
+          "computeLast20LegsStats",
+          "isCheckoutAttempt",
+          "isCheckoutSuccess",
+          "is180",
+          "is140Plus",
+          "is100Plus",
+          "computeAllTimeStats"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\types.ts",
+        "path": "src\\lib\\game\\types.ts",
+        "language": "typescript",
+        "size": 2111,
+        "last_modified": "2026-04-04T13:52:28.098233",
+        "imports": [],
+        "exports": [
+          "PlayerStats",
+          "TurnData",
+          "MatchConfig",
+          "Multiplier",
+          "CheckoutOption",
+          "TurnRecord",
+          "MatchState",
+          "DartData",
+          "LegState",
+          "PlayerInMatch"
+        ]
+      },
+      {
+        "id": "src\\lib\\index.ts",
+        "path": "src\\lib\\index.ts",
+        "language": "typescript",
+        "size": 75,
+        "last_modified": "2026-04-03T16:53:59.485557",
+        "imports": [],
+        "exports": []
+      },
+      {
+        "id": "src\\lib\\stores\\toast.ts",
+        "path": "src\\lib\\stores\\toast.ts",
+        "language": "typescript",
+        "size": 973,
+        "last_modified": "2026-04-07T14:45:03.649435",
+        "imports": [
+          "svelte/store"
+        ],
+        "exports": [
+          "toasts",
+          "removeToast",
+          "addToast"
+        ]
+      },
+      {
+        "id": "src\\lib\\stores\\voice-settings.ts",
+        "path": "src\\lib\\stores\\voice-settings.ts",
+        "language": "typescript",
+        "size": 1875,
+        "last_modified": "2026-04-07T14:33:09.708544",
+        "imports": [
+          "svelte/store"
+        ],
+        "exports": [
+          "voiceSettings",
+          "getVoicePrefix",
+          "VoiceSetting",
+          "VOICE_OPTIONS"
+        ]
+      },
+      {
+        "id": "src\\lib\\utils\\audio-effects.ts",
+        "path": "src\\lib\\utils\\audio-effects.ts",
+        "language": "typescript",
+        "size": 12846,
+        "last_modified": "2026-04-07T11:34:01.697870",
+        "imports": [],
+        "exports": [
+          "VOICE_PROFILES",
+          "AudioEffectsOptions",
+          "VoiceProfileName",
+          "isAudioContextAvailable",
+          "DramaticVoiceEffects"
+        ]
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts",
+        "path": "src\\lib\\utils\\darts-caller.ts",
+        "language": "typescript",
+        "size": 20111,
+        "last_modified": "2026-04-07T13:51:16.004181",
+        "imports": [
+          "src\\lib\\utils\\audio-effects.ts",
+          "kokoro-js"
+        ],
+        "exports": [
+          "VOICE_PROFILES",
+          "DartsCaller",
+          "isTTSAvailable",
+          "cancelSpeech",
+          "getDartsCaller",
+          "AnnouncementResult",
+          "CallerOptions"
+        ]
+      },
+      {
+        "id": "src\\routes\\+layout.svelte",
+        "path": "src\\routes\\+layout.svelte",
+        "language": "svelte",
+        "size": 458,
+        "last_modified": "2026-04-07T14:48:10.212376",
+        "imports": [
+          "src\\app.css",
+          "$lib/components/ui"
+        ],
+        "exports": []
+      },
+      {
+        "id": "src\\routes\\+page.svelte",
+        "path": "src\\routes\\+page.svelte",
+        "language": "svelte",
+        "size": 4317,
+        "last_modified": "2026-04-07T14:48:43.567309",
+        "imports": [
+          "$lib/stores/toast",
+          "@tabler/icons-svelte",
+          "$lib/stores/voice-settings"
+        ],
+        "exports": []
+      },
+      {
+        "id": "src\\routes\\api\\insights\\[playerId]\\+server.ts",
+        "path": "src\\routes\\api\\insights\\[playerId]\\+server.ts",
+        "language": "typescript",
+        "size": 8070,
+        "last_modified": "2026-04-04T14:27:16.821433",
+        "imports": [
+          "@sveltejs/kit",
+          "$lib/db/database-service"
+        ],
+        "exports": [
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\routes\\api\\matches\\+server.ts",
+        "path": "src\\routes\\api\\matches\\+server.ts",
+        "language": "typescript",
+        "size": 1484,
+        "last_modified": "2026-04-03T17:52:19.590241",
+        "imports": [
+          "@sveltejs/kit",
+          "$lib/db/database-service"
+        ],
+        "exports": [
+          "POST",
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\routes\\api\\matches\\[id]\\+server.ts",
+        "path": "src\\routes\\api\\matches\\[id]\\+server.ts",
+        "language": "typescript",
+        "size": 1011,
+        "last_modified": "2026-04-03T19:30:11.095188",
+        "imports": [
+          "@sveltejs/kit",
+          "$lib/db/database-service"
+        ],
+        "exports": [
+          "DELETE",
+          "PATCH",
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\routes\\api\\matches\\[id]\\legs\\+server.ts",
+        "path": "src\\routes\\api\\matches\\[id]\\legs\\+server.ts",
+        "language": "typescript",
+        "size": 901,
+        "last_modified": "2026-04-03T23:12:58.595466",
+        "imports": [
+          "@sveltejs/kit",
+          "$lib/db/database-service"
+        ],
+        "exports": [
+          "POST",
+          "PATCH",
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\routes\\api\\matches\\[id]\\players\\[playerId]\\+server.ts",
+        "path": "src\\routes\\api\\matches\\[id]\\players\\[playerId]\\+server.ts",
+        "language": "typescript",
+        "size": 894,
+        "last_modified": "2026-04-03T21:40:14.571837",
+        "imports": [
+          "@sveltejs/kit",
+          "$lib/db/database-service"
+        ],
+        "exports": [
+          "PATCH"
+        ]
+      },
+      {
+        "id": "src\\routes\\api\\matches\\[id]\\turns\\+server.ts",
+        "path": "src\\routes\\api\\matches\\[id]\\turns\\+server.ts",
+        "language": "typescript",
+        "size": 1130,
+        "last_modified": "2026-04-03T23:44:03.507972",
+        "imports": [
+          "@sveltejs/kit",
+          "$lib/db/database-service"
+        ],
+        "exports": [
+          "POST",
+          "DELETE",
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\routes\\api\\matches\\with-players\\+server.ts",
+        "path": "src\\routes\\api\\matches\\with-players\\+server.ts",
+        "language": "typescript",
+        "size": 1167,
+        "last_modified": "2026-04-07T15:25:14.516936",
+        "imports": [
+          "@sveltejs/kit",
+          "$lib/db/database-service"
+        ],
+        "exports": [
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\routes\\api\\players\\+server.ts",
+        "path": "src\\routes\\api\\players\\+server.ts",
+        "language": "typescript",
+        "size": 622,
+        "last_modified": "2026-04-03T17:52:40.002470",
+        "imports": [
+          "@sveltejs/kit",
+          "$lib/db/database-service"
+        ],
+        "exports": [
+          "POST",
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\routes\\api\\players\\[id]\\+server.ts",
+        "path": "src\\routes\\api\\players\\[id]\\+server.ts",
+        "language": "typescript",
+        "size": 504,
+        "last_modified": "2026-04-07T10:16:21.959728",
+        "imports": [
+          "@sveltejs/kit",
+          "$lib/db/database-service"
+        ],
+        "exports": [
+          "DELETE",
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\routes\\api\\players\\[id]\\matches\\+server.ts",
+        "path": "src\\routes\\api\\players\\[id]\\matches\\+server.ts",
+        "language": "typescript",
+        "size": 301,
+        "last_modified": "2026-04-03T20:37:16.095807",
+        "imports": [
+          "@sveltejs/kit",
+          "$lib/db/database-service"
+        ],
+        "exports": [
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\routes\\api\\players\\archived\\+server.ts",
+        "path": "src\\routes\\api\\players\\archived\\+server.ts",
+        "language": "typescript",
+        "size": 438,
+        "last_modified": "2026-04-07T10:30:02.580281",
+        "imports": [
+          "drizzle-orm",
+          "@sveltejs/kit",
+          "$lib/db/index"
+        ],
+        "exports": [
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\routes\\api\\players\\archived\\[id]\\restore\\+server.ts",
+        "path": "src\\routes\\api\\players\\archived\\[id]\\restore\\+server.ts",
+        "language": "typescript",
+        "size": 748,
+        "last_modified": "2026-04-07T10:30:23.779253",
+        "imports": [
+          "drizzle-orm",
+          "@sveltejs/kit",
+          "$lib/db/index"
+        ],
+        "exports": [
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\routes\\api\\stats\\[playerId]\\+server.ts",
+        "path": "src\\routes\\api\\stats\\[playerId]\\+server.ts",
+        "language": "typescript",
+        "size": 2557,
+        "last_modified": "2026-04-04T14:16:04.982428",
+        "imports": [
+          "$lib/game/stats-engine",
+          "@sveltejs/kit",
+          "$lib/db/database-service"
+        ],
+        "exports": [
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\routes\\archive\\+page.svelte",
+        "path": "src\\routes\\archive\\+page.svelte",
+        "language": "svelte",
+        "size": 9067,
+        "last_modified": "2026-04-07T10:33:09.331398",
+        "imports": [
+          "svelte",
+          "$lib/components/ui"
+        ],
+        "exports": []
+      },
+      {
+        "id": "src\\routes\\history\\+page.svelte",
+        "path": "src\\routes\\history\\+page.svelte",
+        "language": "svelte",
+        "size": 4873,
+        "last_modified": "2026-04-07T15:26:14.411290",
+        "imports": [
+          "svelte",
+          "$lib/components/ui"
+        ],
+        "exports": []
+      },
+      {
+        "id": "src\\routes\\history\\[id]\\+page.svelte",
+        "path": "src\\routes\\history\\[id]\\+page.svelte",
+        "language": "svelte",
+        "size": 28015,
+        "last_modified": "2026-04-03T23:02:10.603064",
+        "imports": [
+          "$app/navigation",
+          "$app/stores",
+          "svelte"
+        ],
+        "exports": []
+      },
+      {
+        "id": "src\\routes\\match\\[id]\\+page.svelte",
+        "path": "src\\routes\\match\\[id]\\+page.svelte",
+        "language": "svelte",
+        "size": 87071,
+        "last_modified": "2026-04-07T14:49:15.024400",
+        "imports": [
+          "$lib/stores/toast",
+          "$app/stores",
+          "$app/navigation",
+          "svelte",
+          "$lib/game/scoring",
+          "$lib/components/ui"
+        ],
+        "exports": []
+      },
+      {
+        "id": "src\\routes\\match\\setup\\+page.svelte",
+        "path": "src\\routes\\match\\setup\\+page.svelte",
+        "language": "svelte",
+        "size": 8978,
+        "last_modified": "2026-04-03T20:09:53.795228",
+        "imports": [
+          "$app/navigation",
+          "@tabler/icons-svelte",
+          "svelte",
+          "$lib/components/ui"
+        ],
+        "exports": []
+      },
+      {
+        "id": "src\\routes\\players\\+page.svelte",
+        "path": "src\\routes\\players\\+page.svelte",
+        "language": "svelte",
+        "size": 6793,
+        "last_modified": "2026-04-07T15:06:54.750009",
+        "imports": [
+          "svelte",
+          "$lib/components/ui"
+        ],
+        "exports": []
+      },
+      {
+        "id": "src\\routes\\players\\[id]\\+page.svelte",
+        "path": "src\\routes\\players\\[id]\\+page.svelte",
+        "language": "svelte",
+        "size": 35788,
+        "last_modified": "2026-04-04T14:29:51.471732",
+        "imports": [
+          "$app/navigation",
+          "$app/stores",
+          "svelte"
+        ],
+        "exports": []
+      }
+    ],
+    "Function": [
+      {
+        "id": "src\\lib\\game\\checkout-suggestions.ts#getCheckoutSuggestions",
+        "name": "getCheckoutSuggestions",
+        "signature": "export function getCheckoutSuggestions(remaining: number, dartsLeft: 1 | 2 | 3 = 3): CheckoutOption[]",
+        "file": "src\\lib\\game\\checkout-suggestions.ts",
+        "line_start": 115,
+        "line_end": 143,
+        "parameters": [
+          {
+            "name": "remaining",
+            "type": "number"
+          },
+          {
+            "name": "dartsLeft",
+            "type": "1 | 2 | 3 = 3"
+          }
+        ],
+        "return_type": "CheckoutOption[] ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\checkout-suggestions.ts#canCheckout",
+          "src\\lib\\game\\scoring.ts#createDart"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\checkout-suggestions.ts#canCheckout",
+        "name": "canCheckout",
+        "signature": "export function canCheckout(remaining: number, dartsLeft: number): boolean",
+        "file": "src\\lib\\game\\checkout-suggestions.ts",
+        "line_start": 147,
+        "line_end": 154,
+        "parameters": [
+          {
+            "name": "remaining",
+            "type": "number"
+          },
+          {
+            "name": "dartsLeft",
+            "type": "number"
+          }
+        ],
+        "return_type": "boolean ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\checkout-suggestions.ts#getCheckoutSuggestions",
+          "src\\lib\\game\\scoring.ts#createDart"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\match-engine.ts#submitTurn",
+        "name": "submitTurn",
+        "signature": "export function submitTurn(state: MatchState, darts: DartData[]): MatchState",
+        "file": "src\\lib\\game\\match-engine.ts",
+        "line_start": 45,
+        "line_end": 95,
+        "parameters": [
+          {
+            "name": "state",
+            "type": "MatchState"
+          },
+          {
+            "name": "darts",
+            "type": "DartData[]"
+          }
+        ],
+        "return_type": "MatchState ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\match-engine.ts#completeLeg",
+          "src\\lib\\game\\match-engine.ts#completeSet",
+          "src\\lib\\game\\match-engine.ts#completeMatch",
+          "src\\lib\\game\\match-engine.ts#abandonMatch",
+          "src\\lib\\game\\match-engine.ts#getScoreDisplay",
+          "src\\lib\\game\\scoring.ts#processTurn"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\match-engine.ts#completeLeg",
+        "name": "completeLeg",
+        "signature": "export function completeLeg(state: MatchState, winnerIndex: number): MatchState",
+        "file": "src\\lib\\game\\match-engine.ts",
+        "line_start": 99,
+        "line_end": 146,
+        "parameters": [
+          {
+            "name": "state",
+            "type": "MatchState"
+          },
+          {
+            "name": "winnerIndex",
+            "type": "number"
+          }
+        ],
+        "return_type": "MatchState ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\match-engine.ts#submitTurn",
+          "src\\lib\\game\\match-engine.ts#completeSet",
+          "src\\lib\\game\\match-engine.ts#completeMatch",
+          "src\\lib\\game\\match-engine.ts#abandonMatch",
+          "src\\lib\\game\\match-engine.ts#getScoreDisplay",
+          "src\\lib\\game\\scoring.ts#processTurn"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\match-engine.ts#completeSet",
+        "name": "completeSet",
+        "signature": "export function completeSet(state: MatchState, winnerIndex: number): MatchState",
+        "file": "src\\lib\\game\\match-engine.ts",
+        "line_start": 150,
+        "line_end": 189,
+        "parameters": [
+          {
+            "name": "state",
+            "type": "MatchState"
+          },
+          {
+            "name": "winnerIndex",
+            "type": "number"
+          }
+        ],
+        "return_type": "MatchState ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\match-engine.ts#submitTurn",
+          "src\\lib\\game\\match-engine.ts#completeLeg",
+          "src\\lib\\game\\match-engine.ts#completeMatch",
+          "src\\lib\\game\\match-engine.ts#abandonMatch",
+          "src\\lib\\game\\match-engine.ts#getScoreDisplay",
+          "src\\lib\\game\\scoring.ts#processTurn"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\match-engine.ts#completeMatch",
+        "name": "completeMatch",
+        "signature": "export function completeMatch(state: MatchState, winnerIndex: number): MatchState",
+        "file": "src\\lib\\game\\match-engine.ts",
+        "line_start": 193,
+        "line_end": 201,
+        "parameters": [
+          {
+            "name": "state",
+            "type": "MatchState"
+          },
+          {
+            "name": "winnerIndex",
+            "type": "number"
+          }
+        ],
+        "return_type": "MatchState ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\match-engine.ts#submitTurn",
+          "src\\lib\\game\\match-engine.ts#completeLeg",
+          "src\\lib\\game\\match-engine.ts#completeSet",
+          "src\\lib\\game\\match-engine.ts#abandonMatch",
+          "src\\lib\\game\\match-engine.ts#getScoreDisplay",
+          "src\\lib\\game\\scoring.ts#processTurn"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\match-engine.ts#abandonMatch",
+        "name": "abandonMatch",
+        "signature": "export function abandonMatch(state: MatchState): MatchState",
+        "file": "src\\lib\\game\\match-engine.ts",
+        "line_start": 205,
+        "line_end": 211,
+        "parameters": [
+          {
+            "name": "state",
+            "type": "MatchState"
+          }
+        ],
+        "return_type": "MatchState ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\match-engine.ts#submitTurn",
+          "src\\lib\\game\\match-engine.ts#completeLeg",
+          "src\\lib\\game\\match-engine.ts#completeSet",
+          "src\\lib\\game\\match-engine.ts#completeMatch",
+          "src\\lib\\game\\match-engine.ts#getScoreDisplay",
+          "src\\lib\\game\\scoring.ts#processTurn"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\match-engine.ts#getScoreDisplay",
+        "name": "getScoreDisplay",
+        "signature": "export function getScoreDisplay(state: MatchState): Array<",
+        "file": "src\\lib\\game\\match-engine.ts",
+        "line_start": 215,
+        "line_end": 223,
+        "parameters": [
+          {
+            "name": "state",
+            "type": "MatchState"
+          }
+        ],
+        "return_type": "Array<",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\match-engine.ts#submitTurn",
+          "src\\lib\\game\\match-engine.ts#completeLeg",
+          "src\\lib\\game\\match-engine.ts#completeSet",
+          "src\\lib\\game\\match-engine.ts#completeMatch",
+          "src\\lib\\game\\match-engine.ts#abandonMatch",
+          "src\\lib\\game\\scoring.ts#processTurn"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\scoring.ts#calculateDartScore",
+        "name": "calculateDartScore",
+        "signature": "export function calculateDartScore(segment: number, multiplier: Multiplier): number",
+        "file": "src\\lib\\game\\scoring.ts",
+        "line_start": 6,
+        "line_end": 12,
+        "parameters": [
+          {
+            "name": "segment",
+            "type": "number"
+          },
+          {
+            "name": "multiplier",
+            "type": "Multiplier"
+          }
+        ],
+        "return_type": "number ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\scoring.ts#createDart",
+          "src\\lib\\game\\scoring.ts#calculateTurnScore",
+          "src\\lib\\game\\scoring.ts#processTurn"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\scoring.ts#createDart",
+        "name": "createDart",
+        "signature": "export function createDart(segment: number, multiplier: Multiplier): DartData",
+        "file": "src\\lib\\game\\scoring.ts",
+        "line_start": 16,
+        "line_end": 23,
+        "parameters": [
+          {
+            "name": "segment",
+            "type": "number"
+          },
+          {
+            "name": "multiplier",
+            "type": "Multiplier"
+          }
+        ],
+        "return_type": "DartData ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\scoring.ts#calculateDartScore",
+          "src\\lib\\game\\scoring.ts#calculateTurnScore",
+          "src\\lib\\game\\scoring.ts#processTurn"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\scoring.ts#calculateTurnScore",
+        "name": "calculateTurnScore",
+        "signature": "export function calculateTurnScore(darts: DartData[]): number",
+        "file": "src\\lib\\game\\scoring.ts",
+        "line_start": 27,
+        "line_end": 30,
+        "parameters": [
+          {
+            "name": "darts",
+            "type": "DartData[]"
+          }
+        ],
+        "return_type": "number ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\scoring.ts#calculateDartScore",
+          "src\\lib\\game\\scoring.ts#createDart",
+          "src\\lib\\game\\scoring.ts#processTurn"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\scoring.ts#processTurn",
+        "name": "processTurn",
+        "signature": "export function processTurn(darts: DartData[], remainingScore: number): TurnData",
+        "file": "src\\lib\\game\\scoring.ts",
+        "line_start": 87,
+        "line_end": 102,
+        "parameters": [
+          {
+            "name": "darts",
+            "type": "DartData[]"
+          },
+          {
+            "name": "remainingScore",
+            "type": "number"
+          }
+        ],
+        "return_type": "TurnData ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\scoring.ts#calculateDartScore",
+          "src\\lib\\game\\scoring.ts#createDart",
+          "src\\lib\\game\\scoring.ts#calculateTurnScore"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\stats-engine.ts#createEmptyStats",
+        "name": "createEmptyStats",
+        "signature": "export function createEmptyStats(): PlayerStats",
+        "file": "src\\lib\\game\\stats-engine.ts",
+        "line_start": 6,
+        "line_end": 26,
+        "parameters": [],
+        "return_type": "PlayerStats ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\stats-engine.ts#is180",
+          "src\\lib\\game\\stats-engine.ts#is140Plus",
+          "src\\lib\\game\\stats-engine.ts#is100Plus",
+          "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt",
+          "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\stats-engine.ts#is180",
+        "name": "is180",
+        "signature": "export function is180(turn: TurnRecord): boolean",
+        "file": "src\\lib\\game\\stats-engine.ts",
+        "line_start": 30,
+        "line_end": 33,
+        "parameters": [
+          {
+            "name": "turn",
+            "type": "TurnRecord"
+          }
+        ],
+        "return_type": "boolean ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\stats-engine.ts#createEmptyStats",
+          "src\\lib\\game\\stats-engine.ts#is140Plus",
+          "src\\lib\\game\\stats-engine.ts#is100Plus",
+          "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt",
+          "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\stats-engine.ts#is140Plus",
+        "name": "is140Plus",
+        "signature": "export function is140Plus(turn: TurnRecord): boolean",
+        "file": "src\\lib\\game\\stats-engine.ts",
+        "line_start": 37,
+        "line_end": 40,
+        "parameters": [
+          {
+            "name": "turn",
+            "type": "TurnRecord"
+          }
+        ],
+        "return_type": "boolean ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\stats-engine.ts#createEmptyStats",
+          "src\\lib\\game\\stats-engine.ts#is180",
+          "src\\lib\\game\\stats-engine.ts#is100Plus",
+          "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt",
+          "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\stats-engine.ts#is100Plus",
+        "name": "is100Plus",
+        "signature": "export function is100Plus(turn: TurnRecord): boolean",
+        "file": "src\\lib\\game\\stats-engine.ts",
+        "line_start": 44,
+        "line_end": 47,
+        "parameters": [
+          {
+            "name": "turn",
+            "type": "TurnRecord"
+          }
+        ],
+        "return_type": "boolean ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\stats-engine.ts#createEmptyStats",
+          "src\\lib\\game\\stats-engine.ts#is180",
+          "src\\lib\\game\\stats-engine.ts#is140Plus",
+          "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt",
+          "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt",
+        "name": "isCheckoutAttempt",
+        "signature": "export function isCheckoutAttempt(remainingBefore: number, dartsThrown: number): boolean",
+        "file": "src\\lib\\game\\stats-engine.ts",
+        "line_start": 52,
+        "line_end": 58,
+        "parameters": [
+          {
+            "name": "remainingBefore",
+            "type": "number"
+          },
+          {
+            "name": "dartsThrown",
+            "type": "number"
+          }
+        ],
+        "return_type": "boolean ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\stats-engine.ts#createEmptyStats",
+          "src\\lib\\game\\stats-engine.ts#is180",
+          "src\\lib\\game\\stats-engine.ts#is140Plus",
+          "src\\lib\\game\\stats-engine.ts#is100Plus",
+          "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess"
+        ]
+      },
+      {
+        "id": "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess",
+        "name": "isCheckoutSuccess",
+        "signature": "export function isCheckoutSuccess(turn: TurnRecord): boolean",
+        "file": "src\\lib\\game\\stats-engine.ts",
+        "line_start": 62,
+        "line_end": 65,
+        "parameters": [
+          {
+            "name": "turn",
+            "type": "TurnRecord"
+          }
+        ],
+        "return_type": "boolean ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\game\\stats-engine.ts#createEmptyStats",
+          "src\\lib\\game\\stats-engine.ts#is180",
+          "src\\lib\\game\\stats-engine.ts#is140Plus",
+          "src\\lib\\game\\stats-engine.ts#is100Plus",
+          "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt"
+        ]
+      },
+      {
+        "id": "src\\lib\\stores\\voice-settings.ts#getVoicePrefix",
+        "name": "getVoicePrefix",
+        "signature": "export function getVoicePrefix(): string",
+        "file": "src\\lib\\stores\\voice-settings.ts",
+        "line_start": 75,
+        "line_end": 79,
+        "parameters": [],
+        "return_type": "string ",
+        "exported": true,
+        "calls": [],
+        "called_by": []
+      },
+      {
+        "id": "src\\lib\\utils\\audio-effects.ts#isAudioContextAvailable",
+        "name": "isAudioContextAvailable",
+        "signature": "export function isAudioContextAvailable(): boolean",
+        "file": "src\\lib\\utils\\audio-effects.ts",
+        "line_start": 40,
+        "line_end": 43,
+        "parameters": [],
+        "return_type": "boolean ",
+        "exported": true,
+        "calls": [],
+        "called_by": []
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+        "name": "getDartsCaller",
+        "signature": "export function getDartsCaller(): DartsCaller | null",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 558,
+        "line_end": 561,
+        "parameters": [],
+        "return_type": "DartsCaller | null ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\utils\\darts-caller.ts#announce180",
+          "src\\lib\\utils\\darts-caller.ts#announceBust",
+          "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+          "src\\lib\\utils\\darts-caller.ts#announceCentury",
+          "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+          "src\\lib\\utils\\darts-caller.ts#announceTon80",
+          "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+          "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+          "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+          "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+          "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+        ]
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#announce180",
+        "name": "announce180",
+        "signature": "export async function announce180(): Promise<AnnouncementResult>",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 572,
+        "line_end": 578,
+        "parameters": [],
+        "return_type": "Promise<AnnouncementResult> ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+          "src\\lib\\utils\\darts-caller.ts#announceBust",
+          "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+          "src\\lib\\utils\\darts-caller.ts#announceCentury",
+          "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+          "src\\lib\\utils\\darts-caller.ts#announceTon80",
+          "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+          "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+          "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+          "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+          "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+        ]
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#announceBust",
+        "name": "announceBust",
+        "signature": "export async function announceBust(): Promise<AnnouncementResult>",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 580,
+        "line_end": 586,
+        "parameters": [],
+        "return_type": "Promise<AnnouncementResult> ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+          "src\\lib\\utils\\darts-caller.ts#announce180",
+          "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+          "src\\lib\\utils\\darts-caller.ts#announceCentury",
+          "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+          "src\\lib\\utils\\darts-caller.ts#announceTon80",
+          "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+          "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+          "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+          "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+          "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+        ]
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+        "name": "announceGameOn",
+        "signature": "export async function announceGameOn(): Promise<AnnouncementResult>",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 587,
+        "line_end": 593,
+        "parameters": [],
+        "return_type": "Promise<AnnouncementResult> ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+          "src\\lib\\utils\\darts-caller.ts#announce180",
+          "src\\lib\\utils\\darts-caller.ts#announceBust",
+          "src\\lib\\utils\\darts-caller.ts#announceCentury",
+          "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+          "src\\lib\\utils\\darts-caller.ts#announceTon80",
+          "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+          "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+          "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+          "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+          "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+        ]
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#announceCentury",
+        "name": "announceCentury",
+        "signature": "export async function announceCentury(): Promise<AnnouncementResult>",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 594,
+        "line_end": 600,
+        "parameters": [],
+        "return_type": "Promise<AnnouncementResult> ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+          "src\\lib\\utils\\darts-caller.ts#announce180",
+          "src\\lib\\utils\\darts-caller.ts#announceBust",
+          "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+          "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+          "src\\lib\\utils\\darts-caller.ts#announceTon80",
+          "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+          "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+          "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+          "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+          "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+        ]
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+        "name": "announceHighTon",
+        "signature": "export async function announceHighTon(): Promise<AnnouncementResult>",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 601,
+        "line_end": 607,
+        "parameters": [],
+        "return_type": "Promise<AnnouncementResult> ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+          "src\\lib\\utils\\darts-caller.ts#announce180",
+          "src\\lib\\utils\\darts-caller.ts#announceBust",
+          "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+          "src\\lib\\utils\\darts-caller.ts#announceCentury",
+          "src\\lib\\utils\\darts-caller.ts#announceTon80",
+          "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+          "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+          "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+          "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+          "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+        ]
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#announceTon80",
+        "name": "announceTon80",
+        "signature": "export async function announceTon80(): Promise<AnnouncementResult>",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 608,
+        "line_end": 614,
+        "parameters": [],
+        "return_type": "Promise<AnnouncementResult> ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+          "src\\lib\\utils\\darts-caller.ts#announce180",
+          "src\\lib\\utils\\darts-caller.ts#announceBust",
+          "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+          "src\\lib\\utils\\darts-caller.ts#announceCentury",
+          "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+          "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+          "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+          "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+          "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+          "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+        ]
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+        "name": "announceNextLeg",
+        "signature": "export async function announceNextLeg(): Promise<AnnouncementResult>",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 615,
+        "line_end": 621,
+        "parameters": [],
+        "return_type": "Promise<AnnouncementResult> ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+          "src\\lib\\utils\\darts-caller.ts#announce180",
+          "src\\lib\\utils\\darts-caller.ts#announceBust",
+          "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+          "src\\lib\\utils\\darts-caller.ts#announceCentury",
+          "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+          "src\\lib\\utils\\darts-caller.ts#announceTon80",
+          "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+          "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+          "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+          "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+        ]
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+        "name": "announceNextSet",
+        "signature": "export async function announceNextSet(): Promise<AnnouncementResult>",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 622,
+        "line_end": 628,
+        "parameters": [],
+        "return_type": "Promise<AnnouncementResult> ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+          "src\\lib\\utils\\darts-caller.ts#announce180",
+          "src\\lib\\utils\\darts-caller.ts#announceBust",
+          "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+          "src\\lib\\utils\\darts-caller.ts#announceCentury",
+          "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+          "src\\lib\\utils\\darts-caller.ts#announceTon80",
+          "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+          "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+          "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+          "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+        ]
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+        "name": "announceChangeOfThrow",
+        "signature": "export async function announceChangeOfThrow(): Promise<AnnouncementResult>",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 629,
+        "line_end": 635,
+        "parameters": [],
+        "return_type": "Promise<AnnouncementResult> ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+          "src\\lib\\utils\\darts-caller.ts#announce180",
+          "src\\lib\\utils\\darts-caller.ts#announceBust",
+          "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+          "src\\lib\\utils\\darts-caller.ts#announceCentury",
+          "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+          "src\\lib\\utils\\darts-caller.ts#announceTon80",
+          "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+          "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+          "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+          "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+        ]
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+        "name": "cancelSpeech",
+        "signature": "export function cancelSpeech(): void",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 691,
+        "line_end": 699,
+        "parameters": [],
+        "return_type": "void ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+          "src\\lib\\utils\\darts-caller.ts#announce180",
+          "src\\lib\\utils\\darts-caller.ts#announceBust",
+          "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+          "src\\lib\\utils\\darts-caller.ts#announceCentury",
+          "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+          "src\\lib\\utils\\darts-caller.ts#announceTon80",
+          "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+          "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+          "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+          "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+        ]
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable",
+        "name": "isTTSAvailable",
+        "signature": "export function isTTSAvailable(): boolean",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 700,
+        "line_end": 703,
+        "parameters": [],
+        "return_type": "boolean ",
+        "exported": true,
+        "calls": [],
+        "called_by": [
+          "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+          "src\\lib\\utils\\darts-caller.ts#announce180",
+          "src\\lib\\utils\\darts-caller.ts#announceBust",
+          "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+          "src\\lib\\utils\\darts-caller.ts#announceCentury",
+          "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+          "src\\lib\\utils\\darts-caller.ts#announceTon80",
+          "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+          "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+          "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+          "src\\lib\\utils\\darts-caller.ts#cancelSpeech"
+        ]
+      }
+    ],
+    "Class": [
+      {
+        "id": "src\\lib\\db\\database-service.ts#DatabaseService",
+        "name": "DatabaseService",
+        "file": "src\\lib\\db\\database-service.ts",
+        "line_start": 4,
+        "line_end": 54,
+        "extends": null,
+        "implements": [],
+        "methods": [],
+        "properties": []
+      },
+      {
+        "id": "src\\lib\\utils\\audio-effects.ts#DramaticVoiceEffects",
+        "name": "DramaticVoiceEffects",
+        "file": "src\\lib\\utils\\audio-effects.ts",
+        "line_start": 112,
+        "line_end": 162,
+        "extends": null,
+        "implements": [],
+        "methods": [],
+        "properties": []
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#DartsCaller",
+        "name": "DartsCaller",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 67,
+        "line_end": 117,
+        "extends": null,
+        "implements": [],
+        "methods": [],
+        "properties": []
+      }
+    ],
+    "Interface": [
+      {
+        "id": "src\\lib\\game\\types.ts#DartData",
+        "name": "DartData",
+        "file": "src\\lib\\game\\types.ts",
+        "line_start": 5,
+        "line_end": 10,
+        "properties": [],
+        "implemented_by": []
+      },
+      {
+        "id": "src\\lib\\game\\types.ts#TurnData",
+        "name": "TurnData",
+        "file": "src\\lib\\game\\types.ts",
+        "line_start": 12,
+        "line_end": 18,
+        "properties": [],
+        "implemented_by": []
+      },
+      {
+        "id": "src\\lib\\game\\types.ts#MatchConfig",
+        "name": "MatchConfig",
+        "file": "src\\lib\\game\\types.ts",
+        "line_start": 20,
+        "line_end": 26,
+        "properties": [],
+        "implemented_by": []
+      },
+      {
+        "id": "src\\lib\\game\\types.ts#PlayerInMatch",
+        "name": "PlayerInMatch",
+        "file": "src\\lib\\game\\types.ts",
+        "line_start": 28,
+        "line_end": 36,
+        "properties": [],
+        "implemented_by": []
+      },
+      {
+        "id": "src\\lib\\game\\types.ts#LegState",
+        "name": "LegState",
+        "file": "src\\lib\\game\\types.ts",
+        "line_start": 38,
+        "line_end": 47,
+        "properties": [],
+        "implemented_by": []
+      },
+      {
+        "id": "src\\lib\\game\\types.ts#TurnRecord",
+        "name": "TurnRecord",
+        "file": "src\\lib\\game\\types.ts",
+        "line_start": 49,
+        "line_end": 60,
+        "properties": [],
+        "implemented_by": []
+      },
+      {
+        "id": "src\\lib\\game\\types.ts#MatchState",
+        "name": "MatchState",
+        "file": "src\\lib\\game\\types.ts",
+        "line_start": 62,
+        "line_end": 70,
+        "properties": [],
+        "implemented_by": []
+      },
+      {
+        "id": "src\\lib\\game\\types.ts#PlayerStats",
+        "name": "PlayerStats",
+        "file": "src\\lib\\game\\types.ts",
+        "line_start": 72,
+        "line_end": 90,
+        "properties": [],
+        "implemented_by": []
+      },
+      {
+        "id": "src\\lib\\game\\types.ts#CheckoutOption",
+        "name": "CheckoutOption",
+        "file": "src\\lib\\game\\types.ts",
+        "line_start": 92,
+        "line_end": 96,
+        "properties": [],
+        "implemented_by": []
+      },
+      {
+        "id": "src\\lib\\stores\\voice-settings.ts#VoiceSetting",
+        "name": "VoiceSetting",
+        "file": "src\\lib\\stores\\voice-settings.ts",
+        "line_start": 10,
+        "line_end": 17,
+        "properties": [],
+        "implemented_by": []
+      },
+      {
+        "id": "src\\lib\\utils\\audio-effects.ts#AudioEffectsOptions",
+        "name": "AudioEffectsOptions",
+        "file": "src\\lib\\utils\\audio-effects.ts",
+        "line_start": 10,
+        "line_end": 26,
+        "properties": [],
+        "implemented_by": []
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#CallerOptions",
+        "name": "CallerOptions",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 22,
+        "line_end": 34,
+        "properties": [],
+        "implemented_by": []
+      },
+      {
+        "id": "src\\lib\\utils\\darts-caller.ts#AnnouncementResult",
+        "name": "AnnouncementResult",
+        "file": "src\\lib\\utils\\darts-caller.ts",
+        "line_start": 35,
+        "line_end": 40,
+        "properties": [],
+        "implemented_by": []
+      }
+    ],
+    "Variable": [],
+    "Module": []
+  },
+  "relations": [
+    {
+      "from": "src\\lib\\game\\checkout-suggestions.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\checkout-suggestions.ts#getCheckoutSuggestions"
+    },
+    {
+      "from": "src\\lib\\game\\checkout-suggestions.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\checkout-suggestions.ts#canCheckout"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\match-engine.ts#submitTurn"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\match-engine.ts#completeLeg"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\match-engine.ts#completeSet"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\match-engine.ts#completeMatch"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\match-engine.ts#abandonMatch"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\match-engine.ts#getScoreDisplay"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\scoring.ts#calculateDartScore"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\scoring.ts#createDart"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\scoring.ts#calculateTurnScore"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\scoring.ts#processTurn"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\stats-engine.ts#createEmptyStats"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\stats-engine.ts#is180"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\stats-engine.ts#is140Plus"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\stats-engine.ts#is100Plus"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess"
+    },
+    {
+      "from": "src\\lib\\stores\\voice-settings.ts",
+      "type": "contains",
+      "to": "src\\lib\\stores\\voice-settings.ts#getVoicePrefix"
+    },
+    {
+      "from": "src\\lib\\utils\\audio-effects.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\audio-effects.ts#isAudioContextAvailable"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#getDartsCaller"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#announce180"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceBust"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceGameOn"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceCentury"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceHighTon"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceTon80"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextLeg"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextSet"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#cancelSpeech"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+    },
+    {
+      "from": "src\\lib\\db\\database-service.ts",
+      "type": "contains",
+      "to": "src\\lib\\db\\database-service.ts#DatabaseService"
+    },
+    {
+      "from": "src\\lib\\utils\\audio-effects.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\audio-effects.ts#DramaticVoiceEffects"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#DartsCaller"
+    },
+    {
+      "from": "src\\lib\\game\\types.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\types.ts#DartData"
+    },
+    {
+      "from": "src\\lib\\game\\types.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\types.ts#TurnData"
+    },
+    {
+      "from": "src\\lib\\game\\types.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\types.ts#MatchConfig"
+    },
+    {
+      "from": "src\\lib\\game\\types.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\types.ts#PlayerInMatch"
+    },
+    {
+      "from": "src\\lib\\game\\types.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\types.ts#LegState"
+    },
+    {
+      "from": "src\\lib\\game\\types.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\types.ts#TurnRecord"
+    },
+    {
+      "from": "src\\lib\\game\\types.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\types.ts#MatchState"
+    },
+    {
+      "from": "src\\lib\\game\\types.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\types.ts#PlayerStats"
+    },
+    {
+      "from": "src\\lib\\game\\types.ts",
+      "type": "contains",
+      "to": "src\\lib\\game\\types.ts#CheckoutOption"
+    },
+    {
+      "from": "src\\lib\\stores\\voice-settings.ts",
+      "type": "contains",
+      "to": "src\\lib\\stores\\voice-settings.ts#VoiceSetting"
+    },
+    {
+      "from": "src\\lib\\utils\\audio-effects.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\audio-effects.ts#AudioEffectsOptions"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#CallerOptions"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "contains",
+      "to": "src\\lib\\utils\\darts-caller.ts#AnnouncementResult"
+    },
+    {
+      "from": "src\\lib\\db\\database-service.ts",
+      "type": "imports",
+      "to": "src\\lib\\db\\index.ts"
+    },
+    {
+      "from": "src\\lib\\db\\index.ts",
+      "type": "imports",
+      "to": "src\\lib\\db\\schema.ts"
+    },
+    {
+      "from": "src\\lib\\game\\checkout-suggestions.ts",
+      "type": "imports",
+      "to": "src\\lib\\game\\scoring.ts"
+    },
+    {
+      "from": "src\\lib\\game\\checkout-suggestions.ts",
+      "type": "imports",
+      "to": "src\\lib\\game\\types.ts"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts",
+      "type": "imports",
+      "to": "src\\lib\\game\\scoring.ts"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts",
+      "type": "imports",
+      "to": "src\\lib\\game\\types.ts"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts",
+      "type": "imports",
+      "to": "src\\lib\\game\\types.ts"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts",
+      "type": "imports",
+      "to": "src\\lib\\game\\types.ts"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts",
+      "type": "imports",
+      "to": "src\\lib\\utils\\audio-effects.ts"
+    },
+    {
+      "from": "src\\lib\\game\\checkout-suggestions.ts#getCheckoutSuggestions",
+      "type": "calls",
+      "to": "src\\lib\\game\\checkout-suggestions.ts#canCheckout"
+    },
+    {
+      "from": "src\\lib\\game\\checkout-suggestions.ts#getCheckoutSuggestions",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#createDart"
+    },
+    {
+      "from": "src\\lib\\game\\checkout-suggestions.ts#canCheckout",
+      "type": "calls",
+      "to": "src\\lib\\game\\checkout-suggestions.ts#getCheckoutSuggestions"
+    },
+    {
+      "from": "src\\lib\\game\\checkout-suggestions.ts#canCheckout",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#createDart"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#submitTurn",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeLeg"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#submitTurn",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeSet"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#submitTurn",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeMatch"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#submitTurn",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#abandonMatch"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#submitTurn",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#getScoreDisplay"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#submitTurn",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#processTurn"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeLeg",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#submitTurn"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeLeg",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeSet"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeLeg",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeMatch"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeLeg",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#abandonMatch"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeLeg",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#getScoreDisplay"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeLeg",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#processTurn"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeSet",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#submitTurn"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeSet",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeLeg"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeSet",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeMatch"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeSet",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#abandonMatch"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeSet",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#getScoreDisplay"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeSet",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#processTurn"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeMatch",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#submitTurn"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeMatch",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeLeg"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeMatch",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeSet"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeMatch",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#abandonMatch"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeMatch",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#getScoreDisplay"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#completeMatch",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#processTurn"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#abandonMatch",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#submitTurn"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#abandonMatch",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeLeg"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#abandonMatch",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeSet"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#abandonMatch",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeMatch"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#abandonMatch",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#getScoreDisplay"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#abandonMatch",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#processTurn"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#getScoreDisplay",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#submitTurn"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#getScoreDisplay",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeLeg"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#getScoreDisplay",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeSet"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#getScoreDisplay",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#completeMatch"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#getScoreDisplay",
+      "type": "calls",
+      "to": "src\\lib\\game\\match-engine.ts#abandonMatch"
+    },
+    {
+      "from": "src\\lib\\game\\match-engine.ts#getScoreDisplay",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#processTurn"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts#calculateDartScore",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#createDart"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts#calculateDartScore",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#calculateTurnScore"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts#calculateDartScore",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#processTurn"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts#createDart",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#calculateDartScore"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts#createDart",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#calculateTurnScore"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts#createDart",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#processTurn"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts#calculateTurnScore",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#calculateDartScore"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts#calculateTurnScore",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#createDart"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts#calculateTurnScore",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#processTurn"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts#processTurn",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#calculateDartScore"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts#processTurn",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#createDart"
+    },
+    {
+      "from": "src\\lib\\game\\scoring.ts#processTurn",
+      "type": "calls",
+      "to": "src\\lib\\game\\scoring.ts#calculateTurnScore"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#createEmptyStats",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is180"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#createEmptyStats",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is140Plus"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#createEmptyStats",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is100Plus"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#createEmptyStats",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#createEmptyStats",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is180",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#createEmptyStats"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is180",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is140Plus"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is180",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is100Plus"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is180",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is180",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is140Plus",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#createEmptyStats"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is140Plus",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is180"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is140Plus",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is100Plus"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is140Plus",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is140Plus",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is100Plus",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#createEmptyStats"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is100Plus",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is180"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is100Plus",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is140Plus"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is100Plus",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#is100Plus",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#createEmptyStats"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is180"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is140Plus"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is100Plus"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#createEmptyStats"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is180"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is140Plus"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#is100Plus"
+    },
+    {
+      "from": "src\\lib\\game\\stats-engine.ts#isCheckoutSuccess",
+      "type": "calls",
+      "to": "src\\lib\\game\\stats-engine.ts#isCheckoutAttempt"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announce180"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceBust"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceGameOn"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceCentury"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceHighTon"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceTon80"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextLeg"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextSet"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#cancelSpeech"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#getDartsCaller",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announce180",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#getDartsCaller"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announce180",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceBust"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announce180",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceGameOn"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announce180",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceCentury"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announce180",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceHighTon"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announce180",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceTon80"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announce180",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextLeg"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announce180",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextSet"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announce180",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announce180",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#cancelSpeech"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announce180",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceBust",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#getDartsCaller"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceBust",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announce180"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceBust",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceGameOn"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceBust",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceCentury"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceBust",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceHighTon"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceBust",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceTon80"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceBust",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextLeg"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceBust",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextSet"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceBust",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceBust",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#cancelSpeech"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceBust",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#getDartsCaller"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announce180"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceBust"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceCentury"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceHighTon"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceTon80"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextLeg"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextSet"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#cancelSpeech"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceGameOn",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceCentury",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#getDartsCaller"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceCentury",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announce180"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceCentury",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceBust"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceCentury",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceGameOn"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceCentury",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceHighTon"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceCentury",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceTon80"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceCentury",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextLeg"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceCentury",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextSet"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceCentury",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceCentury",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#cancelSpeech"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceCentury",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#getDartsCaller"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announce180"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceBust"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceGameOn"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceCentury"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceTon80"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextLeg"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextSet"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#cancelSpeech"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceHighTon",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceTon80",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#getDartsCaller"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceTon80",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announce180"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceTon80",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceBust"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceTon80",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceGameOn"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceTon80",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceCentury"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceTon80",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceHighTon"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceTon80",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextLeg"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceTon80",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextSet"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceTon80",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceTon80",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#cancelSpeech"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceTon80",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#getDartsCaller"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announce180"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceBust"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceGameOn"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceCentury"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceHighTon"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceTon80"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextSet"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#cancelSpeech"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextLeg",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#getDartsCaller"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announce180"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceBust"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceGameOn"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceCentury"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceHighTon"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceTon80"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextLeg"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#cancelSpeech"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceNextSet",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#getDartsCaller"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announce180"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceBust"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceGameOn"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceCentury"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceHighTon"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceTon80"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextLeg"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextSet"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#cancelSpeech"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#getDartsCaller"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announce180"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceBust"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceGameOn"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceCentury"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceHighTon"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceTon80"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextLeg"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextSet"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#cancelSpeech",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#getDartsCaller"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announce180"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceBust"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceGameOn"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceCentury"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceHighTon"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceTon80"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextLeg"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceNextSet"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#announceChangeOfThrow"
+    },
+    {
+      "from": "src\\lib\\utils\\darts-caller.ts#isTTSAvailable",
+      "type": "calls",
+      "to": "src\\lib\\utils\\darts-caller.ts#cancelSpeech"
+    }
+  ],
+  "constraints": {
+    "required_relations": [
+      "imports",
+      "contains"
+    ],
+    "acyclic_relations": [
+      "calls",
+      "extends"
+    ],
+    "validation_rules": [
+      "All relation targets must exist",
+      "No circular function calls",
+      "Class extends must reference existing class"
+    ]
+  }
+}

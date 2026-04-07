@@ -1,0 +1,206 @@
+{
+  "generated": "2026-04-07T15:41:08.541007",
+  "total_files": 50,
+  "files": [
+    {
+      "path": "src\\app.d.ts",
+      "purpose": "TypeScript type definitions and interfaces"
+    },
+    {
+      "path": "src\\lib\\components\\ui\\AnimatedNumber.svelte",
+      "purpose": "A UI component for animatednumber"
+    },
+    {
+      "path": "src\\lib\\components\\ui\\Dartboard.svelte",
+      "purpose": "A UI component for dartboard"
+    },
+    {
+      "path": "src\\lib\\components\\ui\\DoubleBezel.svelte",
+      "purpose": "A UI component for doublebezel"
+    },
+    {
+      "path": "src\\lib\\components\\ui\\EyebrowTag.svelte",
+      "purpose": "A UI component for eyebrowtag"
+    },
+    {
+      "path": "src\\lib\\components\\ui\\FloatingNav.svelte",
+      "purpose": "A UI component for floatingnav"
+    },
+    {
+      "path": "src\\lib\\components\\ui\\PillButton.svelte",
+      "purpose": "A UI component for pillbutton"
+    },
+    {
+      "path": "src\\lib\\components\\ui\\StatBadge.svelte",
+      "purpose": "A UI component for statbadge"
+    },
+    {
+      "path": "src\\lib\\components\\ui\\StyledSelect.svelte",
+      "purpose": "A UI component for styledselect"
+    },
+    {
+      "path": "src\\lib\\components\\ui\\Toast.svelte",
+      "purpose": "A UI component for toast"
+    },
+    {
+      "path": "src\\lib\\components\\ui\\Tooltip.svelte",
+      "purpose": "A UI component for tooltip"
+    },
+    {
+      "path": "src\\lib\\components\\ui\\index.ts",
+      "purpose": "Module providing StatBadge, DoubleBezel"
+    },
+    {
+      "path": "src\\lib\\db\\database-service.ts",
+      "purpose": "Service logic for database service"
+    },
+    {
+      "path": "src\\lib\\db\\index.ts",
+      "purpose": "Module providing db, schema"
+    },
+    {
+      "path": "src\\lib\\db\\init.ts",
+      "purpose": "Source code module"
+    },
+    {
+      "path": "src\\lib\\db\\schema.ts",
+      "purpose": "Database schema definitions and migrations"
+    },
+    {
+      "path": "src\\lib\\db\\verify.ts",
+      "purpose": "Source code module"
+    },
+    {
+      "path": "src\\lib\\game\\checkout-suggestions.ts",
+      "purpose": "Module providing canCheckout, getCheckoutSuggestions"
+    },
+    {
+      "path": "src\\lib\\game\\index.ts",
+      "purpose": "Source code module"
+    },
+    {
+      "path": "src\\lib\\game\\match-engine.ts",
+      "purpose": "Module providing getScoreDisplay, completeLeg"
+    },
+    {
+      "path": "src\\lib\\game\\scoring.ts",
+      "purpose": "Module providing detectBust, detectCheckout"
+    },
+    {
+      "path": "src\\lib\\game\\stats-engine.ts",
+      "purpose": "Module providing computeStatsFromTurns, createEmptyStats"
+    },
+    {
+      "path": "src\\lib\\game\\types.ts",
+      "purpose": "TypeScript type definitions and interfaces"
+    },
+    {
+      "path": "src\\lib\\index.ts",
+      "purpose": "Source code module"
+    },
+    {
+      "path": "src\\lib\\stores\\toast.ts",
+      "purpose": "State management store for application data"
+    },
+    {
+      "path": "src\\lib\\stores\\voice-settings.ts",
+      "purpose": "State management store for application data"
+    },
+    {
+      "path": "src\\lib\\utils\\audio-effects.ts",
+      "purpose": "Utility functions for common operations"
+    },
+    {
+      "path": "src\\lib\\utils\\darts-caller.ts",
+      "purpose": "Utility functions for common operations"
+    },
+    {
+      "path": "src\\routes\\+layout.svelte",
+      "purpose": "A UI component for +layout"
+    },
+    {
+      "path": "src\\routes\\+page.svelte",
+      "purpose": "A UI component for +page"
+    },
+    {
+      "path": "src\\routes\\api\\insights\\[playerId]\\+server.ts",
+      "purpose": "HTTP client for API communication and data fetching"
+    },
+    {
+      "path": "src\\routes\\api\\matches\\+server.ts",
+      "purpose": "HTTP client for API communication and data fetching"
+    },
+    {
+      "path": "src\\routes\\api\\matches\\[id]\\+server.ts",
+      "purpose": "HTTP client for API communication and data fetching"
+    },
+    {
+      "path": "src\\routes\\api\\matches\\[id]\\legs\\+server.ts",
+      "purpose": "HTTP client for API communication and data fetching"
+    },
+    {
+      "path": "src\\routes\\api\\matches\\[id]\\players\\[playerId]\\+server.ts",
+      "purpose": "HTTP client for API communication and data fetching"
+    },
+    {
+      "path": "src\\routes\\api\\matches\\[id]\\turns\\+server.ts",
+      "purpose": "HTTP client for API communication and data fetching"
+    },
+    {
+      "path": "src\\routes\\api\\matches\\with-players\\+server.ts",
+      "purpose": "HTTP client for API communication and data fetching"
+    },
+    {
+      "path": "src\\routes\\api\\players\\+server.ts",
+      "purpose": "HTTP client for API communication and data fetching"
+    },
+    {
+      "path": "src\\routes\\api\\players\\[id]\\+server.ts",
+      "purpose": "HTTP client for API communication and data fetching"
+    },
+    {
+      "path": "src\\routes\\api\\players\\[id]\\matches\\+server.ts",
+      "purpose": "HTTP client for API communication and data fetching"
+    },
+    {
+      "path": "src\\routes\\api\\players\\archived\\+server.ts",
+      "purpose": "HTTP client for API communication and data fetching"
+    },
+    {
+      "path": "src\\routes\\api\\players\\archived\\[id]\\restore\\+server.ts",
+      "purpose": "HTTP client for API communication and data fetching"
+    },
+    {
+      "path": "src\\routes\\api\\stats\\[playerId]\\+server.ts",
+      "purpose": "HTTP client for API communication and data fetching"
+    },
+    {
+      "path": "src\\routes\\archive\\+page.svelte",
+      "purpose": "A UI component for +page"
+    },
+    {
+      "path": "src\\routes\\history\\+page.svelte",
+      "purpose": "A UI component for +page"
+    },
+    {
+      "path": "src\\routes\\history\\[id]\\+page.svelte",
+      "purpose": "A UI component for +page"
+    },
+    {
+      "path": "src\\routes\\match\\[id]\\+page.svelte",
+      "purpose": "A UI component for +page"
+    },
+    {
+      "path": "src\\routes\\match\\setup\\+page.svelte",
+      "purpose": "A UI component for +page"
+    },
+    {
+      "path": "src\\routes\\players\\+page.svelte",
+      "purpose": "A UI component for +page"
+    },
+    {
+      "path": "src\\routes\\players\\[id]\\+page.svelte",
+      "purpose": "A UI component for +page"
+    }
+  ]
+}
