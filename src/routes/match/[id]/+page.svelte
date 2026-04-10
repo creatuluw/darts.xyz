@@ -1786,13 +1786,253 @@
                         </div>
                     </DoubleBezel>
                 </div>
-            {:else}
-                <div class="md:col-span-3 order-2 md:order-none">
+            {/if}
+
+            {#if isSoloGame}
+                {@const sp = matchState.players[0]}
+                {@const spStats = computeMatchStats(getPlayerTurns(sp.id))}
+                {@const spDarts = getDartsThrown(sp.id)}
+                <div
+                    class="md:col-span-3 order-2 md:order-none space-y-3 opacity-25 pointer-events-none select-none"
+                >
+                    <!-- Muted mirror: Scoreboard -->
                     <DoubleBezel>
-                        <div
-                            class="text-center py-12 text-zinc-300 dark:text-zinc-600"
-                        >
-                            <span class="text-sm italic">Solo Practice</span>
+                        <div class="text-center">
+                            <div
+                                class="font-display font-black text-8xl tracking-tight leading-none"
+                            >
+                                {sp.remainingScore}
+                            </div>
+                            <div class="mt-2 font-medium text-sm">
+                                {sp.name}
+                            </div>
+                            <div
+                                class="mt-2 flex justify-center gap-4 text-xs font-mono text-zinc-400"
+                            >
+                                <span
+                                    >Sets
+                                    <span
+                                        class="font-bold text-sm text-zinc-700 dark:text-zinc-300"
+                                        >{sp.setsWon}</span
+                                    ></span
+                                >
+                                <span
+                                    >Legs
+                                    <span
+                                        class="font-bold text-sm text-zinc-700 dark:text-zinc-300"
+                                        >{sp.legsWon}</span
+                                    ></span
+                                >
+                            </div>
+                            <div
+                                class="mt-1.5 flex justify-center gap-3 text-[10px] text-zinc-400"
+                            >
+                                <span
+                                    >Darts
+                                    <span class="font-mono font-medium"
+                                        >{spDarts}</span
+                                    ></span
+                                >
+                                <span
+                                    >Avg
+                                    <span class="font-mono font-medium"
+                                        >{spStats.threeDartAvg.toFixed(1)}</span
+                                    ></span
+                                >
+                            </div>
+                        </div>
+                    </DoubleBezel>
+
+                    <!-- Muted mirror: Stats -->
+                    <DoubleBezel>
+                        <div class="space-y-1.5 mt-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-zinc-400"
+                                    >3-Dart Avg</span
+                                >
+                                <span class="text-sm font-mono font-medium"
+                                    >{spStats.threeDartAvg.toFixed(1)}</span
+                                >
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-zinc-400"
+                                    >Checkout %</span
+                                >
+                                <span class="text-sm font-mono font-medium"
+                                    >{spStats.checkoutPct.toFixed(0)}%</span
+                                >
+                            </div>
+
+                            <div
+                                class="pt-2 mt-1 border-t border-zinc-100 dark:border-white/5"
+                            >
+                                <div class="grid grid-cols-3 gap-1 text-center">
+                                    <div>
+                                        <div class="text-[10px] text-zinc-400">
+                                            60+
+                                        </div>
+                                        <div
+                                            class="font-mono font-medium text-sm"
+                                        >
+                                            {spStats.count60Plus}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="text-[10px] text-zinc-400">
+                                            100+
+                                        </div>
+                                        <div
+                                            class="font-mono font-medium text-sm"
+                                        >
+                                            {spStats.count100Plus}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="text-[10px] text-zinc-400">
+                                            140+
+                                        </div>
+                                        <div
+                                            class="font-mono font-medium text-sm"
+                                        >
+                                            {spStats.count140Plus}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                class="pt-2 mt-1 border-t border-zinc-100 dark:border-white/5"
+                            >
+                                <div class="grid grid-cols-3 gap-1 text-center">
+                                    <div>
+                                        <div class="text-[10px] text-zinc-400">
+                                            &lt;20
+                                        </div>
+                                        <div
+                                            class="font-mono font-medium text-sm text-zinc-500"
+                                        >
+                                            {spStats.countUnder20}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="text-[10px] text-zinc-400">
+                                            180
+                                        </div>
+                                        <div
+                                            class="font-mono font-bold text-sm text-amber-600 dark:text-amber-400"
+                                        >
+                                            {spStats.count180}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="text-[10px] text-zinc-400">
+                                            60+ Fin
+                                        </div>
+                                        <div
+                                            class="font-mono font-medium text-sm text-emerald-600 dark:text-emerald-400"
+                                        >
+                                            {spStats.count60PlusFinishes}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Avg Trend -->
+                            <div
+                                class="pt-2 mt-1 border-t border-zinc-100 dark:border-white/5"
+                            >
+                                <div
+                                    class="text-[10px] uppercase tracking-wider text-zinc-400 mb-1.5"
+                                >
+                                    Avg Trend
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-zinc-500"
+                                        >Last 3</span
+                                    >
+                                    <div class="flex items-center gap-1">
+                                        <span
+                                            class="text-sm font-mono font-medium"
+                                            >{spStats.last3Avg.toFixed(1)}</span
+                                        >
+                                        {#if spStats.prior15Avg > 0}
+                                            {#if spStats.last3Avg > spStats.prior15Avg}
+                                                <IconArrowUp
+                                                    size={14}
+                                                    class="text-emerald-500"
+                                                />
+                                            {:else if spStats.last3Avg < spStats.prior15Avg}
+                                                <IconArrowDown
+                                                    size={14}
+                                                    class="text-red-500"
+                                                />
+                                            {/if}
+                                        {/if}
+                                    </div>
+                                </div>
+                                <div
+                                    class="flex justify-between items-center mt-0.5"
+                                >
+                                    <span class="text-xs text-zinc-500"
+                                        >Prior turns</span
+                                    >
+                                    <span
+                                        class="text-sm font-mono text-zinc-400"
+                                        >{spStats.prior15Avg > 0
+                                            ? spStats.prior15Avg.toFixed(1)
+                                            : "—"}</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </DoubleBezel>
+
+                    <!-- Muted mirror: Last 3 Turns -->
+                    <DoubleBezel>
+                        <div class="mt-2 space-y-1.5">
+                            {#each [...allMatchTurns]
+                                .filter((t) => t.playerId === sp.id)
+                                .slice(-3)
+                                .reverse() as turn}
+                                <div
+                                    class="flex items-center justify-between gap-1.5 text-xs"
+                                >
+                                    <div
+                                        class="flex items-center gap-1 font-mono"
+                                    >
+                                        {#each turn.darts as dart}
+                                            <span
+                                                class="rounded px-1.5 py-0.5 bg-zinc-100 dark:bg-white/10"
+                                            >
+                                                {dart.multiplier === 3
+                                                    ? "T"
+                                                    : dart.multiplier === 2
+                                                      ? "D"
+                                                      : ""}{dart.segment === 25
+                                                    ? dart.multiplier === 2
+                                                        ? "Bull"
+                                                        : "25"
+                                                    : dart.segment}
+                                            </span>
+                                        {/each}
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono font-medium">
+                                            {turn.totalScore}
+                                        </span>
+                                        <span class="text-zinc-400"
+                                            >→ {turn.remainingScore}</span
+                                        >
+                                    </div>
+                                </div>
+                            {/each}
+                            {#if allMatchTurns.filter((t) => t.playerId === sp.id).length === 0}
+                                <div
+                                    class="text-zinc-400 text-center py-1 text-xs"
+                                >
+                                    No turns yet
+                                </div>
+                            {/if}
                         </div>
                     </DoubleBezel>
                 </div>
