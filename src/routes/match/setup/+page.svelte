@@ -31,7 +31,7 @@
     }
 
     async function startMatch() {
-        if (selectedPlayers.length < 2) return;
+        if (selectedPlayers.length < 1) return;
         starting = true;
 
         const email = emailStore.getEmail();
@@ -58,12 +58,12 @@
 </script>
 
 <svelte:head>
-    <title>New Match — Darts 501</title>
+    <title>New Match — dart.monster</title>
 </svelte:head>
 
-<div class="py-6">
+<div class="py-8">
     <EyebrowTag>Match Setup</EyebrowTag>
-    <h1 class="font-display font-extrabold text-4xl md:text-5xl mt-3 mb-6">
+    <h1 class="font-display font-extrabold text-5xl md:text-6xl mt-4 mb-8">
         New Match
     </h1>
 
@@ -194,14 +194,14 @@
         <div class="mt-5 flex justify-end">
             <PillButton
                 onclick={startMatch}
-                disabled={selectedPlayers.length < 2 || starting}
+                disabled={selectedPlayers.length < 1 || starting}
             >
                 {starting ? "Starting..." : "Start Match"}
             </PillButton>
         </div>
-        {#if selectedPlayers.length < 2}
+        {#if selectedPlayers.length < 1}
             <p class="text-zinc-400 text-xs mt-1.5 text-right">
-                Select at least 2 players
+                Select at least 1 player
             </p>
         {/if}
     </DoubleBezel>

@@ -53,7 +53,7 @@
 </script>
 
 <svelte:head>
-    <title>Archive — Darts 501</title>
+    <title>Archive — dart.monster</title>
 </svelte:head>
 
 <div class="py-8">

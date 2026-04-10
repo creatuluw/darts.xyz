@@ -42,10 +42,10 @@ export const VOICE_OPTIONS: VoiceSetting[] = [
 const STORAGE_KEY = "darts-voice-settings";
 
 function getInitialValue(): string {
-  if (typeof window === "undefined") return "jack";
+  if (typeof window === "undefined") return "scotty";
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored && VOICE_OPTIONS.find((v) => v.id === stored)) return stored;
-  return "jack";
+  return "scotty";
 }
 
 function createVoiceSettingsStore() {

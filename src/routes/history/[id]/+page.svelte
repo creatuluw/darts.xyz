@@ -149,7 +149,7 @@
 </script>
 
 <svelte:head>
-    <title>Match Detail — Darts 501</title>
+    <title>Match Detail — dart.monster</title>
 </svelte:head>
 
 <div class="py-8">

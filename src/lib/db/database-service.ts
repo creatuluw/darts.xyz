@@ -128,6 +128,7 @@ export class DatabaseService {
     legsPerSet: number;
     setsPerMatch: number;
     doubleIn: boolean;
+    accountId?: string;
   }) {
     const result = await getDb()
       .insert(schema.matches)
@@ -136,6 +137,7 @@ export class DatabaseService {
         legsPerSet: config.legsPerSet,
         setsPerMatch: config.setsPerMatch,
         doubleIn: config.doubleIn,
+        accountId: config.accountId,
       })
       .returning();
     return result[0];
@@ -197,23 +199,13 @@ export class DatabaseService {
   }
 
   async getRecentMatches(limit = 10, email?: string) {
-    // If email provided, filter matches by that email's players
+    // If email provided, filter matches by accountId on matches table
     if (email) {
-      const player = await this.getPlayerByEmail(email);
-      if (!player) return [];
-
-      const matchPlayers = await getDb()
-        .select({ matchId: schema.matchPlayers.matchId })
-        .from(schema.matchPlayers)
-        .where(eq(schema.matchPlayers.playerId, player.id));
-
-      const matchIds = matchPlayers.map((mp) => mp.matchId);
-      if (matchIds.length === 0) return [];
-
+      // Primary: filter by accountId on matches table
       return getDb()
         .select()
         .from(schema.matches)
-        .where(inArray(schema.matches.id, matchIds))
+        .where(eq(schema.matches.accountId, email.toLowerCase()))
         .orderBy(desc(schema.matches.createdAt))
         .limit(limit);
     }

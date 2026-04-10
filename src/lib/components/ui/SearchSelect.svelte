@@ -1,5 +1,6 @@
 <script lang="ts">
     import { IconSearch, IconX } from "@tabler/icons-svelte";
+    import { IconGripVertical } from "@tabler/icons-svelte";
 
     interface Option {
         id: string;
@@ -21,6 +22,8 @@
     let search = $state("");
     let isOpen = $state(false);
     let inputRef: HTMLInputElement;
+    let dragIndex = $state<number | null>(null);
+    let dragOverIndex = $state<number | null>(null);
 
     let filteredOptions = $derived(
         search.trim()
@@ -58,16 +61,85 @@
             search = "";
         }
     }
+
+    // Drag and drop handlers
+    function handleDragStart(index: number, e: DragEvent) {
+        dragIndex = index;
+        dragOverIndex = null;
+        if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", index.toString());
+        }
+    }
+
+    function handleDragOver(index: number, e: DragEvent) {
+        e.preventDefault();
+        if (e.dataTransfer) {
+            e.dataTransfer.dropEffect = "move";
+        }
+        if (dragIndex !== null && dragIndex !== index) {
+            dragOverIndex = index;
+        }
+    }
+
+    function handleDragLeave() {
+        dragOverIndex = null;
+    }
+
+    function handleDrop(index: number, e: DragEvent) {
+        e.preventDefault();
+        if (dragIndex === null || dragIndex === index) {
+            resetDrag();
+            return;
+        }
+
+        const reordered = [...selected];
+        const [moved] = reordered.splice(dragIndex, 1);
+        reordered.splice(index, 0, moved);
+        selected = reordered;
+        resetDrag();
+    }
+
+    function handleDragEnd() {
+        resetDrag();
+    }
+
+    function resetDrag() {
+        dragIndex = null;
+        dragOverIndex = null;
+    }
 </script>
 
 <div class="relative {className}">
     {#if selected.length > 0}
-        <div class="flex flex-wrap gap-2 mb-3">
-            {#each selected as item (item.id)}
+        <div class="flex flex-wrap gap-2 mb-3" role="list">
+            {#each selected as item, i (item.id)}
                 <span
-                    class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20"
+                    role="listitem"
+                    draggable={selected.length > 1}
+                    ondragstart={(e) => handleDragStart(i, e)}
+                    ondragover={(e) => handleDragOver(i, e)}
+                    ondragleave={handleDragLeave}
+                    ondrop={(e) => handleDrop(i, e)}
+                    ondragend={handleDragEnd}
+                    class="inline-flex items-center gap-1.5 rounded-full pl-2 pr-3 py-1.5 text-sm font-medium transition-all duration-200 {selected.length >
+                    1
+                        ? 'cursor-grab active:cursor-grabbing'
+                        : ''} {dragIndex === i
+                        ? 'opacity-40 scale-95'
+                        : ''} {dragOverIndex === i &&
+                    dragIndex !== null &&
+                    dragIndex !== i
+                        ? 'ring-2 ring-emerald-400 scale-105'
+                        : 'bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20'}"
                 >
-                    {item.name}
+                    {#if selected.length > 1}
+                        <IconGripVertical
+                            size={12}
+                            class="text-emerald-500/40 -ml-0.5"
+                        />
+                    {/if}
+                    <span class="select-none">{item.name}</span>
                     <button
                         type="button"
                         onclick={() => removeOption(item.id)}

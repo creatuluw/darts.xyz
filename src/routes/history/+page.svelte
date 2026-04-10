@@ -37,7 +37,7 @@
 </script>
 
 <svelte:head>
-    <title>Match History — Darts 501</title>
+    <title>Match History — dart.monster</title>
 </svelte:head>
 
 <div class="py-8">

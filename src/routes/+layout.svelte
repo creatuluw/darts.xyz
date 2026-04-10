@@ -28,7 +28,7 @@
 </script>
 
 <svelte:head>
-    <title>Darts 501</title>
+    <title>dart.monster</title>
 </svelte:head>
 
 {#if isLoading}

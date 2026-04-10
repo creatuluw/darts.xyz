@@ -38,7 +38,7 @@
 </script>
 
 <svelte:head>
-    <title>Darts.xyz — Score Your Game</title>
+    <title>dart.monster</title>
 </svelte:head>
 
 <div

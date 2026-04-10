@@ -35,13 +35,7 @@
         if (!newName.trim()) return;
 
         const email = emailStore.getEmail();
-        alert("Creating player with email: " + email);
-        if (!email) {
-            alert(
-                "No email found. Please refresh the page and enter your email first.",
-            );
-            return;
-        }
+        if (!email) return;
 
         creating = true;
         try {

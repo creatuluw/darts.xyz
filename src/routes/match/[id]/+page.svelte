@@ -63,6 +63,7 @@
     let matchData = $state<any>(null);
     let playerStats = $state<Record<string, any>>({});
     let loading = $state(true);
+    let isSoloGame = $derived(matchState?.players.length === 1);
 
     // Dart input state
     let currentDarts = $state<DartData[]>([]);
@@ -773,7 +774,7 @@
 </script>
 
 <svelte:head>
-    <title>Match — Darts 501</title>
+    <title>Match — dart.monster</title>
 </svelte:head>
 
 {#if loading}
@@ -876,7 +877,11 @@
                 {@const p1LifetimeAvg = playerStats[p1.id]?.threeDartAvg
                     ? Number(playerStats[p1.id].threeDartAvg).toFixed(1)
                     : "—"}
-                <div class="lg:col-span-3 order-1 lg:order-none space-y-3">
+                <div
+                    class="{isSoloGame
+                        ? 'lg:col-span-4'
+                        : 'lg:col-span-3'} order-1 lg:order-none space-y-3"
+                >
                     <!-- Player 1 Scoreboard -->
                     <DoubleBezel>
                         <div class="text-center">
@@ -1178,7 +1183,11 @@
             <!-- ============================================ -->
             <!-- CENTER: Score Display + Input + Turn History  -->
             <!-- ============================================ -->
-            <div class="lg:col-span-6 order-3 lg:order-none space-y-3">
+            <div
+                class="{isSoloGame
+                    ? 'lg:col-span-8'
+                    : 'lg:col-span-6'} order-3 lg:order-none space-y-3"
+            >
                 {#if activeTab === "board"}
                     <!-- Dartboard Input -->
                     <DoubleBezel>

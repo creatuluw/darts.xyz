@@ -42,6 +42,7 @@ export const matches = darts.table(
   "matches",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    accountId: varchar("account_id", { length: 255 }),
     status: varchar("status", { length: 20 }).notNull().default("in_progress"),
     startingScore: integer("starting_score").notNull().default(501),
     legsPerSet: integer("legs_per_set").notNull().default(3),
@@ -56,6 +57,7 @@ export const matches = darts.table(
       .notNull(),
   },
   (table) => ({
+    accountIdx: index("idx_matches_account").on(table.accountId),
     statusIdx: index("idx_matches_status").on(table.status),
     winnerIdx: index("idx_matches_winner").on(table.winnerId),
     createdIdx: index("idx_matches_created").on(table.createdAt),

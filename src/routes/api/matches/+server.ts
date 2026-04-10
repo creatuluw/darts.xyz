@@ -58,6 +58,7 @@ export const POST: RequestHandler = async ({ request }) => {
     legsPerSet,
     setsPerMatch,
     doubleIn,
+    accountId: email?.toLowerCase() || null,
   });
 
   // Add players to match
