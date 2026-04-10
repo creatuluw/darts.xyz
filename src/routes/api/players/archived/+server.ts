@@ -1,10 +1,10 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { db, schema } from "$lib/db/index";
+import { getDb, schema } from "$lib/db/index";
 import { isNull, isNotNull, desc } from "drizzle-orm";
 
 export const GET: RequestHandler = async () => {
-  const archived = await db
+  const archived = await getDb()
     .select()
     .from(schema.players)
     .where(isNotNull(schema.players.deletedAt))

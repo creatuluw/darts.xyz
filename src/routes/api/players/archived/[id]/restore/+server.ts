@@ -1,10 +1,10 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { db, schema } from "$lib/db/index";
+import { getDb, schema } from "$lib/db/index";
 import { eq, isNotNull } from "drizzle-orm";
 
 export const POST: RequestHandler = async ({ params }) => {
-  const player = await db
+  const player = await getDb()
     .select()
     .from(schema.players)
     .where(eq(schema.players.id, params.id))
@@ -15,7 +15,7 @@ export const POST: RequestHandler = async ({ params }) => {
     return json({ error: "Player is not archived" }, { status: 400 });
   }
 
-  await db
+  await getDb()
     .update(schema.players)
     .set({ deletedAt: null, updatedAt: new Date() })
     .where(eq(schema.players.id, params.id));
