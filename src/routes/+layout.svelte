@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import "../app.css";
     import { FloatingNav, Toast } from "$lib/components/ui";
+    import ThemeSwitcher from "$lib/components/ui/ThemeSwitcher.svelte";
     import EmailGate from "$lib/components/ui/EmailGate.svelte";
     import { emailStore } from "$lib/stores/email";
 
@@ -34,7 +35,7 @@
 {#if isLoading}
     <!-- Loading spinner while checking localStorage -->
     <div
-        class="min-h-dvh bg-[#F4F2EE] dark:bg-[#0A0A0A] flex items-center justify-center"
+        class="min-h-dvh bg-page dark:bg-page-deep flex items-center justify-center"
     >
         <div class="flex flex-col items-center gap-4">
             <div
@@ -49,12 +50,13 @@
     <EmailGate />
 {:else}
     <div
-        class="min-h-dvh bg-[#F4F2EE] dark:bg-[#0A0A0A] text-zinc-900 dark:text-white font-sans"
+        class="min-h-dvh bg-page dark:bg-page-deep text-zinc-900 dark:text-white font-sans"
     >
         <FloatingNav />
         <main class="pt-16 pb-16 px-4 md:px-8 max-w-7xl mx-auto">
             {@render children()}
         </main>
+        <ThemeSwitcher />
         <Toast />
     </div>
 {/if}

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Lekton:ital,wght@0,400;0,700;1,400&family=Oregano:ital@0;1&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Caveat:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Lekton:ital,wght@0,400;0,700;1,400&family=Oregano:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 /* Prevent scrollbar-induced layout shifts */
@@ -8,22 +8,80 @@ body {
 }
 
 @theme {
+    /* Fonts — default is Focus, overridden per theme via [data-theme] */
     --font-sans: "Bricolage Grotesque", system-ui, sans-serif;
     --font-display: "Bricolage Grotesque", system-ui, sans-serif;
     --font-mono: "Lekton", ui-monospace, monospace;
     --font-accent: "Oregano", cursive, sans-serif;
 
+    /* Accent palette — Focus uses emerald, overridden per theme */
     --color-emerald-50: #eef7ee;
     --color-emerald-100: #d5edd5;
     --color-emerald-200: #aedbae;
     --color-emerald-300: #7ec47e;
     --color-emerald-400: #50a850;
-    --color-emerald-500: #3A9434;
+    --color-emerald-500: #3a9434;
     --color-emerald-600: #2d7a28;
     --color-emerald-700: #266122;
     --color-emerald-800: #214e1f;
     --color-emerald-900: #1c401c;
     --color-emerald-950: #0d230d;
+
+    /* Page backgrounds — light & dark, overridden per theme */
+    --color-page: #f4f2ee;
+    --color-page-deep: #0a0a0a;
+}
+
+/* ─── Coastal ───────────────────────────────────────────
+   Palette: #2B2D42 · #8D99AE · #EDF2F4 · #EF233C · #D90429
+   Fonts:  Space Grotesk (display) · DM Sans (body)            */
+
+[data-theme="coastal"] {
+    --font-sans: "DM Sans", system-ui, sans-serif;
+    --font-display: "Space Grotesk", system-ui, sans-serif;
+    --font-mono: "DM Sans", ui-monospace, monospace;
+    --font-accent: "Space Grotesk", system-ui, sans-serif;
+
+    --color-page: #edf2f4;
+    --color-page-deep: #2b2d42;
+
+    --color-emerald-50: #fef2f4;
+    --color-emerald-100: #fde2e7;
+    --color-emerald-200: #fcc8d1;
+    --color-emerald-300: #f9a0ad;
+    --color-emerald-400: #f46b7d;
+    --color-emerald-500: #ef233c;
+    --color-emerald-600: #d90429;
+    --color-emerald-700: #b5101f;
+    --color-emerald-800: #93121e;
+    --color-emerald-900: #7d141f;
+    --color-emerald-950: #44050d;
+}
+
+/* ─── Ogee ──────────────────────────────────────────────
+   Palette: #252E41 · #564C43 · #8E7B67 · #BAAB97 · #E08380 · #A0CDD9 · #C8E3E9 · #F0F9F9
+   Fonts:  Caveat (handwritten display) · JetBrains Mono (mono)                              */
+
+[data-theme="ogee"] {
+    --font-sans: "JetBrains Mono", ui-monospace, monospace;
+    --font-display: "Caveat", cursive, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --font-accent: "Caveat", cursive, sans-serif;
+
+    --color-page: #f0f9f9;
+    --color-page-deep: #252e41;
+
+    --color-emerald-50: #fef4f3;
+    --color-emerald-100: #fde5e3;
+    --color-emerald-200: #fcccc9;
+    --color-emerald-300: #f8a8a4;
+    --color-emerald-400: #f08882;
+    --color-emerald-500: #e08380;
+    --color-emerald-600: #c4625f;
+    --color-emerald-700: #a44d4b;
+    --color-emerald-800: #874241;
+    --color-emerald-900: #713b3b;
+    --color-emerald-950: #3d1c1c;
 }
 
 /* Custom transition */

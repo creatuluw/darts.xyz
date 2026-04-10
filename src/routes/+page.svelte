@@ -47,9 +47,9 @@
     <EyebrowTag>Darts Scoring App</EyebrowTag>
 
     <h1
-        class="font-display font-black text-7xl md:text-8xl lg:text-9xl tracking-tight mt-6 mb-4"
+        class="font-display font-black text-7xl md:text-8xl lg:text-7xl tracking-tight mt-6 mb-4"
     >
-        DARTS
+        dart.monster
     </h1>
 
     <p
