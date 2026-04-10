@@ -4,16 +4,47 @@ import { eq, and, desc, sql, inArray, isNull } from "drizzle-orm";
 export class DatabaseService {
   // === PLAYERS ===
 
-  async createPlayer(name: string) {
-    // Check if player exists (case-insensitive)
-    const existing = await db
+  async createPlayer(name: string, email: string) {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if player already exists with this email (unique constraint)
+    const existingByEmail = await db
       .select()
       .from(schema.players)
-      .where(sql`LOWER(${schema.players.name}) = LOWER(${name})`)
+      .where(
+        and(
+          eq(schema.players.email, normalizedEmail),
+          isNull(schema.players.deletedAt),
+        ),
+      )
       .limit(1);
-    if (existing.length > 0) return existing[0];
+    if (existingByEmail.length > 0) return existingByEmail[0];
 
-    const result = await db.insert(schema.players).values({ name }).returning();
+    // Check if player exists by name (case-insensitive) for this email account
+    const existingByName = await db
+      .select()
+      .from(schema.players)
+      .where(
+        and(
+          sql`LOWER(${schema.players.name}) = LOWER(${name})`,
+          eq(schema.players.email, normalizedEmail),
+          isNull(schema.players.deletedAt),
+        ),
+      )
+      .limit(1);
+    if (existingByName.length > 0) return existingByName[0];
+
+    // Create new player with explicit values
+    const result = await db
+      .insert(schema.players)
+      .values({
+        name: name.trim(),
+        email: normalizedEmail,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
     // Also create empty stats row
     await db.insert(schema.playerStats).values({ playerId: result[0].id });
     return result[0];
@@ -24,6 +55,20 @@ export class DatabaseService {
       .select()
       .from(schema.players)
       .where(and(eq(schema.players.id, id), isNull(schema.players.deletedAt)))
+      .limit(1);
+    return result[0] || null;
+  }
+
+  async getPlayerByEmail(email: string) {
+    const result = await db
+      .select()
+      .from(schema.players)
+      .where(
+        and(
+          eq(schema.players.email, email.toLowerCase()),
+          isNull(schema.players.deletedAt),
+        ),
+      )
       .limit(1);
     return result[0] || null;
   }
@@ -42,7 +87,20 @@ export class DatabaseService {
     return result[0] || null;
   }
 
-  async getAllPlayers() {
+  async getAllPlayers(email?: string) {
+    if (email) {
+      // Get all players for a specific email
+      return db
+        .select()
+        .from(schema.players)
+        .where(
+          and(
+            eq(schema.players.email, email.toLowerCase()),
+            isNull(schema.players.deletedAt),
+          ),
+        )
+        .orderBy(desc(schema.players.createdAt));
+    }
     return db
       .select()
       .from(schema.players)
@@ -136,7 +194,28 @@ export class DatabaseService {
       .orderBy(desc(schema.matches.createdAt));
   }
 
-  async getRecentMatches(limit = 10) {
+  async getRecentMatches(limit = 10, email?: string) {
+    // If email provided, filter matches by that email's players
+    if (email) {
+      const player = await this.getPlayerByEmail(email);
+      if (!player) return [];
+
+      const matchPlayers = await db
+        .select({ matchId: schema.matchPlayers.matchId })
+        .from(schema.matchPlayers)
+        .where(eq(schema.matchPlayers.playerId, player.id));
+
+      const matchIds = matchPlayers.map((mp) => mp.matchId);
+      if (matchIds.length === 0) return [];
+
+      return db
+        .select()
+        .from(schema.matches)
+        .where(inArray(schema.matches.id, matchIds))
+        .orderBy(desc(schema.matches.createdAt))
+        .limit(limit);
+    }
+
     return db
       .select()
       .from(schema.matches)
@@ -338,6 +417,56 @@ export class DatabaseService {
       .from(schema.turns)
       .where(eq(schema.turns.playerId, playerId))
       .orderBy(schema.turns.createdAt);
+  }
+
+  // === EMAIL-BASED QUERIES ===
+
+  /**
+   * Get all data associated with an email address.
+   * Returns player info, stats, and recent matches.
+   */
+  async getDataByEmail(email: string) {
+    const player = await this.getPlayerByEmail(email);
+    if (!player) {
+      return null;
+    }
+
+    const stats = await this.getPlayerStats(player.id);
+    const recentMatches = await this.getMatchesForPlayer(player.id);
+
+    // Get match players for recent matches
+    const matchIds = recentMatches.map((m) => m.id);
+    const matchPlayers =
+      matchIds.length > 0
+        ? await db
+            .select()
+            .from(schema.matchPlayers)
+            .where(inArray(schema.matchPlayers.matchId, matchIds))
+        : [];
+
+    // Get legs for recent matches
+    const legs = await this.getAllLegsForMatches(matchIds);
+
+    // Get turns for those legs
+    const legIds = legs.map((l) => l.id);
+    const turns = await this.getTurnsForLegs(legIds);
+
+    return {
+      player,
+      stats,
+      matches: recentMatches,
+      matchPlayers,
+      legs,
+      turns,
+    };
+  }
+
+  /**
+   * Check if email exists in the database
+   */
+  async emailExists(email: string): Promise<boolean> {
+    const player = await this.getPlayerByEmail(email);
+    return player !== null;
   }
 }
 
