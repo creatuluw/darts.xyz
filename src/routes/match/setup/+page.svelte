@@ -16,9 +16,9 @@
     let starting = $state(false);
 
     onMount(async () => {
-        const email = emailStore.getEmail();
+        const accountId = emailStore.getEmail();
         const res = await fetch(
-            `/api/players?email=${encodeURIComponent(email)}`,
+            `/api/players?accountId=${encodeURIComponent(accountId)}`,
         );
         players = await res.json();
         loading = false;
@@ -34,12 +34,12 @@
         if (selectedPlayers.length < 1) return;
         starting = true;
 
-        const email = emailStore.getEmail();
+        const accountId = emailStore.getEmail();
         const res = await fetch("/api/matches", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                email,
+                email: accountId,
                 startingScore,
                 legsPerSet,
                 setsPerMatch,

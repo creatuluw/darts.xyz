@@ -4,42 +4,30 @@ import { eq, and, desc, sql, inArray, isNull } from "drizzle-orm";
 export class DatabaseService {
   // === PLAYERS ===
 
-  async createPlayer(name: string, email: string) {
-    const normalizedEmail = email.toLowerCase().trim();
+  async createPlayer(name: string, accountId: string, playerEmail?: string) {
+    const normalizedAccountId = accountId.toLowerCase().trim();
 
-    // Check if player already exists with this email (unique constraint)
-    const existingByEmail = await getDb()
-      .select()
-      .from(schema.players)
-      .where(
-        and(
-          eq(schema.players.email, normalizedEmail),
-          isNull(schema.players.deletedAt),
-        ),
-      )
-      .limit(1);
-    if (existingByEmail.length > 0) return existingByEmail[0];
-
-    // Check if player exists by name (case-insensitive) for this email account
+    // Check if player with same name already exists for this account
     const existingByName = await getDb()
       .select()
       .from(schema.players)
       .where(
         and(
           sql`LOWER(${schema.players.name}) = LOWER(${name})`,
-          eq(schema.players.email, normalizedEmail),
+          eq(schema.players.accountId, normalizedAccountId),
           isNull(schema.players.deletedAt),
         ),
       )
       .limit(1);
     if (existingByName.length > 0) return existingByName[0];
 
-    // Create new player with explicit values
+    // Create new player associated with the account
     const result = await getDb()
       .insert(schema.players)
       .values({
         name: name.trim(),
-        email: normalizedEmail,
+        accountId: normalizedAccountId,
+        playerEmail: playerEmail?.trim().toLowerCase() || null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -59,13 +47,13 @@ export class DatabaseService {
     return result[0] || null;
   }
 
-  async getPlayerByEmail(email: string) {
+  async getPlayerByAccountId(accountId: string) {
     const result = await getDb()
       .select()
       .from(schema.players)
       .where(
         and(
-          eq(schema.players.email, email.toLowerCase()),
+          eq(schema.players.accountId, accountId.toLowerCase()),
           isNull(schema.players.deletedAt),
         ),
       )
@@ -87,15 +75,15 @@ export class DatabaseService {
     return result[0] || null;
   }
 
-  async getAllPlayers(email?: string) {
-    if (email) {
-      // Get all players for a specific email
+  async getAllPlayers(accountId?: string) {
+    if (accountId) {
+      // Get all players for a specific account
       return getDb()
         .select()
         .from(schema.players)
         .where(
           and(
-            eq(schema.players.email, email.toLowerCase()),
+            eq(schema.players.accountId, accountId.toLowerCase()),
             isNull(schema.players.deletedAt),
           ),
         )
@@ -109,7 +97,6 @@ export class DatabaseService {
   }
 
   async softDeletePlayer(id: string) {
-    // Soft delete: set deletedAt timestamp, preserve all match/replay data
     await getDb()
       .update(schema.players)
       .set({ deletedAt: new Date(), updatedAt: new Date() })
@@ -117,7 +104,6 @@ export class DatabaseService {
   }
 
   async deletePlayer(id: string) {
-    // Alias to softDeletePlayer for backwards compatibility
     return this.softDeletePlayer(id);
   }
 
@@ -163,7 +149,6 @@ export class DatabaseService {
   }
 
   async deleteMatch(id: string) {
-    // Get all legs for this match
     const matchLegs = await getDb()
       .select({ id: schema.legs.id })
       .from(schema.legs)
@@ -171,22 +156,16 @@ export class DatabaseService {
 
     const legIds = matchLegs.map((l) => l.id);
 
-    // Delete turns for all legs
     if (legIds.length > 0) {
       await getDb()
         .delete(schema.turns)
         .where(inArray(schema.turns.legId, legIds));
     }
 
-    // Delete legs
     await getDb().delete(schema.legs).where(eq(schema.legs.matchId, id));
-
-    // Delete match players
     await getDb()
       .delete(schema.matchPlayers)
       .where(eq(schema.matchPlayers.matchId, id));
-
-    // Delete the match itself
     await getDb().delete(schema.matches).where(eq(schema.matches.id, id));
   }
 
@@ -198,14 +177,12 @@ export class DatabaseService {
       .orderBy(desc(schema.matches.createdAt));
   }
 
-  async getRecentMatches(limit = 10, email?: string) {
-    // If email provided, filter matches by accountId on matches table
-    if (email) {
-      // Primary: filter by accountId on matches table
+  async getRecentMatches(limit = 10, accountId?: string) {
+    if (accountId) {
       return getDb()
         .select()
         .from(schema.matches)
-        .where(eq(schema.matches.accountId, email.toLowerCase()))
+        .where(eq(schema.matches.accountId, accountId.toLowerCase()))
         .orderBy(desc(schema.matches.createdAt))
         .limit(limit);
     }
@@ -413,20 +390,23 @@ export class DatabaseService {
       .orderBy(schema.turns.createdAt);
   }
 
-  // === EMAIL-BASED QUERIES ===
+  // === ACCOUNT-BASED QUERIES ===
 
   /**
-   * Get all data associated with an email address.
-   * Returns player info, stats, and recent matches.
+   * Get all data associated with an account (accountId / email).
+   * Returns players, stats, and recent matches.
    */
-  async getDataByEmail(email: string) {
-    const player = await this.getPlayerByEmail(email);
-    if (!player) {
+  async getDataByAccountId(accountId: string) {
+    const players = await this.getAllPlayers(accountId);
+    if (players.length === 0) {
       return null;
     }
 
-    const stats = await this.getPlayerStats(player.id);
-    const recentMatches = await this.getMatchesForPlayer(player.id);
+    const allStats = await Promise.all(
+      players.map((p) => this.getPlayerStats(p.id)),
+    );
+
+    const recentMatches = await this.getRecentMatches(20, accountId);
 
     // Get match players for recent matches
     const matchIds = recentMatches.map((m) => m.id);
@@ -446,8 +426,8 @@ export class DatabaseService {
     const turns = await this.getTurnsForLegs(legIds);
 
     return {
-      player,
-      stats,
+      players,
+      stats: allStats,
       matches: recentMatches,
       matchPlayers,
       legs,
@@ -456,11 +436,11 @@ export class DatabaseService {
   }
 
   /**
-   * Check if email exists in the database
+   * Check if any players exist for an account
    */
-  async emailExists(email: string): Promise<boolean> {
-    const player = await this.getPlayerByEmail(email);
-    return player !== null;
+  async accountExists(accountId: string): Promise<boolean> {
+    const players = await this.getAllPlayers(accountId);
+    return players.length > 0;
   }
 }
 

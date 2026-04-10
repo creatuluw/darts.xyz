@@ -3,10 +3,13 @@ import type { RequestHandler } from "./$types";
 import { dbService } from "$lib/db/database-service";
 
 export const GET: RequestHandler = async ({ url }) => {
-  const email = url.searchParams.get("email");
+  const accountId = url.searchParams.get("accountId");
   const limit = parseInt(url.searchParams.get("limit") || "50");
 
-  const matches = await dbService.getRecentMatches(limit, email || undefined);
+  const matches = await dbService.getRecentMatches(
+    limit,
+    accountId || undefined,
+  );
 
   // For each match, get the match players and their names
   const matchesWithPlayers = await Promise.all(

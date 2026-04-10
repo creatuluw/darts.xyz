@@ -3,14 +3,13 @@ import type { RequestHandler } from "./$types";
 import { dbService } from "$lib/db/database-service";
 
 export const GET: RequestHandler = async ({ url }) => {
-  const email = url.searchParams.get("email");
+  const accountId = url.searchParams.get("accountId");
   const playerId = url.searchParams.get("playerId");
   const status = url.searchParams.get("status");
   const limit = parseInt(url.searchParams.get("limit") || "20");
 
-  if (email) {
-    // Get matches filtered by email
-    const matches = await dbService.getRecentMatches(limit, email);
+  if (accountId) {
+    const matches = await dbService.getRecentMatches(limit, accountId);
     return json(matches);
   }
 
@@ -37,17 +36,18 @@ export const POST: RequestHandler = async ({ request }) => {
     players = [],
   } = body;
 
-  // If email provided, ensure player exists for this email
+  const accountId = email?.toLowerCase() || null;
+
+  // If accountId provided, ensure players exist for this account
   let processedPlayers = players;
-  if (email) {
-    // For each player, associate with the email
+  if (accountId) {
     processedPlayers = await Promise.all(
-      players.map(async (p: any, index: number) => {
+      players.map(async (p: any) => {
         if (p.id) {
           return p;
         }
-        // Create new player with email
-        const newPlayer = await dbService.createPlayer(p.name, email);
+        // Create new player associated with this account
+        const newPlayer = await dbService.createPlayer(p.name, accountId);
         return { ...p, id: newPlayer.id };
       }),
     );
@@ -58,7 +58,7 @@ export const POST: RequestHandler = async ({ request }) => {
     legsPerSet,
     setsPerMatch,
     doubleIn,
-    accountId: email?.toLowerCase() || null,
+    accountId,
   });
 
   // Add players to match

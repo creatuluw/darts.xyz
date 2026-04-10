@@ -7,11 +7,13 @@
         IconArrowRight,
         IconPlus,
         IconX,
+        IconMail,
     } from "@tabler/icons-svelte";
     import { emailStore } from "$lib/stores/email";
 
     let players = $state<any[]>([]);
     let newName = $state("");
+    let newPlayerEmail = $state("");
     let search = $state("");
     let loading = $state(true);
     let creating = $state(false);
@@ -23,9 +25,9 @@
 
     async function loadPlayers() {
         loading = true;
-        const email = emailStore.getEmail();
+        const accountId = emailStore.getEmail();
         const res = await fetch(
-            `/api/players?email=${encodeURIComponent(email)}`,
+            `/api/players?accountId=${encodeURIComponent(accountId)}`,
         );
         players = await res.json();
         loading = false;
@@ -34,38 +36,29 @@
     async function createPlayer() {
         if (!newName.trim()) return;
 
-        const email = emailStore.getEmail();
-        if (!email) return;
+        const accountId = emailStore.getEmail();
+        if (!accountId) return;
 
         creating = true;
         try {
-            console.log(
-                "Creating player:",
-                newName.trim(),
-                "with email:",
-                email,
-            );
             const res = await fetch("/api/players", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     name: newName.trim(),
-                    email: email,
+                    accountId,
+                    playerEmail: newPlayerEmail.trim() || undefined,
                 }),
             });
-            console.log("Response status:", res.status);
-            const data = await res.json();
-            console.log("Response data:", data);
             if (!res.ok) {
-                console.error("Failed to create player:", data);
                 creating = false;
                 return;
             }
             newName = "";
+            newPlayerEmail = "";
             creating = false;
             showModal = false;
             await loadPlayers();
-            console.log("Player created successfully, list reloaded");
         } catch (e) {
             console.error("Error creating player:", e);
             creating = false;
@@ -75,6 +68,7 @@
     function closeModal() {
         showModal = false;
         newName = "";
+        newPlayerEmail = "";
     }
 
     let filteredPlayers = $derived(
@@ -195,11 +189,36 @@
                     <input
                         type="text"
                         bind:value={newName}
-                        placeholder="Enter name..."
+                        placeholder="Player name"
                         autofocus
                         class="w-full bg-zinc-50 dark:bg-white/5 rounded-full px-4 py-2.5 text-sm ring-1 ring-black/[0.06] dark:ring-white/10 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
                         onkeydown={(e) => e.key === "Enter" && createPlayer()}
                     />
+                    <div>
+                        <div class="relative">
+                            <IconMail
+                                size={16}
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
+                            />
+                            <input
+                                type="email"
+                                bind:value={newPlayerEmail}
+                                placeholder="Player email (optional)"
+                                autocomplete="email"
+                                class="w-full bg-zinc-50 dark:bg-white/5 rounded-full pl-11 pr-4 py-2.5 text-sm ring-1 ring-black/[0.06] dark:ring-white/10 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                                onkeydown={(e) =>
+                                    e.key === "Enter" && createPlayer()}
+                            />
+                        </div>
+                        <p
+                            class="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1.5 px-1"
+                        >
+                            Link a player to their email for cross-account sync.
+                            <span class="text-zinc-300 dark:text-zinc-600"
+                                >(Coming soon)</span
+                            >
+                        </p>
+                    </div>
                     <PillButton
                         onclick={createPlayer}
                         disabled={creating || !newName.trim()}

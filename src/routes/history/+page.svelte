@@ -27,9 +27,9 @@
     );
 
     onMount(async () => {
-        const email = emailStore.getEmail();
+        const accountId = emailStore.getEmail();
         const res = await fetch(
-            `/api/matches/with-players?email=${encodeURIComponent(email)}&limit=50`,
+            `/api/matches/with-players?accountId=${encodeURIComponent(accountId)}&limit=50`,
         );
         matches = await res.json();
         loading = false;
