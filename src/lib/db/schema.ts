@@ -39,6 +39,29 @@ export const players = darts.table(
   }),
 );
 
+// === VERIFICATION_TOKENS ===
+export const verificationTokens = darts.table(
+  "verification_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    playerId: uuid("player_id")
+      .notNull()
+      .references(() => players.id, { onDelete: "cascade" }),
+    token: varchar("token", { length: 255 }).notNull(),
+    email: varchar("email", { length: 255 }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    tokenIdx: uniqueIndex("idx_verification_tokens_token").on(table.token),
+    playerIdx: index("idx_verification_tokens_player").on(table.playerId),
+    emailIdx: index("idx_verification_tokens_email").on(table.email),
+  }),
+);
+
 // === ACCOUNT_SETTINGS ===
 export const accountSettings = darts.table(
   "account_settings",
