@@ -39,6 +39,29 @@ export const players = darts.table(
   }),
 );
 
+// === ACCOUNT_SETTINGS ===
+export const accountSettings = darts.table(
+  "account_settings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    accountId: varchar("account_id", { length: 255 }).notNull().unique(),
+    smtpHost: varchar("smtp_host", { length: 255 }),
+    smtpPort: integer("smtp_port"),
+    smtpUser: varchar("smtp_user", { length: 255 }),
+    smtpPassword: varchar("smtp_password", { length: 255 }),
+    smtpFrom: varchar("smtp_from", { length: 255 }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    accountIdx: uniqueIndex("idx_account_settings_account").on(table.accountId),
+  }),
+);
+
 // === MATCHES ===
 export const matches = darts.table(
   "matches",

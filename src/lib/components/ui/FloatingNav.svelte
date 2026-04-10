@@ -14,6 +14,8 @@
         IconArrowRight,
         IconX,
         IconCheck,
+        IconSettings,
+        IconServer,
     } from "@tabler/icons-svelte";
     import { emailStore, accountsStore } from "$lib/stores/email";
     import { addToast } from "$lib/stores/toast";
@@ -36,8 +38,18 @@
     let accounts = $state<string[]>([]);
     let showAccountMenu = $state(false);
     let showAddAccountModal = $state(false);
+    let showSettingsModal = $state(false);
     let newAccountEmail = $state("");
     let newAccountError = $state("");
+
+    // Settings state
+    let settingsLoading = $state(false);
+    let settingsSaving = $state(false);
+    let smtpHost = $state("");
+    let smtpPort = $state("");
+    let smtpUser = $state("");
+    let smtpPassword = $state("");
+    let smtpFrom = $state("");
 
     $effect(() => {
         const unsubEmail = emailStore.subscribe((email) => {
@@ -77,6 +89,75 @@
         newAccountError = "";
     }
 
+    async function openSettingsModal() {
+        showAccountMenu = false;
+        smtpHost = "";
+        smtpPort = "";
+        smtpUser = "";
+        smtpPassword = "";
+        smtpFrom = "";
+        showSettingsModal = true;
+        settingsLoading = true;
+
+        try {
+            const accountId = emailStore.getEmail();
+            const res = await fetch(
+                `/api/settings?accountId=${encodeURIComponent(accountId)}`,
+            );
+            const data = await res.json();
+            if (data.smtp_host) {
+                smtpHost = data.smtp_host || "";
+                smtpPort = data.smtp_port?.toString() || "";
+                smtpUser = data.smtp_user || "";
+                smtpPassword = data.smtp_password || "";
+                smtpFrom = data.smtp_from || "";
+            }
+        } catch (e) {
+            console.error("Failed to load settings:", e);
+        } finally {
+            settingsLoading = false;
+        }
+    }
+
+    function closeSettingsModal() {
+        showSettingsModal = false;
+    }
+
+    async function handleSaveSettings() {
+        settingsSaving = true;
+        const accountId = emailStore.getEmail();
+
+        try {
+            const res = await fetch("/api/settings", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    accountId,
+                    smtpHost: smtpHost.trim() || null,
+                    smtpPort: smtpPort.trim() ? parseInt(smtpPort) : null,
+                    smtpUser: smtpUser.trim() || null,
+                    smtpPassword: smtpPassword.trim() || null,
+                    smtpFrom: smtpFrom.trim() || null,
+                }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                addToast(data.error || "Failed to save settings", "error");
+                settingsSaving = false;
+                return;
+            }
+
+            addToast("Settings saved", "success");
+            showSettingsModal = false;
+        } catch (e) {
+            console.error("Failed to save settings:", e);
+            addToast("Failed to save settings", "error");
+        } finally {
+            settingsSaving = false;
+        }
+    }
+
     function handleAddAccount() {
         const trimmed = newAccountEmail.trim().toLowerCase();
 
@@ -92,7 +173,6 @@
         }
 
         if (accounts.includes(trimmed)) {
-            // Already exists — just switch to it
             emailStore.switchTo(trimmed);
             closeAddAccountModal();
             addToast(`Switched to ${trimmed}`, "success");
@@ -229,6 +309,14 @@
                             <IconUserPlus size={16} />
                             Add account
                         </button>
+                        <button
+                            onclick={openSettingsModal}
+                            class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                            role="menuitem"
+                        >
+                            <IconSettings size={16} />
+                            Settings
+                        </button>
                         {#if accounts.length > 0}
                             <button
                                 onclick={handleSignOut}
@@ -257,13 +345,12 @@
         role="dialog"
         aria-modal="true"
         aria-label="Add account"
+        tabindex="-1"
     >
         <div class="w-full max-w-sm mx-4">
             <DoubleBezel>
                 <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <EyebrowTag>Account</EyebrowTag>
-                    </div>
+                    <EyebrowTag>Account</EyebrowTag>
                     <button
                         onclick={closeAddAccountModal}
                         class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors cursor-pointer"
@@ -293,7 +380,6 @@
                             type="email"
                             bind:value={newAccountEmail}
                             placeholder="your@email.com"
-                            autofocus
                             autocomplete="email"
                             class="w-full bg-zinc-50 dark:bg-white/5 rounded-full pl-12 pr-4 py-3 text-base ring-1 ring-black/6 dark:ring-white/10 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
                         />
@@ -314,6 +400,148 @@
                         </span>
                     </PillButton>
                 </form>
+            </DoubleBezel>
+        </div>
+    </div>
+{/if}
+
+<!-- Settings Modal -->
+{#if showSettingsModal}
+    <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+        onclick={(e) => {
+            if (e.target === e.currentTarget) closeSettingsModal();
+        }}
+        onkeydown={(e) => e.key === "Escape" && closeSettingsModal()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Settings"
+        tabindex="-1"
+    >
+        <div class="w-full max-w-md mx-4">
+            <DoubleBezel>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <IconSettings size={18} class="text-zinc-400" />
+                        <EyebrowTag>Settings</EyebrowTag>
+                    </div>
+                    <button
+                        onclick={closeSettingsModal}
+                        class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+                    >
+                        <IconX size={18} />
+                    </button>
+                </div>
+
+                {#if settingsLoading}
+                    <div class="text-center text-zinc-400 py-8">Loading...</div>
+                {:else}
+                    <!-- SMTP Configuration -->
+                    <div class="mb-5">
+                        <div class="flex items-center gap-2 mb-3">
+                            <IconServer size={16} class="text-zinc-400" />
+                            <h3
+                                class="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                            >
+                                SMTP Configuration
+                            </h3>
+                        </div>
+                        <p class="text-xs text-zinc-400 mb-4">
+                            Configure an SMTP server to enable email
+                            verification for players. This allows cross-account
+                            player linking.
+                        </p>
+
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="col-span-2">
+                                    <label
+                                        class="text-[10px] uppercase tracking-wider text-zinc-400 font-medium mb-1 block"
+                                    >
+                                        Host
+                                    </label>
+                                    <input
+                                        type="text"
+                                        bind:value={smtpHost}
+                                        placeholder="smtp.gmail.com"
+                                        class="w-full bg-zinc-50 dark:bg-white/5 rounded-lg px-3 py-2 text-sm ring-1 ring-black/6 dark:ring-white/10 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label
+                                        class="text-[10px] uppercase tracking-wider text-zinc-400 font-medium mb-1 block"
+                                    >
+                                        Port
+                                    </label>
+                                    <input
+                                        type="text"
+                                        bind:value={smtpPort}
+                                        placeholder="465"
+                                        class="w-full bg-zinc-50 dark:bg-white/5 rounded-lg px-3 py-2 text-sm ring-1 ring-black/6 dark:ring-white/10 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label
+                                    class="text-[10px] uppercase tracking-wider text-zinc-400 font-medium mb-1 block"
+                                >
+                                    Username
+                                </label>
+                                <input
+                                    type="text"
+                                    bind:value={smtpUser}
+                                    placeholder="user@example.com"
+                                    autocomplete="off"
+                                    class="w-full bg-zinc-50 dark:bg-white/5 rounded-lg px-3 py-2 text-sm ring-1 ring-black/6 dark:ring-white/10 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    class="text-[10px] uppercase tracking-wider text-zinc-400 font-medium mb-1 block"
+                                >
+                                    Password
+                                </label>
+                                <input
+                                    type="password"
+                                    bind:value={smtpPassword}
+                                    placeholder="••••••••"
+                                    autocomplete="new-password"
+                                    class="w-full bg-zinc-50 dark:bg-white/5 rounded-lg px-3 py-2 text-sm ring-1 ring-black/6 dark:ring-white/10 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    class="text-[10px] uppercase tracking-wider text-zinc-400 font-medium mb-1 block"
+                                >
+                                    From Address
+                                </label>
+                                <input
+                                    type="email"
+                                    bind:value={smtpFrom}
+                                    placeholder="noreply@yourdomain.com"
+                                    class="w-full bg-zinc-50 dark:bg-white/5 rounded-lg px-3 py-2 text-sm ring-1 ring-black/6 dark:ring-white/10 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-white/10"
+                    >
+                        <p class="text-[10px] text-zinc-400">
+                            Settings stored per account
+                        </p>
+                        <PillButton
+                            onclick={handleSaveSettings}
+                            disabled={settingsSaving}
+                        >
+                            {settingsSaving ? "Saving..." : "Save Settings"}
+                        </PillButton>
+                    </div>
+                {/if}
             </DoubleBezel>
         </div>
     </div>

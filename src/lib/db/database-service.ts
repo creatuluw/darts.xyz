@@ -96,6 +96,13 @@ export class DatabaseService {
       .orderBy(desc(schema.players.createdAt));
   }
 
+  async updatePlayerEmail(id: string, playerEmail: string | null) {
+    await getDb()
+      .update(schema.players)
+      .set({ playerEmail, updatedAt: new Date() })
+      .where(eq(schema.players.id, id));
+  }
+
   async softDeletePlayer(id: string) {
     await getDb()
       .update(schema.players)
@@ -348,6 +355,47 @@ export class DatabaseService {
       .update(schema.playerStats)
       .set({ ...stats, updatedAt: new Date() })
       .where(eq(schema.playerStats.playerId, playerId));
+  }
+
+  // === ACCOUNT SETTINGS ===
+
+  async getAccountSettings(accountId: string) {
+    const result = await getDb()
+      .select()
+      .from(schema.accountSettings)
+      .where(eq(schema.accountSettings.accountId, accountId.toLowerCase()))
+      .limit(1);
+    return result[0] || null;
+  }
+
+  async upsertAccountSettings(
+    accountId: string,
+    settings: {
+      smtpHost?: string | null;
+      smtpPort?: number | null;
+      smtpUser?: string | null;
+      smtpPassword?: string | null;
+      smtpFrom?: string | null;
+    },
+  ) {
+    const existing = await this.getAccountSettings(accountId);
+
+    if (existing) {
+      await getDb()
+        .update(schema.accountSettings)
+        .set({ ...settings, updatedAt: new Date() })
+        .where(eq(schema.accountSettings.accountId, accountId.toLowerCase()));
+      return this.getAccountSettings(accountId);
+    }
+
+    const result = await getDb()
+      .insert(schema.accountSettings)
+      .values({
+        accountId: accountId.toLowerCase(),
+        ...settings,
+      })
+      .returning();
+    return result[0];
   }
 
   // === HELPERS ===
