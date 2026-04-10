@@ -1801,7 +1801,7 @@
                             <div
                                 class="font-display font-black text-8xl tracking-tight leading-none"
                             >
-                                {sp.remainingScore}
+                                <AnimatedNumber value={sp.remainingScore} />
                             </div>
                             <div class="mt-2 font-medium text-sm">
                                 {sp.name}
