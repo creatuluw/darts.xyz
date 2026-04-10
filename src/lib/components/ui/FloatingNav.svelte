@@ -153,7 +153,7 @@
         <div class="relative ml-1" data-account-menu>
             <button
                 onclick={toggleAccountMenu}
-                class="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-zinc-100 dark:hover:bg-white/10"
+                class="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-zinc-100 dark:hover:bg-white/10"
             >
                 <div
                     class="w-7 h-7 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center text-xs font-bold"
@@ -205,7 +205,7 @@
                             {#if account !== userEmail}
                                 <button
                                     onclick={() => handleSwitchAccount(account)}
-                                    class="w-full px-3 py-2 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-white/5"
+                                    class="w-full px-3 py-2 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-white/5 cursor-pointer"
                                 >
                                     <div
                                         class="w-7 h-7 rounded-full bg-zinc-200 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 flex items-center justify-center text-xs font-bold flex-shrink-0"
@@ -234,7 +234,7 @@
                     ></div>
                     <button
                         onclick={openAddAccountModal}
-                        class="w-full px-3 py-2.5 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300"
+                        class="w-full px-3 py-2.5 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300 cursor-pointer"
                     >
                         <IconUserPlus
                             size={16}
@@ -244,7 +244,7 @@
                     </button>
                     <button
                         onclick={handleSignOut}
-                        class="w-full px-3 py-2.5 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400"
+                        class="w-full px-3 py-2.5 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 cursor-pointer"
                     >
                         <IconLogout size={16} />
                         Sign out

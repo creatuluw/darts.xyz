@@ -217,19 +217,10 @@
 
             <!-- Actions -->
             <div class="flex items-center gap-2 flex-shrink-0 mt-6">
-                {#if isInProgress}
-                    <button onclick={handleResume}>
-                        <PillButton>
-                            <IconPlayerPlay size={16} />
-                            Resume
-                        </PillButton>
-                    </button>
-                {/if}
-
                 {#if !showDeleteConfirm}
                     <button
                         onclick={handleDelete}
-                        class="rounded-full px-4 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors inline-flex items-center gap-1.5"
+                        class="cursor-pointer rounded-full px-4 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors inline-flex items-center gap-1.5"
                     >
                         <IconTrash size={14} />
                         Delete
@@ -261,6 +252,15 @@
                             Cancel
                         </button>
                     </div>
+                {/if}
+
+                {#if isInProgress}
+                    <button onclick={handleResume}>
+                        <PillButton>
+                            <IconPlayerPlay size={16} />
+                            Resume
+                        </PillButton>
+                    </button>
                 {/if}
             </div>
         </div>
