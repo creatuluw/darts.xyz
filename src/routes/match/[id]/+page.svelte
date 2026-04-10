@@ -876,11 +876,7 @@
                 {@const p1LifetimeAvg = playerStats[p1.id]?.threeDartAvg
                     ? Number(playerStats[p1.id].threeDartAvg).toFixed(1)
                     : "—"}
-                <div
-                    class="{isSoloGame
-                        ? 'md:col-span-4'
-                        : 'md:col-span-3'} order-1 md:order-none space-y-3"
-                >
+                <div class="md:col-span-3 order-1 md:order-none space-y-3">
                     <!-- Player 1 Scoreboard -->
                     <DoubleBezel>
                         <div class="text-center">
@@ -1180,11 +1176,7 @@
             <!-- ============================================ -->
             <!-- CENTER: Score Display + Input + Turn History  -->
             <!-- ============================================ -->
-            <div
-                class="{isSoloGame
-                    ? 'md:col-span-8'
-                    : 'md:col-span-6'} order-3 md:order-none space-y-3"
-            >
+            <div class="md:col-span-6 order-3 md:order-none space-y-3">
                 {#if activeTab === "board"}
                     <!-- Dartboard Input -->
                     <DoubleBezel>
@@ -1791,6 +1783,16 @@
                                     No turns yet
                                 </div>
                             {/if}
+                        </div>
+                    </DoubleBezel>
+                </div>
+            {:else}
+                <div class="md:col-span-3 order-2 md:order-none">
+                    <DoubleBezel>
+                        <div
+                            class="text-center py-12 text-zinc-300 dark:text-zinc-600"
+                        >
+                            <span class="text-sm italic">Solo Practice</span>
                         </div>
                     </DoubleBezel>
                 </div>
