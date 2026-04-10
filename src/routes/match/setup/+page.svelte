@@ -110,7 +110,7 @@
     <DoubleBezel class="mb-4">
         <h2 class="font-display font-bold text-lg mb-4">Match Format</h2>
 
-        <div class="grid grid-cols-4 gap-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div>
                 <p class="text-xs text-zinc-400 uppercase tracking-wider mb-2">
                     Starting Score

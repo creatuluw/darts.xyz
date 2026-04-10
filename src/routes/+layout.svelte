@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import "../app.css";
     import { FloatingNav, Toast } from "$lib/components/ui";
-    import ThemeSwitcher from "$lib/components/ui/ThemeSwitcher.svelte";
+    import FullscreenButton from "$lib/components/ui/FullscreenButton.svelte";
     import EmailGate from "$lib/components/ui/EmailGate.svelte";
     import { emailStore } from "$lib/stores/email";
 
@@ -56,7 +56,7 @@
         <main class="pt-16 pb-16 px-4 md:px-8 max-w-7xl mx-auto">
             {@render children()}
         </main>
-        <ThemeSwitcher />
+        <FullscreenButton />
         <Toast />
     </div>
 {/if}

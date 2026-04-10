@@ -6,6 +6,7 @@
         StyledSelect,
     } from "$lib/components/ui";
     import { IconTarget, IconChartBar } from "@tabler/icons-svelte";
+    import ThemeSwitcher from "$lib/components/ui/ThemeSwitcher.svelte";
     import { voiceSettings, VOICE_OPTIONS } from "$lib/stores/voice-settings";
     import { addToast } from "$lib/stores/toast";
 
@@ -123,3 +124,5 @@
         </div>
     </DoubleBezel>
 </div>
+
+<ThemeSwitcher />

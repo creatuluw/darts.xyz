@@ -863,7 +863,7 @@
         </div>
 
         <!-- 3-Column Bento Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
             <!-- ============================================ -->
             <!-- LEFT: Player 1 Scoreboard + Stats            -->
             <!-- ============================================ -->
@@ -879,8 +879,8 @@
                     : "—"}
                 <div
                     class="{isSoloGame
-                        ? 'lg:col-span-4'
-                        : 'lg:col-span-3'} order-1 lg:order-none space-y-3"
+                        ? 'md:col-span-4'
+                        : 'md:col-span-3'} order-1 md:order-none space-y-3"
                 >
                     <!-- Player 1 Scoreboard -->
                     <DoubleBezel>
@@ -1185,8 +1185,8 @@
             <!-- ============================================ -->
             <div
                 class="{isSoloGame
-                    ? 'lg:col-span-8'
-                    : 'lg:col-span-6'} order-3 lg:order-none space-y-3"
+                    ? 'md:col-span-8'
+                    : 'md:col-span-6'} order-3 md:order-none space-y-3"
             >
                 {#if activeTab === "board"}
                     <!-- Dartboard Input -->
@@ -1504,7 +1504,7 @@
                 {@const p2LifetimeAvg = playerStats[p2.id]?.threeDartAvg
                     ? Number(playerStats[p2.id].threeDartAvg).toFixed(1)
                     : "—"}
-                <div class="lg:col-span-3 order-2 lg:order-none space-y-3">
+                <div class="md:col-span-3 order-2 md:order-none space-y-3">
                     <!-- Player 2 Scoreboard -->
                     <DoubleBezel>
                         <div class="text-center">

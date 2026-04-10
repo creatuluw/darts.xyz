@@ -26,10 +26,9 @@
 
     const links = [
         { href: "/", label: "Home", icon: IconHome },
-        { href: "/match/setup", label: "New Match", icon: IconTarget },
+        { href: "/match/setup", label: "Play", icon: IconTarget },
         { href: "/players", label: "Players", icon: IconUsers },
         { href: "/history", label: "History", icon: IconHistory },
-        { href: "/archive", label: "Archive", icon: IconArchive },
     ];
 
     // Subscribe to stores
@@ -242,6 +241,16 @@
                         />
                         Add another account
                     </button>
+                    <a
+                        href="/archive"
+                        class="w-full px-3 py-2.5 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                    >
+                        <IconArchive
+                            size={16}
+                            class="text-zinc-500 dark:text-zinc-400"
+                        />
+                        Archive
+                    </a>
                     <button
                         onclick={handleSignOut}
                         class="w-full px-3 py-2.5 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 cursor-pointer"
