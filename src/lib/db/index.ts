@@ -8,7 +8,9 @@ let _db: ReturnType<typeof drizzle> | null = null;
 
 export function getDb() {
   if (!_db) {
-    const DATABASE_URL = process.env.DATABASE_URL;
+    // Use process.env for runtime access (not $env/static/private which is build-time)
+    const DATABASE_URL =
+      typeof process !== "undefined" ? process.env?.DATABASE_URL : undefined;
     if (!DATABASE_URL) {
       throw new Error("DATABASE_URL environment variable is not set");
     }
