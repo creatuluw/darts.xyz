@@ -5,7 +5,6 @@
     import {
         DoubleBezel,
         PillButton,
-        EyebrowTag,
         AnimatedNumber,
     } from "$lib/components/ui";
     import {
@@ -142,8 +141,7 @@
     {#if loading}
         <div class="text-center text-zinc-400 py-24">Loading...</div>
     {:else if player}
-        <EyebrowTag>Player Profile</EyebrowTag>
-        <div class="flex items-center justify-between mt-4">
+        <div class="flex items-center justify-between">
             <h1 class="font-display font-extrabold text-5xl md:text-6xl">
                 {player.name}
             </h1>

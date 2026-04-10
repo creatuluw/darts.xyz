@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { DoubleBezel, PillButton, EyebrowTag } from "$lib/components/ui";
+    import { DoubleBezel, PillButton } from "$lib/components/ui";
     import {
         IconTarget,
         IconSearch,
@@ -57,8 +57,7 @@
 </svelte:head>
 
 <div class="py-8">
-    <EyebrowTag>Data Management</EyebrowTag>
-    <h1 class="font-display font-extrabold text-5xl md:text-6xl mt-4 mb-2">
+    <h1 class="font-display font-extrabold text-5xl md:text-6xl mb-2">
         Archive
     </h1>
     <p class="text-zinc-400 text-sm mb-8">

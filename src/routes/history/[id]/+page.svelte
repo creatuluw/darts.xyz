@@ -2,12 +2,7 @@
     import { onMount } from "svelte";
     import { page } from "$app/stores";
     import { goto } from "$app/navigation";
-    import {
-        DoubleBezel,
-        PillButton,
-        EyebrowTag,
-        StatBadge,
-    } from "$lib/components/ui";
+    import { DoubleBezel, PillButton, StatBadge } from "$lib/components/ui";
     import {
         IconArrowLeft,
         IconCircleCheck,
@@ -169,7 +164,6 @@
 
         <div class="flex items-start justify-between gap-4 flex-wrap">
             <div>
-                <EyebrowTag>Match Detail</EyebrowTag>
                 <h1 class="font-display font-extrabold text-4xl mt-4 mb-2">
                     {matchData.match.startingScore} · Best of
                     {matchData.match.legsPerSet} legs ·
@@ -267,7 +261,6 @@
 
         <!-- Legs -->
         {#if matchData.legs && matchData.legs.length > 0}
-            <EyebrowTag class="mb-3 mt-6">Legs</EyebrowTag>
             <div class="space-y-2">
                 {#each matchData.legs as leg}
                     <DoubleBezel>
@@ -295,7 +288,6 @@
             </div>
 
             <!-- Match State Summary -->
-            <EyebrowTag class="mb-3 mt-8">Match State Summary</EyebrowTag>
             <DoubleBezel>
                 <div class="space-y-4">
                     <!-- Current Set/Leg Info -->
@@ -489,7 +481,6 @@
             </DoubleBezel>
 
             <!-- Match Details -->
-            <EyebrowTag class="mb-3 mt-8">Match Details</EyebrowTag>
             <div class="space-y-4">
                 {#each matchData.legs as leg}
                     <DoubleBezel>

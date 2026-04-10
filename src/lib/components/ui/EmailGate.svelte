@@ -1,7 +1,7 @@
 <script lang="ts">
     import DoubleBezel from "./DoubleBezel.svelte";
     import PillButton from "./PillButton.svelte";
-    import EyebrowTag from "./EyebrowTag.svelte";
+
     import {
         IconMail,
         IconArrowRight,
@@ -66,8 +66,6 @@
 <div
     class="flex flex-col items-center justify-center min-h-[80dvh] text-center px-4"
 >
-    <EyebrowTag>Darts Scoring App</EyebrowTag>
-
     <h1
         class="font-display font-black text-6xl md:text-7xl lg:text-8xl tracking-tight mt-6 mb-4"
     >

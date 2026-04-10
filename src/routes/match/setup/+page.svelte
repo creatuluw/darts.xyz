@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { IconArrowLeft } from "@tabler/icons-svelte";
-    import { DoubleBezel, PillButton, EyebrowTag } from "$lib/components/ui";
+    import { DoubleBezel, PillButton } from "$lib/components/ui";
     import SearchSelect from "$lib/components/ui/SearchSelect.svelte";
     import { emailStore } from "$lib/stores/email";
 
@@ -62,7 +62,6 @@
 </svelte:head>
 
 <div class="py-8">
-    <EyebrowTag>Match Setup</EyebrowTag>
     <h1 class="font-display font-extrabold text-5xl md:text-6xl mt-4 mb-8">
         New Match
     </h1>

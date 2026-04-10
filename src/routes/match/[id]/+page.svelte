@@ -14,7 +14,6 @@
     import {
         DoubleBezel,
         PillButton,
-        EyebrowTag,
         AnimatedNumber,
         StatBadge,
         Dartboard,
@@ -809,9 +808,9 @@
         <!-- Header with Tabs -->
         <div class="grid grid-cols-3 items-center mb-4">
             <div>
-                <EyebrowTag
-                    >Set {matchState.currentLeg.setNumber} · Leg
-                    {matchState.currentLeg.legNumber}</EyebrowTag
+                <span class="text-xs text-zinc-400 font-medium"
+                    >Set {matchState.currentLeg.setNumber} · Leg {matchState
+                        .currentLeg.legNumber}</span
                 >
             </div>
             <div class="flex justify-center gap-2">
@@ -944,7 +943,6 @@
 
                     <!-- Player 1 Stats -->
                     <DoubleBezel>
-                        <EyebrowTag class="mb-2">Stats</EyebrowTag>
                         <div class="space-y-1.5 mt-2">
                             <div class="flex justify-between items-center">
                                 <span class="text-xs text-zinc-400"
@@ -1089,7 +1087,6 @@
 
                     <!-- Player 1 Last 3 Turns -->
                     <DoubleBezel>
-                        <EyebrowTag class="mb-2">Last 3 Turns</EyebrowTag>
                         <div class="mt-2 space-y-1.5">
                             {#each [...allMatchTurns]
                                 .filter((t) => t.playerId === p1.id)
@@ -1254,7 +1251,6 @@
                     <!-- Checkout Suggestions -->
                     {#if checkoutOptions.length > 0}
                         <DoubleBezel>
-                            <EyebrowTag class="mb-2">Checkout</EyebrowTag>
                             <div class="space-y-1 mt-2">
                                 {#each checkoutOptions as opt}
                                     <div
@@ -1269,7 +1265,6 @@
                 {:else if activeTab === "turns"}
                     <!-- Turn History — Grouped by Set > Leg -->
                     <DoubleBezel>
-                        <EyebrowTag class="mb-2">Turn History</EyebrowTag>
                         <div class="mt-3 space-y-4">
                             {#each [...new Set(allTurnsWithLeg.map((t) => t.setNumber))].sort((a, b) => b - a) as setNum}
                                 {@const setTurns = allTurnsWithLeg.filter(
@@ -1567,7 +1562,6 @@
 
                     <!-- Player 2 Stats -->
                     <DoubleBezel>
-                        <EyebrowTag class="mb-2">Stats</EyebrowTag>
                         <div class="space-y-1.5 mt-2">
                             <div class="flex justify-between items-center">
                                 <span class="text-xs text-zinc-400"
@@ -1712,7 +1706,6 @@
 
                     <!-- Player 2 Last 3 Turns -->
                     <DoubleBezel>
-                        <EyebrowTag class="mb-2">Last 3 Turns</EyebrowTag>
                         <div class="mt-2 space-y-1.5">
                             {#each [...allMatchTurns]
                                 .filter((t) => t.playerId === p2.id)

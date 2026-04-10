@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { DoubleBezel, EyebrowTag } from "$lib/components/ui";
+    import { DoubleBezel } from "$lib/components/ui";
     import {
         IconCircleCheck,
         IconCircleX,
@@ -41,7 +41,6 @@
 </svelte:head>
 
 <div class="py-8">
-    <EyebrowTag>History</EyebrowTag>
     <h1 class="font-display font-extrabold text-5xl md:text-6xl mt-4 mb-8">
         Match History
     </h1>

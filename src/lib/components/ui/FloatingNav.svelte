@@ -20,7 +20,6 @@
     import { addToast } from "$lib/stores/toast";
     import DoubleBezel from "./DoubleBezel.svelte";
     import PillButton from "./PillButton.svelte";
-    import EyebrowTag from "./EyebrowTag.svelte";
 
     let currentPath = derived(page, ($page) => $page.url.pathname);
 
@@ -288,12 +287,12 @@
                         </button>
                     </div>
 
-                    <EyebrowTag>
-                        <div class="flex items-center gap-1">
-                            <IconMail size={10} />
-                            Email
-                        </div>
-                    </EyebrowTag>
+                    <label
+                        class="text-[10px] uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 font-medium flex items-center gap-1"
+                    >
+                        <IconMail size={10} />
+                        Email
+                    </label>
 
                     <div class="mt-3">
                         <input

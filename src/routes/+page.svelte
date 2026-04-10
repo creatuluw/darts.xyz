@@ -1,10 +1,5 @@
 <script lang="ts">
-    import {
-        DoubleBezel,
-        PillButton,
-        EyebrowTag,
-        StyledSelect,
-    } from "$lib/components/ui";
+    import { DoubleBezel, PillButton, StyledSelect } from "$lib/components/ui";
     import { IconTarget, IconChartBar } from "@tabler/icons-svelte";
     import ThemeSwitcher from "$lib/components/ui/ThemeSwitcher.svelte";
     import { voiceSettings, VOICE_OPTIONS } from "$lib/stores/voice-settings";
@@ -45,8 +40,6 @@
 <div
     class="flex flex-col items-center justify-center min-h-[80dvh] text-center"
 >
-    <EyebrowTag>Darts Scoring App</EyebrowTag>
-
     <h1
         class="font-display font-black text-7xl md:text-8xl lg:text-7xl tracking-tight mt-6 mb-4"
     >
