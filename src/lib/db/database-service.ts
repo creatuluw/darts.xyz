@@ -1,4 +1,4 @@
-import { db, schema } from "./index";
+import { getDb, schema } from "./index";
 import { eq, and, desc, sql, inArray, isNull } from "drizzle-orm";
 
 export class DatabaseService {
@@ -8,7 +8,7 @@ export class DatabaseService {
     const normalizedEmail = email.toLowerCase().trim();
 
     // Check if player already exists with this email (unique constraint)
-    const existingByEmail = await db
+    const existingByEmail = await getDb()
       .select()
       .from(schema.players)
       .where(
@@ -21,7 +21,7 @@ export class DatabaseService {
     if (existingByEmail.length > 0) return existingByEmail[0];
 
     // Check if player exists by name (case-insensitive) for this email account
-    const existingByName = await db
+    const existingByName = await getDb()
       .select()
       .from(schema.players)
       .where(
@@ -35,7 +35,7 @@ export class DatabaseService {
     if (existingByName.length > 0) return existingByName[0];
 
     // Create new player with explicit values
-    const result = await db
+    const result = await getDb()
       .insert(schema.players)
       .values({
         name: name.trim(),
@@ -46,12 +46,12 @@ export class DatabaseService {
       .returning();
 
     // Also create empty stats row
-    await db.insert(schema.playerStats).values({ playerId: result[0].id });
+    await getDb().insert(schema.playerStats).values({ playerId: result[0].id });
     return result[0];
   }
 
   async getPlayer(id: string) {
-    const result = await db
+    const result = await getDb()
       .select()
       .from(schema.players)
       .where(and(eq(schema.players.id, id), isNull(schema.players.deletedAt)))
@@ -60,7 +60,7 @@ export class DatabaseService {
   }
 
   async getPlayerByEmail(email: string) {
-    const result = await db
+    const result = await getDb()
       .select()
       .from(schema.players)
       .where(
@@ -74,7 +74,7 @@ export class DatabaseService {
   }
 
   async getPlayerByName(name: string) {
-    const result = await db
+    const result = await getDb()
       .select()
       .from(schema.players)
       .where(
@@ -90,7 +90,7 @@ export class DatabaseService {
   async getAllPlayers(email?: string) {
     if (email) {
       // Get all players for a specific email
-      return db
+      return getDb()
         .select()
         .from(schema.players)
         .where(
@@ -101,7 +101,7 @@ export class DatabaseService {
         )
         .orderBy(desc(schema.players.createdAt));
     }
-    return db
+    return getDb()
       .select()
       .from(schema.players)
       .where(isNull(schema.players.deletedAt))
@@ -110,7 +110,7 @@ export class DatabaseService {
 
   async softDeletePlayer(id: string) {
     // Soft delete: set deletedAt timestamp, preserve all match/replay data
-    await db
+    await getDb()
       .update(schema.players)
       .set({ deletedAt: new Date(), updatedAt: new Date() })
       .where(eq(schema.players.id, id));
@@ -129,7 +129,7 @@ export class DatabaseService {
     setsPerMatch: number;
     doubleIn: boolean;
   }) {
-    const result = await db
+    const result = await getDb()
       .insert(schema.matches)
       .values({
         startingScore: config.startingScore,
@@ -142,7 +142,7 @@ export class DatabaseService {
   }
 
   async getMatch(id: string) {
-    const result = await db
+    const result = await getDb()
       .select()
       .from(schema.matches)
       .where(eq(schema.matches.id, id))
@@ -154,7 +154,7 @@ export class DatabaseService {
     id: string,
     updates: { status?: string; winnerId?: string },
   ) {
-    await db
+    await getDb()
       .update(schema.matches)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(schema.matches.id, id));
@@ -162,7 +162,7 @@ export class DatabaseService {
 
   async deleteMatch(id: string) {
     // Get all legs for this match
-    const matchLegs = await db
+    const matchLegs = await getDb()
       .select({ id: schema.legs.id })
       .from(schema.legs)
       .where(eq(schema.legs.matchId, id));
@@ -171,23 +171,25 @@ export class DatabaseService {
 
     // Delete turns for all legs
     if (legIds.length > 0) {
-      await db.delete(schema.turns).where(inArray(schema.turns.legId, legIds));
+      await getDb()
+        .delete(schema.turns)
+        .where(inArray(schema.turns.legId, legIds));
     }
 
     // Delete legs
-    await db.delete(schema.legs).where(eq(schema.legs.matchId, id));
+    await getDb().delete(schema.legs).where(eq(schema.legs.matchId, id));
 
     // Delete match players
-    await db
+    await getDb()
       .delete(schema.matchPlayers)
       .where(eq(schema.matchPlayers.matchId, id));
 
     // Delete the match itself
-    await db.delete(schema.matches).where(eq(schema.matches.id, id));
+    await getDb().delete(schema.matches).where(eq(schema.matches.id, id));
   }
 
   async getActiveMatches() {
-    return db
+    return getDb()
       .select()
       .from(schema.matches)
       .where(eq(schema.matches.status, "in_progress"))
@@ -200,7 +202,7 @@ export class DatabaseService {
       const player = await this.getPlayerByEmail(email);
       if (!player) return [];
 
-      const matchPlayers = await db
+      const matchPlayers = await getDb()
         .select({ matchId: schema.matchPlayers.matchId })
         .from(schema.matchPlayers)
         .where(eq(schema.matchPlayers.playerId, player.id));
@@ -208,7 +210,7 @@ export class DatabaseService {
       const matchIds = matchPlayers.map((mp) => mp.matchId);
       if (matchIds.length === 0) return [];
 
-      return db
+      return getDb()
         .select()
         .from(schema.matches)
         .where(inArray(schema.matches.id, matchIds))
@@ -216,7 +218,7 @@ export class DatabaseService {
         .limit(limit);
     }
 
-    return db
+    return getDb()
       .select()
       .from(schema.matches)
       .orderBy(desc(schema.matches.createdAt))
@@ -226,7 +228,7 @@ export class DatabaseService {
   // === MATCH PLAYERS ===
 
   async addMatchPlayer(matchId: string, playerId: string, throwOrder: number) {
-    const result = await db
+    const result = await getDb()
       .insert(schema.matchPlayers)
       .values({
         matchId,
@@ -238,7 +240,7 @@ export class DatabaseService {
   }
 
   async getMatchPlayers(matchId: string) {
-    return db
+    return getDb()
       .select()
       .from(schema.matchPlayers)
       .where(eq(schema.matchPlayers.matchId, matchId))
@@ -251,7 +253,7 @@ export class DatabaseService {
     setsWon: number,
     legsWon: number,
   ) {
-    await db
+    await getDb()
       .update(schema.matchPlayers)
       .set({ setsWon, legsWon })
       .where(
@@ -270,7 +272,7 @@ export class DatabaseService {
     legNumber: number,
     firstThrowerId: string,
   ) {
-    const result = await db
+    const result = await getDb()
       .insert(schema.legs)
       .values({
         matchId,
@@ -283,14 +285,14 @@ export class DatabaseService {
   }
 
   async updateLegWinner(legId: string, winnerId: string) {
-    await db
+    await getDb()
       .update(schema.legs)
       .set({ winnerId })
       .where(eq(schema.legs.id, legId));
   }
 
   async getMatchLegs(matchId: string) {
-    return db
+    return getDb()
       .select()
       .from(schema.legs)
       .where(eq(schema.legs.matchId, matchId))
@@ -298,7 +300,7 @@ export class DatabaseService {
   }
 
   async getLeg(id: string) {
-    const result = await db
+    const result = await getDb()
       .select()
       .from(schema.legs)
       .where(eq(schema.legs.id, id))
@@ -326,12 +328,12 @@ export class DatabaseService {
     isBust: boolean;
     dartsThrown: number;
   }) {
-    const result = await db.insert(schema.turns).values(turn).returning();
+    const result = await getDb().insert(schema.turns).values(turn).returning();
     return result[0];
   }
 
   async getLegTurns(legId: string) {
-    return db
+    return getDb()
       .select()
       .from(schema.turns)
       .where(eq(schema.turns.legId, legId))
@@ -339,11 +341,11 @@ export class DatabaseService {
   }
 
   async deleteTurn(turnId: string) {
-    await db.delete(schema.turns).where(eq(schema.turns.id, turnId));
+    await getDb().delete(schema.turns).where(eq(schema.turns.id, turnId));
   }
 
   async getPlayerTurns(playerId: string, limit?: number) {
-    const query = db
+    const query = getDb()
       .select()
       .from(schema.turns)
       .where(eq(schema.turns.playerId, playerId))
@@ -354,7 +356,7 @@ export class DatabaseService {
 
   async getTurnsForLegs(legIds: string[]) {
     if (legIds.length === 0) return [];
-    return db
+    return getDb()
       .select()
       .from(schema.turns)
       .where(inArray(schema.turns.legId, legIds))
@@ -364,7 +366,7 @@ export class DatabaseService {
   // === STATS ===
 
   async getPlayerStats(playerId: string) {
-    const result = await db
+    const result = await getDb()
       .select()
       .from(schema.playerStats)
       .where(eq(schema.playerStats.playerId, playerId))
@@ -373,7 +375,7 @@ export class DatabaseService {
   }
 
   async updatePlayerStats(playerId: string, stats: Record<string, unknown>) {
-    await db
+    await getDb()
       .update(schema.playerStats)
       .set({ ...stats, updatedAt: new Date() })
       .where(eq(schema.playerStats.playerId, playerId));
@@ -382,13 +384,13 @@ export class DatabaseService {
   // === HELPERS ===
 
   async getMatchesForPlayer(playerId: string) {
-    const mp = await db
+    const mp = await getDb()
       .select()
       .from(schema.matchPlayers)
       .where(eq(schema.matchPlayers.playerId, playerId));
     const matchIds = mp.map((m) => m.matchId);
     if (matchIds.length === 0) return [];
-    return db
+    return getDb()
       .select()
       .from(schema.matches)
       .where(inArray(schema.matches.id, matchIds))
@@ -396,7 +398,7 @@ export class DatabaseService {
   }
 
   async getMatchPlayerEntries(playerId: string) {
-    return db
+    return getDb()
       .select()
       .from(schema.matchPlayers)
       .where(eq(schema.matchPlayers.playerId, playerId));
@@ -404,7 +406,7 @@ export class DatabaseService {
 
   async getAllLegsForMatches(matchIds: string[]) {
     if (matchIds.length === 0) return [];
-    return db
+    return getDb()
       .select()
       .from(schema.legs)
       .where(inArray(schema.legs.matchId, matchIds))
@@ -412,7 +414,7 @@ export class DatabaseService {
   }
 
   async getAllTurnsForPlayer(playerId: string) {
-    return db
+    return getDb()
       .select()
       .from(schema.turns)
       .where(eq(schema.turns.playerId, playerId))
@@ -438,7 +440,7 @@ export class DatabaseService {
     const matchIds = recentMatches.map((m) => m.id);
     const matchPlayers =
       matchIds.length > 0
-        ? await db
+        ? await getDb()
             .select()
             .from(schema.matchPlayers)
             .where(inArray(schema.matchPlayers.matchId, matchIds))

@@ -1,15 +1,22 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { DATABASE_URL } from "$env/static/private";
 import * as schema from "./schema";
 
-// Create the postgres client using SvelteKit's env system.
-// Drizzle ORM generates fully-qualified queries (e.g. darts.players)
-// automatically from the pgSchema("darts") table definitions.
-const client = postgres(DATABASE_URL);
+// Lazy initialization for database connection
+// This defers DATABASE_URL access to runtime (not build time)
+let _db: ReturnType<typeof drizzle> | null = null;
 
-// Create the drizzle instance with our schema
-export const db = drizzle(client, { schema });
+export function getDb() {
+  if (!_db) {
+    const DATABASE_URL = process.env.DATABASE_URL;
+    if (!DATABASE_URL) {
+      throw new Error("DATABASE_URL environment variable is not set");
+    }
+    const client = postgres(DATABASE_URL);
+    _db = drizzle(client, { schema });
+  }
+  return _db;
+}
 
 // Export schema for use in queries
 export { schema };
