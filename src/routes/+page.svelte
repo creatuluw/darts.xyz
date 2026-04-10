@@ -41,7 +41,7 @@
     class="flex flex-col items-center justify-center min-h-[80dvh] text-center"
 >
     <h1
-        class="font-display font-black text-7xl md:text-8xl lg:text-7xl tracking-tight mt-6 mb-4"
+        class="font-display font-black text-5xl md:text-6xl tracking-tight mt-4 mb-3"
     >
         dart.monster
     </h1>

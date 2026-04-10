@@ -142,7 +142,7 @@
         <div class="text-center text-zinc-400 py-24">Loading...</div>
     {:else if player}
         <div class="flex items-center justify-between">
-            <h1 class="font-display font-extrabold text-5xl md:text-6xl">
+            <h1 class="font-display font-extrabold text-3xl md:text-4xl">
                 {player.name}
             </h1>
             <button

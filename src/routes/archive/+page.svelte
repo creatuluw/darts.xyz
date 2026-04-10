@@ -57,7 +57,7 @@
 </svelte:head>
 
 <div class="py-8">
-    <h1 class="font-display font-extrabold text-5xl md:text-6xl mb-2">
+    <h1 class="font-display font-extrabold text-3xl md:text-4xl mb-2">
         Archive
     </h1>
     <p class="text-zinc-400 text-sm mb-8">
