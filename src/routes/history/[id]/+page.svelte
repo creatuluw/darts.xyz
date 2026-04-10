@@ -165,7 +165,7 @@
         <div class="flex items-start justify-between gap-4 flex-wrap">
             <div>
                 <h1
-                    class="font-display font-extrabold text-2xl md:text-3xl mt-2 mb-2"
+                    class="font-display font-extrabold text-2xl md:text-3xl mb-2"
                 >
                     {matchData.match.startingScore} · Best of
                     {matchData.match.legsPerSet} legs ·

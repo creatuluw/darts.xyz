@@ -86,7 +86,7 @@
 
 <div class="py-8">
     <!-- Title row with + button -->
-    <div class="flex items-end justify-between mt-4 mb-8">
+    <div class="flex items-end justify-between mb-8">
         <h1 class="font-display font-extrabold text-3xl md:text-4xl">
             Players
         </h1>

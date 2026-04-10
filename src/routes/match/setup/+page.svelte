@@ -62,7 +62,7 @@
 </svelte:head>
 
 <div class="py-8">
-    <h1 class="font-display font-extrabold text-3xl md:text-4xl mt-2 mb-6">
+    <h1 class="font-display font-extrabold text-3xl md:text-4xl mb-6">
         New Match
     </h1>
 
