@@ -21,7 +21,8 @@ export const players = darts.table(
   "players",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    name: varchar("name", { length: 100 }).notNull().unique(),
+    email: varchar("email", { length: 255 }).notNull().unique(),
+    name: varchar("name", { length: 100 }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -32,6 +33,7 @@ export const players = darts.table(
   },
   (table) => ({
     nameLowerIdx: index("idx_players_name_lower").on(sql`LOWER(${table.name})`),
+    emailIdx: index("idx_players_email").on(table.email),
   }),
 );
 

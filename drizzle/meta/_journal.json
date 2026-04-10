@@ -8,6 +8,13 @@
       "when": 1775550036764,
       "tag": "0000_great_callisto",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775574553752,
+      "tag": "0001_needy_lester",
+      "breakpoints": true
     }
   ]
 }

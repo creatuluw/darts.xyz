@@ -3,6 +3,8 @@
     import { goto } from "$app/navigation";
     import { IconArrowLeft } from "@tabler/icons-svelte";
     import { DoubleBezel, PillButton, EyebrowTag } from "$lib/components/ui";
+    import SearchSelect from "$lib/components/ui/SearchSelect.svelte";
+    import { emailStore } from "$lib/stores/email";
 
     let players = $state<any[]>([]);
     let selectedPlayers = $state<any[]>([]);
@@ -14,27 +16,30 @@
     let starting = $state(false);
 
     onMount(async () => {
-        const res = await fetch("/api/players");
+        const email = emailStore.getEmail();
+        const res = await fetch(
+            `/api/players?email=${encodeURIComponent(email)}`,
+        );
         players = await res.json();
         loading = false;
     });
 
-    function togglePlayer(player: any) {
-        if (selectedPlayers.find((p) => p.id === player.id)) {
-            selectedPlayers = selectedPlayers.filter((p) => p.id !== player.id);
-        } else if (selectedPlayers.length < 4) {
-            selectedPlayers = [...selectedPlayers, player];
-        }
+    function handlePlayerSelect(
+        event: CustomEvent<{ id: string; name: string }[]>,
+    ) {
+        selectedPlayers = event.detail;
     }
 
     async function startMatch() {
         if (selectedPlayers.length < 2) return;
         starting = true;
 
+        const email = emailStore.getEmail();
         const res = await fetch("/api/matches", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+                email,
                 startingScore,
                 legsPerSet,
                 setsPerMatch,
@@ -56,33 +61,35 @@
     <title>New Match — Darts 501</title>
 </svelte:head>
 
-<div class="py-8">
-    <a
-        href="/"
-        class="text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors text-sm mb-4 inline-flex items-center gap-1"
-    >
-        <IconArrowLeft size={14} />
-        Home
-    </a>
+<div class="py-6">
     <EyebrowTag>Match Setup</EyebrowTag>
-    <h1 class="font-display font-extrabold text-5xl md:text-6xl mt-4 mb-8">
+    <h1 class="font-display font-extrabold text-4xl md:text-5xl mt-3 mb-6">
         New Match
     </h1>
 
     <!-- Step 1: Select Players -->
-    <DoubleBezel class="mb-6">
-        <h2 class="font-display font-bold text-xl mb-4">
-            Select Players
-            <span class="text-zinc-400 font-normal text-sm"
-                >({selectedPlayers.length}/4)</span
-            >
-        </h2>
+    <DoubleBezel class="mb-4">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="font-display font-bold text-lg">
+                Players
+                <span class="text-zinc-400 font-normal text-sm"
+                    >({selectedPlayers.length}/4)</span
+                >
+            </h2>
+            {#if selectedPlayers.length > 0}
+                <span class="text-xs text-zinc-400"
+                    >Throw order: {selectedPlayers
+                        .map((p) => p.name)
+                        .join(" → ")}</span
+                >
+            {/if}
+        </div>
 
         {#if loading}
-            <div class="text-zinc-400 text-center py-4">Loading players...</div>
+            <div class="text-zinc-400 text-center py-3">Loading players...</div>
         {:else if players.length === 0}
-            <div class="text-center py-4">
-                <p class="text-zinc-400 mb-3">
+            <div class="text-center py-3">
+                <p class="text-zinc-400 text-sm mb-2">
                     No players yet. Create one first!
                 </p>
                 <a href="/players"
@@ -91,58 +98,31 @@
                 >
             </div>
         {:else}
-            <div class="flex flex-wrap gap-2">
-                {#each players as player}
-                    {@const isSelected = selectedPlayers.find(
-                        (p) => p.id === player.id,
-                    )}
-                    <button
-                        onclick={() => togglePlayer(player)}
-                        class="rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] {isSelected
-                            ? 'bg-emerald-500 text-white ring-2 ring-emerald-300'
-                            : 'bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-400 ring-1 ring-black/[0.06] dark:ring-white/10 hover:bg-zinc-200 dark:hover:bg-white/15'}"
-                    >
-                        {player.name}
-                    </button>
-                {/each}
-            </div>
-        {/if}
-
-        {#if selectedPlayers.length > 0}
-            <div class="mt-4 pt-4 border-t border-zinc-100 dark:border-white/5">
-                <p class="text-xs text-zinc-400 uppercase tracking-wider mb-2">
-                    Throw order
-                </p>
-                <div class="flex gap-2 flex-wrap">
-                    {#each selectedPlayers as player, i}
-                        <span
-                            class="rounded-full px-4 py-1.5 text-sm font-mono bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
-                        >
-                            {i + 1}. {player.name}
-                        </span>
-                    {/each}
-                </div>
-            </div>
+            <SearchSelect
+                options={players}
+                bind:selected={selectedPlayers}
+                placeholder="Search players to add..."
+            />
         {/if}
     </DoubleBezel>
 
     <!-- Step 2: Configure -->
-    <DoubleBezel class="mb-6">
-        <h2 class="font-display font-bold text-xl mb-4">Match Format</h2>
+    <DoubleBezel class="mb-4">
+        <h2 class="font-display font-bold text-lg mb-4">Match Format</h2>
 
-        <div class="space-y-5">
+        <div class="grid grid-cols-4 gap-6">
             <div>
                 <p class="text-xs text-zinc-400 uppercase tracking-wider mb-2">
                     Starting Score
                 </p>
-                <div class="flex gap-2 flex-wrap">
+                <div class="flex gap-1.5 flex-wrap">
                     {#each scoreOptions as opt}
                         <button
                             onclick={() => (startingScore = opt)}
-                            class="rounded-full px-5 py-2 text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] {startingScore ===
+                            class="rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-300 {startingScore ===
                             opt
                                 ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
-                                : 'bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-400 ring-1 ring-black/[0.06] dark:ring-white/10'}"
+                                : 'bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-400 ring-1 ring-black/6 dark:ring-white/10'}"
                         >
                             {opt}
                         </button>
@@ -154,14 +134,14 @@
                 <p class="text-xs text-zinc-400 uppercase tracking-wider mb-2">
                     Legs per Set
                 </p>
-                <div class="flex gap-2 flex-wrap">
+                <div class="flex gap-1.5 flex-wrap">
                     {#each legsOptions as opt}
                         <button
                             onclick={() => (legsPerSet = opt)}
-                            class="rounded-full px-5 py-2 text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] {legsPerSet ===
+                            class="rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-300 {legsPerSet ===
                             opt
                                 ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
-                                : 'bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-400 ring-1 ring-black/[0.06] dark:ring-white/10'}"
+                                : 'bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-400 ring-1 ring-black/6 dark:ring-white/10'}"
                         >
                             {opt}
                         </button>
@@ -173,14 +153,14 @@
                 <p class="text-xs text-zinc-400 uppercase tracking-wider mb-2">
                     Sets per Match
                 </p>
-                <div class="flex gap-2 flex-wrap">
+                <div class="flex gap-1.5 flex-wrap">
                     {#each setsOptions as opt}
                         <button
                             onclick={() => (setsPerMatch = opt)}
-                            class="rounded-full px-5 py-2 text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] {setsPerMatch ===
+                            class="rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-300 {setsPerMatch ===
                             opt
                                 ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
-                                : 'bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-400 ring-1 ring-black/[0.06] dark:ring-white/10'}"
+                                : 'bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-400 ring-1 ring-black/6 dark:ring-white/10'}"
                         >
                             {opt}
                         </button>
@@ -188,28 +168,30 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-3">
+            <div>
+                <p class="text-xs text-zinc-400 uppercase tracking-wider mb-2">
+                    Double-in
+                </p>
                 <button
                     onclick={() => (doubleIn = !doubleIn)}
                     role="switch"
                     aria-checked={doubleIn}
                     aria-label="Toggle double-in rule"
-                    class="w-12 h-7 rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] {doubleIn
+                    class="w-11 h-6 rounded-full transition-all duration-300 {doubleIn
                         ? 'bg-emerald-500'
                         : 'bg-zinc-200 dark:bg-white/10'}"
                 >
                     <div
-                        class="w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] {doubleIn
+                        class="w-4.5 h-4.5 bg-white rounded-full shadow-sm transition-transform duration-300 {doubleIn
                             ? 'translate-x-6'
                             : 'translate-x-1'}"
                     ></div>
                 </button>
-                <span class="text-sm">Double-in rule</span>
             </div>
         </div>
 
         <!-- Start Match Button -->
-        <div class="mt-6 flex justify-end">
+        <div class="mt-5 flex justify-end">
             <PillButton
                 onclick={startMatch}
                 disabled={selectedPlayers.length < 2 || starting}
@@ -218,7 +200,7 @@
             </PillButton>
         </div>
         {#if selectedPlayers.length < 2}
-            <p class="text-zinc-400 text-sm mt-2 text-right">
+            <p class="text-zinc-400 text-xs mt-1.5 text-right">
                 Select at least 2 players
             </p>
         {/if}

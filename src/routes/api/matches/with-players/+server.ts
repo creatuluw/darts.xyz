@@ -1,11 +1,12 @@
-import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
-import { dbService } from '$lib/db/database-service';
+import { json } from "@sveltejs/kit";
+import type { RequestHandler } from "./$types";
+import { dbService } from "$lib/db/database-service";
 
 export const GET: RequestHandler = async ({ url }) => {
-  const limit = parseInt(url.searchParams.get('limit') || '50');
+  const email = url.searchParams.get("email");
+  const limit = parseInt(url.searchParams.get("limit") || "50");
 
-  const matches = await dbService.getRecentMatches(limit);
+  const matches = await dbService.getRecentMatches(limit, email || undefined);
 
   // For each match, get the match players and their names
   const matchesWithPlayers = await Promise.all(
@@ -19,19 +20,19 @@ export const GET: RequestHandler = async ({ url }) => {
           return {
             id: mp.id,
             playerId: mp.playerId,
-            name: player?.name || 'Unknown',
+            name: player?.name || "Unknown",
             throwOrder: mp.throwOrder,
             setsWon: mp.setsWon,
             legsWon: mp.legsWon,
           };
-        })
+        }),
       );
 
       return {
         ...match,
         players: playersWithInfo,
       };
-    })
+    }),
   );
 
   return json(matchesWithPlayers);

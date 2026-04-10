@@ -8,6 +8,7 @@
         IconPlus,
         IconX,
     } from "@tabler/icons-svelte";
+    import { emailStore } from "$lib/stores/email";
 
     let players = $state<any[]>([]);
     let newName = $state("");
@@ -22,23 +23,59 @@
 
     async function loadPlayers() {
         loading = true;
-        const res = await fetch("/api/players");
+        const email = emailStore.getEmail();
+        const res = await fetch(
+            `/api/players?email=${encodeURIComponent(email)}`,
+        );
         players = await res.json();
         loading = false;
     }
 
     async function createPlayer() {
         if (!newName.trim()) return;
+
+        const email = emailStore.getEmail();
+        alert("Creating player with email: " + email);
+        if (!email) {
+            alert(
+                "No email found. Please refresh the page and enter your email first.",
+            );
+            return;
+        }
+
         creating = true;
-        await fetch("/api/players", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: newName.trim() }),
-        });
-        newName = "";
-        creating = false;
-        showModal = false;
-        await loadPlayers();
+        try {
+            console.log(
+                "Creating player:",
+                newName.trim(),
+                "with email:",
+                email,
+            );
+            const res = await fetch("/api/players", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: newName.trim(),
+                    email: email,
+                }),
+            });
+            console.log("Response status:", res.status);
+            const data = await res.json();
+            console.log("Response data:", data);
+            if (!res.ok) {
+                console.error("Failed to create player:", data);
+                creating = false;
+                return;
+            }
+            newName = "";
+            creating = false;
+            showModal = false;
+            await loadPlayers();
+            console.log("Player created successfully, list reloaded");
+        } catch (e) {
+            console.error("Error creating player:", e);
+            creating = false;
+        }
     }
 
     function closeModal() {
@@ -77,7 +114,7 @@
     </div>
 
     <!-- Search -->
-    <div class="mb-4 max-w-md">
+    <div class="mb-4">
         <div class="relative">
             <IconSearch
                 size={16}

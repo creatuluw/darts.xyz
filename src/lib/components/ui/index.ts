@@ -8,3 +8,5 @@ export { default as Tooltip } from "./Tooltip.svelte";
 export { default as Dartboard } from "./Dartboard.svelte";
 export { default as StyledSelect } from "./StyledSelect.svelte";
 export { default as Toast } from "./Toast.svelte";
+export { default as EmailGate } from "./EmailGate.svelte";
+export { default as SearchSelect } from "./SearchSelect.svelte";

@@ -8,6 +8,7 @@
         IconClipboardList,
         IconSearch,
     } from "@tabler/icons-svelte";
+    import { emailStore } from "$lib/stores/email";
 
     let matches = $state<any[]>([]);
     let search = $state("");
@@ -26,7 +27,10 @@
     );
 
     onMount(async () => {
-        const res = await fetch("/api/matches/with-players?limit=50");
+        const email = emailStore.getEmail();
+        const res = await fetch(
+            `/api/matches/with-players?email=${encodeURIComponent(email)}&limit=50`,
+        );
         matches = await res.json();
         loading = false;
     });
@@ -43,7 +47,7 @@
     </h1>
 
     <!-- Search -->
-    <div class="mb-4 max-w-md">
+    <div class="mb-4">
         <div class="relative">
             <IconSearch
                 size={16}
