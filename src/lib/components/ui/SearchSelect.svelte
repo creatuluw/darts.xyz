@@ -20,6 +20,7 @@
     } = $props();
 
     let search = $state("");
+    let showSearch = $state(false);
     let inputRef: HTMLInputElement;
     let dragIndex = $state<number | null>(null);
     let dragOverIndex = $state<number | null>(null);
@@ -40,14 +41,21 @@
         } else {
             selected = [...selected, option];
         }
+    }
+
+    function openSearch() {
+        showSearch = true;
+        setTimeout(() => inputRef?.focus(), 50);
+    }
+
+    function closeSearch() {
+        showSearch = false;
         search = "";
-        inputRef?.focus();
     }
 
     function handleKeydown(e: KeyboardEvent) {
         if (e.key === "Escape") {
-            search = "";
-            inputRef?.blur();
+            closeSearch();
         }
     }
 
@@ -140,20 +148,42 @@
         </div>
     {/if}
 
-    <div class="relative mb-3">
-        <IconSearch
-            size={16}
-            class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none"
-        />
-        <input
-            bind:this={inputRef}
-            type="text"
-            inputmode="search"
-            bind:value={search}
-            {placeholder}
-            onkeydown={handleKeydown}
-            class="w-full bg-zinc-50 dark:bg-white/5 rounded-full pl-10 pr-4 py-2.5 text-sm ring-1 ring-black/6 dark:ring-white/10 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-        />
+    <div class="flex items-center justify-between mb-3">
+        <span class="text-xs text-zinc-400 uppercase tracking-wider"
+            >{options.length} player{options.length !== 1 ? 's' : ''}</span
+        >
+        {#if showSearch}
+            <div class="relative flex-1 max-w-[200px] ml-3">
+                <IconSearch
+                    size={14}
+                    class="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none"
+                />
+                <input
+                    bind:this={inputRef}
+                    type="text"
+                    inputmode="search"
+                    bind:value={search}
+                    {placeholder}
+                    onkeydown={handleKeydown}
+                    class="w-full bg-zinc-50 dark:bg-white/5 rounded-full pl-8 pr-3 py-1.5 text-sm ring-1 ring-black/6 dark:ring-white/10 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                />
+            </div>
+            <button
+                type="button"
+                onclick={closeSearch}
+                class="ml-1.5 p-1 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+            >
+                <IconX size={16} />
+            </button>
+        {:else}
+            <button
+                type="button"
+                onclick={openSearch}
+                class="p-1.5 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+            >
+                <IconSearch size={16} />
+            </button>
+        {/if}
     </div>
 
     <div class="flex flex-wrap gap-2">
