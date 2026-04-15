@@ -55,6 +55,7 @@
         getVoicePrefix,
     } from "$lib/stores/voice-settings";
     import { addToast } from "$lib/stores/toast";
+    import { loadingStore } from "$lib/stores/loading";
     import { StyledSelect } from "$lib/components/ui";
 
     let matchId = $derived($page.params.id as string);
@@ -245,12 +246,16 @@
     }
 
     onMount(async () => {
-        // Initialize TTS in background with voice prefix from settings
-        import("$lib/utils/darts-caller").then(({ initDartsCaller }) => {
-            initDartsCaller({
+        loadingStore.start("audio", "Loading voice caller...");
+        loadingStore.start("data", "Loading match data...");
+        loadingStore.start("stats", "Loading player stats...");
+
+        import("$lib/utils/darts-caller").then(async ({ initDartsCaller }) => {
+            await initDartsCaller({
                 profile: "dartsCaller",
                 voicePrefix: getVoicePrefix(),
             });
+            loadingStore.finish("audio");
         });
 
         const res = await fetch(`/api/matches/${matchId}`);
@@ -498,12 +503,15 @@
             allMatchTurns = [];
         }
 
+        loadingStore.finish("data");
+
         // Load stats for each player
         for (const p of playerData) {
             const statsRes = await fetch(`/api/stats/${p.id}`);
             playerStats[p.id] = await statsRes.json();
         }
 
+        loadingStore.finish("stats");
         loading = false;
     });
 
@@ -777,7 +785,7 @@
 </svelte:head>
 
 {#if loading}
-    <div class="text-center text-zinc-400 py-24">Loading match...</div>
+    <div></div>
 {:else if matchState}
     <div class="py-4">
         <!-- Match completed overlay -->

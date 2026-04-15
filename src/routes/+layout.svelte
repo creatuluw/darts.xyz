@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import "../app.css";
-    import { FloatingNav, Toast } from "$lib/components/ui";
+    import { FloatingNav, Toast, LoadingOverlay } from "$lib/components/ui";
     import FullscreenButton from "$lib/components/ui/FullscreenButton.svelte";
     import EmailGate from "$lib/components/ui/EmailGate.svelte";
     import { emailStore } from "$lib/stores/email";
@@ -65,6 +65,7 @@
             {@render children()}
         </main>
         <FullscreenButton />
+        <LoadingOverlay />
         <Toast />
     </div>
 {/if}
