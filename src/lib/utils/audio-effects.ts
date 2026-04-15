@@ -244,22 +244,6 @@ export class DramaticVoiceEffects {
     }
 
     try {
-      // Create a buffer source from the input
-      const source = this.audioContext.createBufferSource();
-      source.buffer = audioBuffer;
-
-      // Connect to the effects chain input
-      source.connect(this.effectsChain.inputGain);
-
-      // Create output buffer
-      const outputBuffer = this.audioContext.createBuffer(
-        audioBuffer.numberOfChannels,
-        audioBuffer.length,
-        audioBuffer.sampleRate,
-      );
-
-      // For offline processing, we need to use a different approach
-      // Use MediaRecorder or OfflineAudioContext
       const offlineCtx = new OfflineAudioContext(
         audioBuffer.numberOfChannels,
         audioBuffer.length,

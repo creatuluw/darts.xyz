@@ -79,6 +79,9 @@ export class DartsCaller {
   private isInitialized = false;
   private initPromise: Promise<void> | null = null;
   private currentAudioContext: AudioContext | null = null;
+  private audioBufferCache = new Map<string, AudioBuffer>();
+  private currentSource: AudioBufferSourceNode | null = null;
+  private inFlightFetches = new Map<string, Promise<AudioBuffer>>();
 
   constructor(options: CallerOptions = {}) {
     this.options = {
@@ -154,6 +157,44 @@ export class DartsCaller {
   /**
    * Play a pre-generated audio file from the ElevenLabs soundboard
    */
+  private async fetchAndDecode(audioPath: string): Promise<AudioBuffer> {
+    const response = await fetch(audioPath);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch audio file: ${response.status}`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+
+    if (!this.currentAudioContext) {
+      this.currentAudioContext = new AudioContext();
+    }
+    const ctx = this.currentAudioContext;
+    if (ctx.state === "suspended") {
+      await ctx.resume();
+    }
+    return ctx.decodeAudioData(arrayBuffer);
+  }
+
+  private async getOrCacheBuffer(audioPath: string): Promise<AudioBuffer> {
+    if (this.audioBufferCache.has(audioPath)) {
+      return this.audioBufferCache.get(audioPath)!;
+    }
+
+    if (this.inFlightFetches.has(audioPath)) {
+      return this.inFlightFetches.get(audioPath)!;
+    }
+
+    const promise = this.fetchAndDecode(audioPath);
+    this.inFlightFetches.set(audioPath, promise);
+
+    try {
+      const buffer = await promise;
+      this.audioBufferCache.set(audioPath, buffer);
+      return buffer;
+    } finally {
+      this.inFlightFetches.delete(audioPath);
+    }
+  }
+
   private async playSoundFile(filename: string): Promise<AnnouncementResult> {
     if (typeof window === "undefined" || !("AudioContext" in window)) {
       return {
@@ -166,43 +207,10 @@ export class DartsCaller {
     await this.initialize();
 
     const audioPath = `${this.options.audioPath}/${filename}`;
-    console.log("[DartsCaller] Playing sound file:", audioPath);
 
     try {
-      const response = await fetch(audioPath);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch audio file: ${response.status}`);
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      console.log(
-        "[DartsCaller] Fetched audio, size:",
-        arrayBuffer.byteLength,
-        "bytes",
-      );
-
-      if (!this.currentAudioContext) {
-        this.currentAudioContext = new AudioContext();
-      }
-
-      const ctx = this.currentAudioContext;
-      if (ctx.state === "suspended") {
-        console.log("[DartsCaller] AudioContext suspended, resuming...");
-        await ctx.resume();
-      }
-
-      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-      console.log(
-        "[DartsCaller] Decoded audio, duration:",
-        audioBuffer.duration,
-        "seconds",
-      );
-
-      // Play the pre-generated ElevenLabs audio directly without effects processing
-      // The ElevenLabs recordings are already optimized, no need to process them
+      const audioBuffer = await this.getOrCacheBuffer(audioPath);
       this.playBufferSimple(audioBuffer);
-
-      console.log("[DartsCaller] Started playback of:", filename);
       return { success: true, engine: "elevenlabs" };
     } catch (err) {
       console.error("[DartsCaller] Failed to play sound file:", filename, err);
@@ -453,7 +461,16 @@ export class DartsCaller {
   /**
    * Play an AudioBuffer through the audio context
    */
-  private playBuffer(buffer: AudioBuffer): void {
+  private stopCurrentSource(): void {
+    if (this.currentSource) {
+      try {
+        this.currentSource.stop();
+      } catch {}
+      this.currentSource = null;
+    }
+  }
+
+  private async playBuffer(buffer: AudioBuffer): Promise<void> {
     if (typeof window === "undefined" || !("AudioContext" in window)) return;
 
     if (!this.currentAudioContext) {
@@ -462,11 +479,14 @@ export class DartsCaller {
 
     const ctx = this.currentAudioContext;
     if (ctx.state === "suspended") {
-      ctx.resume();
+      await ctx.resume();
     }
+
+    this.stopCurrentSource();
 
     const source = ctx.createBufferSource();
     source.buffer = buffer;
+    this.currentSource = source;
 
     if (this.effects && this.options.useEffects) {
       const inputNode = this.effects.getInputNode();
@@ -485,13 +505,16 @@ export class DartsCaller {
       gainNode.connect(ctx.destination);
     }
 
+    source.onended = () => {
+      if (this.currentSource === source) {
+        this.currentSource = null;
+      }
+    };
+
     source.start();
   }
 
-  /**
-   * Simple buffer playback without effects - for pre-generated audio files
-   */
-  private playBufferSimple(buffer: AudioBuffer): void {
+  private async playBufferSimple(buffer: AudioBuffer): Promise<void> {
     if (typeof window === "undefined" || !("AudioContext" in window)) return;
 
     if (!this.currentAudioContext) {
@@ -500,23 +523,27 @@ export class DartsCaller {
 
     const ctx = this.currentAudioContext;
     if (ctx.state === "suspended") {
-      ctx.resume();
+      await ctx.resume();
     }
+
+    this.stopCurrentSource();
 
     const source = ctx.createBufferSource();
     source.buffer = buffer;
+    this.currentSource = source;
 
-    // Direct playback with just volume control
     const gainNode = ctx.createGain();
     gainNode.gain.value = this.options.volume;
     source.connect(gainNode);
     gainNode.connect(ctx.destination);
 
+    source.onended = () => {
+      if (this.currentSource === source) {
+        this.currentSource = null;
+      }
+    };
+
     source.start();
-    console.log(
-      "[DartsCaller] playBufferSimple started, volume:",
-      this.options.volume,
-    );
   }
 
   cancel(): void {
@@ -527,6 +554,7 @@ export class DartsCaller {
 
   dispose(): void {
     this.cancel();
+    this.stopCurrentSource();
     if (this.effects) {
       this.effects.dispose();
       this.effects = null;
@@ -535,6 +563,8 @@ export class DartsCaller {
       this.currentAudioContext.close();
       this.currentAudioContext = null;
     }
+    this.audioBufferCache.clear();
+    this.inFlightFetches.clear();
     this.tts = null;
     this.isInitialized = false;
     this.initPromise = null;
@@ -550,6 +580,9 @@ let defaultCaller: DartsCaller | null = null;
 export async function initDartsCaller(
   options: CallerOptions = {},
 ): Promise<DartsCaller> {
+  if (defaultCaller) {
+    defaultCaller.dispose();
+  }
   defaultCaller = new DartsCaller(options);
   await defaultCaller.initialize();
   return defaultCaller;
