@@ -22,6 +22,7 @@
     let search = $state("");
     let isOpen = $state(false);
     let inputRef: HTMLInputElement;
+    let containerRef: HTMLDivElement;
     let dragIndex = $state<number | null>(null);
     let dragOverIndex = $state<number | null>(null);
 
@@ -47,6 +48,9 @@
 
     function handleFocus() {
         isOpen = true;
+        setTimeout(() => {
+            containerRef?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }, 100);
     }
 
     function handleBlur() {
@@ -110,7 +114,7 @@
     }
 </script>
 
-<div class="relative {className}">
+<div bind:this={containerRef} class="relative {className}">
     {#if selected.length > 0}
         <div class="flex flex-wrap gap-2 mb-3" role="list">
             {#each selected as item, i (item.id)}
@@ -160,6 +164,7 @@
         <input
             bind:this={inputRef}
             type="text"
+            inputmode="search"
             bind:value={search}
             {placeholder}
             onfocus={handleFocus}
