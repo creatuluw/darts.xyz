@@ -15,9 +15,11 @@
         IconX,
         IconCheck,
         IconSettings,
+        IconMenu2,
     } from "@tabler/icons-svelte";
     import { emailStore, accountsStore } from "$lib/stores/email";
     import { addToast } from "$lib/stores/toast";
+    import { fullscreenStore } from "$lib/stores/fullscreen";
     import DoubleBezel from "./DoubleBezel.svelte";
     import PillButton from "./PillButton.svelte";
 
@@ -30,13 +32,14 @@
         { href: "/history", label: "History", icon: IconHistory },
     ];
 
-    // Subscribe to stores
     let userEmail = $state("");
     let accounts = $state<string[]>([]);
     let showAccountMenu = $state(false);
     let showAddAccountModal = $state(false);
     let newAccountEmail = $state("");
     let newAccountError = $state("");
+    let isFullscreen = $state(false);
+    let showMenu = $state(false);
 
     $effect(() => {
         const unsubEmail = emailStore.subscribe((email) => {
@@ -45,9 +48,14 @@
         const unsubAccounts = accountsStore.subscribe((list) => {
             accounts = list;
         });
+        const unsubFullscreen = fullscreenStore.subscribe((v) => {
+            isFullscreen = v;
+            if (!v) showMenu = false;
+        });
         return () => {
             unsubEmail();
             unsubAccounts();
+            unsubFullscreen();
         };
     });
 
@@ -126,142 +134,197 @@
 
 <svelte:window onclick={handleClickOutside} />
 
-<!-- Navigation centered at top -->
-<nav class="fixed top-3 left-1/2 -translate-x-1/2 z-40">
-    <div
-        class="flex items-center gap-1 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-full px-2 py-1.5 ring-1 ring-black/6 dark:ring-white/10 shadow-lg shadow-black/4"
-    >
-        {#each links as link}
-            <a
-                href={link.href}
-                class="px-4 py-2 rounded-full text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] {$currentPath ===
-                link.href
-                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10'}"
-                aria-current={$currentPath === link.href ? "page" : undefined}
-            >
-                <div class="flex items-center gap-1.5">
-                    <link.icon size={16} />
-                    <span class="hidden md:inline">{link.label}</span>
-                </div>
-            </a>
-        {/each}
+{#if isFullscreen}
+    <div class="fixed top-3 left-3 z-40">
+        <button
+            onclick={() => (showMenu = !showMenu)}
+            class="w-10 h-10 rounded-full bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl ring-1 ring-black/6 dark:ring-white/10 shadow-lg shadow-black/4 flex items-center justify-center transition-all duration-300 cursor-pointer hover:scale-105"
+        >
+            <IconMenu2 size={18} class="text-zinc-600 dark:text-zinc-400" />
+        </button>
 
-        <!-- Account button -->
-        <div class="relative ml-1" data-account-menu>
-            <button
-                onclick={toggleAccountMenu}
-                class="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-zinc-100 dark:hover:bg-white/10"
+        {#if showMenu}
+            <div
+                class="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-zinc-900 rounded-2xl ring-1 ring-black/6 dark:ring-white/10 shadow-xl shadow-black/8 p-1.5 transition-all duration-300"
             >
-                <div
-                    class="w-7 h-7 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center text-xs font-bold"
-                >
-                    {initials}
-                </div>
-                <IconChevronDown size={14} class="text-zinc-400" />
-            </button>
+                {#each links as link}
+                    <a
+                        href={link.href}
+                        onclick={() => (showMenu = false)}
+                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors duration-200 {$currentPath ===
+                        link.href
+                            ? 'bg-zinc-100 dark:bg-white/10 text-zinc-900 dark:text-white'
+                            : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5'}"
+                    >
+                        <link.icon size={16} />
+                        {link.label}
+                    </a>
+                {/each}
 
-            <!-- Account dropdown -->
-            {#if showAccountMenu}
-                <div
-                    class="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-zinc-900 rounded-2xl ring-1 ring-black/6 dark:ring-white/10 shadow-xl shadow-black/8 p-2 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+                <div class="border-t border-zinc-100 dark:border-white/5 my-1"></div>
+
+                <a
+                    href="/archive"
+                    onclick={() => (showMenu = false)}
+                    class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors duration-200"
                 >
-                    <!-- Current account -->
+                    <IconArchive size={16} />
+                    Archive
+                </a>
+
+                <div class="border-t border-zinc-100 dark:border-white/5 my-1"></div>
+
+                <button
+                    onclick={() => {
+                        showMenu = false;
+                        handleSignOut();
+                    }}
+                    class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors duration-200 cursor-pointer"
+                >
+                    <IconLogout size={16} />
+                    Sign out
+                </button>
+
+                <div
+                    class="mt-1 px-3 py-2 text-xs text-zinc-400 truncate"
+                >
+                    {userEmail}
+                </div>
+            </div>
+        {/if}
+    </div>
+{:else}
+    <nav class="fixed top-3 left-1/2 -translate-x-1/2 z-40">
+        <div
+            class="flex items-center gap-1 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-full px-2 py-1.5 ring-1 ring-black/6 dark:ring-white/10 shadow-lg shadow-black/4"
+        >
+            {#each links as link}
+                <a
+                    href={link.href}
+                    class="px-4 py-2 rounded-full text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] {$currentPath ===
+                    link.href
+                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10'}"
+                    aria-current={$currentPath === link.href ? "page" : undefined}
+                >
+                    <div class="flex items-center gap-1.5">
+                        <link.icon size={16} />
+                        <span class="hidden md:inline">{link.label}</span>
+                    </div>
+                </a>
+            {/each}
+
+            <div class="relative ml-1" data-account-menu>
+                <button
+                    onclick={toggleAccountMenu}
+                    class="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-zinc-100 dark:hover:bg-white/10"
+                >
                     <div
-                        class="px-3 py-2.5 flex items-center gap-3 rounded-xl bg-zinc-50 dark:bg-white/5 mb-1"
+                        class="w-7 h-7 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center text-xs font-bold"
+                    >
+                        {initials}
+                    </div>
+                    <IconChevronDown size={14} class="text-zinc-400" />
+                </button>
+
+                {#if showAccountMenu}
+                    <div
+                        class="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-zinc-900 rounded-2xl ring-1 ring-black/6 dark:ring-white/10 shadow-xl shadow-black/8 p-2 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
                     >
                         <div
-                            class="w-9 h-9 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center text-sm font-bold flex-shrink-0"
+                            class="px-3 py-2.5 flex items-center gap-3 rounded-xl bg-zinc-50 dark:bg-white/5 mb-1"
                         >
-                            {initials}
+                            <div
+                                class="w-9 h-9 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center text-sm font-bold flex-shrink-0"
+                            >
+                                {initials}
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                                    Current account
+                                </p>
+                                <p class="text-sm font-medium truncate">
+                                    {userEmail}
+                                </p>
+                            </div>
+                            <IconCheck
+                                size={16}
+                                class="text-green-500 flex-shrink-0"
+                            />
                         </div>
-                        <div class="min-w-0 flex-1">
-                            <p class="text-xs text-zinc-500 dark:text-zinc-400">
-                                Current account
-                            </p>
-                            <p class="text-sm font-medium truncate">
-                                {userEmail}
-                            </p>
-                        </div>
-                        <IconCheck
-                            size={16}
-                            class="text-green-500 flex-shrink-0"
-                        />
-                    </div>
 
-                    <!-- Other accounts -->
-                    {#if accounts.length > 1}
+                        {#if accounts.length > 1}
+                            <div
+                                class="border-t border-zinc-100 dark:border-white/5 my-1"
+                            ></div>
+                            <p
+                                class="px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 font-medium"
+                            >
+                                Other accounts
+                            </p>
+                            {#each accounts as account}
+                                {#if account !== userEmail}
+                                    <button
+                                        onclick={() => handleSwitchAccount(account)}
+                                        class="w-full px-3 py-2 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-white/5 cursor-pointer"
+                                    >
+                                        <div
+                                            class="w-7 h-7 rounded-full bg-zinc-200 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 flex items-center justify-center text-xs font-bold flex-shrink-0"
+                                        >
+                                            {account
+                                                .split("@")[0]
+                                                .slice(0, 2)
+                                                .toUpperCase()}
+                                        </div>
+                                        <span
+                                            class="truncate text-zinc-700 dark:text-zinc-300"
+                                            >{account}</span
+                                        >
+                                        <IconArrowRight
+                                            size={14}
+                                            class="text-zinc-400 ml-auto flex-shrink-0"
+                                        />
+                                    </button>
+                                {/if}
+                            {/each}
+                        {/if}
+
                         <div
                             class="border-t border-zinc-100 dark:border-white/5 my-1"
                         ></div>
-                        <p
-                            class="px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 font-medium"
+                        <button
+                            onclick={openAddAccountModal}
+                            class="w-full px-3 py-2.5 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300 cursor-pointer"
                         >
-                            Other accounts
-                        </p>
-                        {#each accounts as account}
-                            {#if account !== userEmail}
-                                <button
-                                    onclick={() => handleSwitchAccount(account)}
-                                    class="w-full px-3 py-2 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-white/5 cursor-pointer"
-                                >
-                                    <div
-                                        class="w-7 h-7 rounded-full bg-zinc-200 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 flex items-center justify-center text-xs font-bold flex-shrink-0"
-                                    >
-                                        {account
-                                            .split("@")[0]
-                                            .slice(0, 2)
-                                            .toUpperCase()}
-                                    </div>
-                                    <span
-                                        class="truncate text-zinc-700 dark:text-zinc-300"
-                                        >{account}</span
-                                    >
-                                    <IconArrowRight
-                                        size={14}
-                                        class="text-zinc-400 ml-auto flex-shrink-0"
-                                    />
-                                </button>
-                            {/if}
-                        {/each}
-                    {/if}
-
-                    <!-- Actions -->
-                    <div
-                        class="border-t border-zinc-100 dark:border-white/5 my-1"
-                    ></div>
-                    <button
-                        onclick={openAddAccountModal}
-                        class="w-full px-3 py-2.5 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300 cursor-pointer"
-                    >
-                        <IconUserPlus
-                            size={16}
-                            class="text-zinc-500 dark:text-zinc-400"
-                        />
-                        Add another account
-                    </button>
-                    <a
-                        href="/archive"
-                        class="w-full px-3 py-2.5 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300 cursor-pointer"
-                    >
-                        <IconArchive
-                            size={16}
-                            class="text-zinc-500 dark:text-zinc-400"
-                        />
-                        Archive
-                    </a>
-                    <button
-                        onclick={handleSignOut}
-                        class="w-full px-3 py-2.5 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 cursor-pointer"
-                    >
-                        <IconLogout size={16} />
-                        Sign out
-                    </button>
-                </div>
-            {/if}
+                            <IconUserPlus
+                                size={16}
+                                class="text-zinc-500 dark:text-zinc-400"
+                            />
+                            Add another account
+                        </button>
+                        <a
+                            href="/archive"
+                            class="w-full px-3 py-2.5 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                        >
+                            <IconArchive
+                                size={16}
+                                class="text-zinc-500 dark:text-zinc-400"
+                            />
+                            Archive
+                        </a>
+                        <button
+                            onclick={handleSignOut}
+                            class="w-full px-3 py-2.5 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 cursor-pointer"
+                        >
+                            <IconLogout size={16} />
+                            Sign out
+                        </button>
+                    </div>
+                {/if}
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
+{/if}
 
 <!-- Add Account Modal -->
 {#if showAddAccountModal}

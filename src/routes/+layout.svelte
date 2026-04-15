@@ -5,26 +5,31 @@
     import FullscreenButton from "$lib/components/ui/FullscreenButton.svelte";
     import EmailGate from "$lib/components/ui/EmailGate.svelte";
     import { emailStore } from "$lib/stores/email";
+    import { fullscreenStore } from "$lib/stores/fullscreen";
 
     let { children } = $props();
 
-    // Loading state - true while checking localStorage
     let isLoading = $state(true);
     let hasEmail = $state(false);
     let mounted = $state(false);
+    let isFullscreen = $state(false);
 
     onMount(() => {
-        // Check localStorage for email
         hasEmail = emailStore.getEmail().length > 0;
         mounted = true;
         isLoading = false;
 
-        // Subscribe to store updates
-        const unsubscribe = emailStore.subscribe((email) => {
+        const unsubEmail = emailStore.subscribe((email) => {
             hasEmail = email.length > 0;
         });
+        const unsubFullscreen = fullscreenStore.subscribe((v) => {
+            isFullscreen = v;
+        });
 
-        return unsubscribe;
+        return () => {
+            unsubEmail();
+            unsubFullscreen();
+        };
     });
 </script>
 
@@ -33,7 +38,6 @@
 </svelte:head>
 
 {#if isLoading}
-    <!-- Loading spinner while checking localStorage -->
     <div
         class="min-h-dvh bg-page dark:bg-page-deep flex items-center justify-center"
     >
@@ -53,7 +57,11 @@
         class="min-h-dvh bg-page dark:bg-page-deep text-zinc-900 dark:text-white font-sans"
     >
         <FloatingNav />
-        <main class="pt-16 pb-16 px-4 md:px-8 max-w-7xl mx-auto">
+        <main
+            class="{isFullscreen
+                ? 'pt-2 pb-2 px-3 md:px-4'
+                : 'pt-16 pb-16 px-4 md:px-8'} max-w-7xl mx-auto transition-all duration-300"
+        >
             {@render children()}
         </main>
         <FullscreenButton />

@@ -1,11 +1,19 @@
 <script lang="ts">
     import { IconMaximize, IconMinimize } from "@tabler/icons-svelte";
+    import { fullscreenStore } from "$lib/stores/fullscreen";
 
     let isFullscreen = $state(false);
 
     $effect(() => {
+        const unsubscribe = fullscreenStore.subscribe((v) => {
+            isFullscreen = v;
+        });
+        return unsubscribe;
+    });
+
+    $effect(() => {
         function onChange() {
-            isFullscreen = !!document.fullscreenElement;
+            fullscreenStore.refresh();
         }
         document.addEventListener("fullscreenchange", onChange);
         return () => document.removeEventListener("fullscreenchange", onChange);
