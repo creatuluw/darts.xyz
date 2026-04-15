@@ -18,7 +18,7 @@
     onMount(async () => {
         const accountId = emailStore.getEmail();
         const res = await fetch(
-            `/api/players?accountId=${encodeURIComponent(accountId)}`,
+            `/api/players?accountId=${encodeURIComponent(accountId)}&sortBy=recent`,
         );
         players = await res.json();
         loading = false;

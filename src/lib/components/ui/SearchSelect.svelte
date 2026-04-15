@@ -10,7 +10,7 @@
     let {
         options = [],
         selected = $bindable<Option[]>([]),
-        placeholder = "Search...",
+        placeholder = "Search players...",
         class: className = "",
     }: {
         options: Option[];
@@ -20,53 +20,37 @@
     } = $props();
 
     let search = $state("");
-    let isOpen = $state(false);
     let inputRef: HTMLInputElement;
-    let containerRef: HTMLDivElement;
     let dragIndex = $state<number | null>(null);
     let dragOverIndex = $state<number | null>(null);
 
+    let isSelected = $derived(new Set(selected.map((s) => s.id)));
+
     let filteredOptions = $derived(
         search.trim()
-            ? options.filter(
-                  (opt) =>
-                      opt.name.toLowerCase().includes(search.toLowerCase()) &&
-                      !selected.find((s) => s.id === opt.id),
+            ? options.filter((opt) =>
+                  opt.name.toLowerCase().includes(search.toLowerCase()),
               )
-            : options.filter((opt) => !selected.find((s) => s.id === opt.id)),
+            : options,
     );
 
-    function selectOption(option: Option) {
-        selected = [...selected, option];
+    function toggleOption(option: Option) {
+        if (isSelected.has(option.id)) {
+            selected = selected.filter((s) => s.id !== option.id);
+        } else {
+            selected = [...selected, option];
+        }
         search = "";
         inputRef?.focus();
     }
 
-    function removeOption(id: string) {
-        selected = selected.filter((s) => s.id !== id);
-    }
-
-    function handleFocus() {
-        isOpen = true;
-        setTimeout(() => {
-            containerRef?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        }, 100);
-    }
-
-    function handleBlur() {
-        setTimeout(() => {
-            isOpen = false;
-        }, 150);
-    }
-
     function handleKeydown(e: KeyboardEvent) {
         if (e.key === "Escape") {
-            isOpen = false;
             search = "";
+            inputRef?.blur();
         }
     }
 
-    // Drag and drop handlers
     function handleDragStart(index: number, e: DragEvent) {
         dragIndex = index;
         dragOverIndex = null;
@@ -114,7 +98,7 @@
     }
 </script>
 
-<div bind:this={containerRef} class="relative {className}">
+<div class="{className}">
     {#if selected.length > 0}
         <div class="flex flex-wrap gap-2 mb-3" role="list">
             {#each selected as item, i (item.id)}
@@ -146,7 +130,7 @@
                     <span class="select-none">{item.name}</span>
                     <button
                         type="button"
-                        onclick={() => removeOption(item.id)}
+                        onclick={() => toggleOption(item)}
                         class="hover:text-emerald-300 transition-colors"
                     >
                         <IconX size={12} />
@@ -156,7 +140,7 @@
         </div>
     {/if}
 
-    <div class="relative">
+    <div class="relative mb-3">
         <IconSearch
             size={16}
             class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none"
@@ -167,29 +151,26 @@
             inputmode="search"
             bind:value={search}
             {placeholder}
-            onfocus={handleFocus}
-            onblur={handleBlur}
             onkeydown={handleKeydown}
             class="w-full bg-zinc-50 dark:bg-white/5 rounded-full pl-10 pr-4 py-2.5 text-sm ring-1 ring-black/6 dark:ring-white/10 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
         />
     </div>
 
-    {#if isOpen && filteredOptions.length > 0}
-        <div
-            class="absolute top-full left-0 right-0 mt-1.5 py-1 bg-white dark:bg-[#1C1C1C] rounded-lg border border-zinc-200 dark:border-white/10 shadow-lg z-50 max-h-48 overflow-y-auto"
-        >
-            {#each filteredOptions as option (option.id)}
-                <button
-                    type="button"
-                    onmousedown={(e) => {
-                        e.preventDefault();
-                        selectOption(option);
-                    }}
-                    class="w-full px-3 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                >
-                    {option.name}
-                </button>
-            {/each}
-        </div>
-    {/if}
+    <div class="flex flex-wrap gap-2">
+        {#each filteredOptions as option (option.id)}
+            {@const active = isSelected.has(option.id)}
+            <button
+                type="button"
+                onclick={() => toggleOption(option)}
+                class="rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-200 cursor-pointer {active
+                    ? 'bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 ring-1 ring-emerald-500/30'
+                    : 'bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 ring-1 ring-black/6 dark:ring-white/10 hover:bg-zinc-200 dark:hover:bg-white/10'}"
+            >
+                {option.name}
+            </button>
+        {/each}
+        {#if filteredOptions.length === 0 && options.length > 0}
+            <p class="text-zinc-400 text-sm py-2">No players match "{search}"</p>
+        {/if}
+    </div>
 </div>

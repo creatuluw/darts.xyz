@@ -5,6 +5,13 @@ import { dbService } from "$lib/db/database-service";
 export const GET: RequestHandler = async ({ url }) => {
   try {
     const accountId = url.searchParams.get("accountId");
+    const sortBy = url.searchParams.get("sortBy");
+
+    if (accountId && sortBy === "recent") {
+      const players = await dbService.getPlayersSortedByRecentMatch(accountId);
+      return json(players);
+    }
+
     const players = await dbService.getAllPlayers(accountId || undefined);
     return json(players);
   } catch (error) {

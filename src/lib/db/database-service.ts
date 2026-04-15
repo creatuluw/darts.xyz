@@ -1,5 +1,5 @@
 import { getDb, schema } from "./index";
-import { eq, and, desc, sql, inArray, isNull } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, isNull, max } from "drizzle-orm";
 
 export class DatabaseService {
   // === PLAYERS ===
@@ -94,6 +94,36 @@ export class DatabaseService {
       .from(schema.players)
       .where(isNull(schema.players.deletedAt))
       .orderBy(desc(schema.players.createdAt));
+  }
+
+  async getPlayersSortedByRecentMatch(accountId: string) {
+    const rows = await getDb()
+      .select({
+        id: schema.players.id,
+        name: schema.players.name,
+        accountId: schema.players.accountId,
+        createdAt: schema.players.createdAt,
+        lastMatchAt: max(schema.matches.createdAt),
+      })
+      .from(schema.players)
+      .leftJoin(
+        schema.matchPlayers,
+        eq(schema.players.id, schema.matchPlayers.playerId),
+      )
+      .leftJoin(
+        schema.matches,
+        eq(schema.matchPlayers.matchId, schema.matches.id),
+      )
+      .where(
+        and(
+          eq(schema.players.accountId, accountId.toLowerCase()),
+          isNull(schema.players.deletedAt),
+        ),
+      )
+      .groupBy(schema.players.id)
+      .orderBy(desc(max(schema.matches.createdAt)));
+
+    return rows.map(({ lastMatchAt, ...player }) => player);
   }
 
   async updatePlayerEmail(id: string, playerEmail: string | null) {
