@@ -10,6 +10,7 @@
         IconArrowUp,
         IconArrowDown,
         IconTrash,
+        IconExternalLink,
     } from "@tabler/icons-svelte";
     import {
         DoubleBezel,
@@ -173,6 +174,7 @@
         const empty = {
             threeDartAvg: 0,
             checkoutPct: 0,
+            doubleConversion: 0,
             countUnder20: 0,
             count60Plus: 0,
             count100Plus: 0,
@@ -194,6 +196,8 @@
         let checkoutAttempts = 0;
         let checkoutSuccesses = 0;
         let count60PlusFinishes = 0;
+        let doubleChances = 0;
+        let throwsOnDouble = 0;
 
         for (const turn of turns) {
             totalScore += turn.totalScore;
@@ -218,6 +222,49 @@
                 ? (checkoutSuccesses / checkoutAttempts) * 100
                 : 0;
 
+        // Per-dart tracking for double conversion
+        const isValidDoubleOut = (score: number) =>
+            score > 0 && score % 2 === 0;
+
+        for (const turn of turns) {
+            const startOfTurnRemaining = turn.remainingScore + turn.totalScore;
+            let onDoubleChance = false;
+            let runningRemaining = startOfTurnRemaining;
+
+            for (let i = 0; i < turn.darts.length; i++) {
+                const dart = turn.darts[i];
+                if (dart.score === 0) continue;
+
+                if (runningRemaining <= 170 && runningRemaining > 0) {
+                    if (isValidDoubleOut(runningRemaining)) {
+                        throwsOnDouble++;
+                        onDoubleChance = true;
+                    } else if (onDoubleChance) {
+                        onDoubleChance = false;
+                    }
+                }
+
+                runningRemaining -= dart.score;
+
+                if (
+                    runningRemaining <= 170 &&
+                    runningRemaining > 0 &&
+                    isValidDoubleOut(runningRemaining)
+                ) {
+                    doubleChances++;
+                    onDoubleChance = true;
+                } else if (
+                    runningRemaining % 2 !== 0 ||
+                    runningRemaining > 170
+                ) {
+                    onDoubleChance = false;
+                }
+            }
+        }
+
+        const doubleConversion =
+            throwsOnDouble > 0 ? (checkoutSuccesses / throwsOnDouble) * 100 : 0;
+
         // Last 3 vs prior turns (up to 15 before the last 3)
         const last3 = turns.slice(-3);
         const prior = turns.slice(0, -3).slice(-15);
@@ -225,6 +272,7 @@
         return {
             threeDartAvg,
             checkoutPct,
+            doubleConversion,
             countUnder20,
             count60Plus,
             count100Plus,
@@ -665,13 +713,28 @@
 
             // Create next leg if match continues
             if (matchState.status === "in_progress") {
-                // The leg winner throws first in the next leg.
+                // Alternate who throws first each leg.
                 // firstThrowerId must be a match_player UUID, not a player UUID.
-                const firstThrowerMp = matchData.matchPlayers.find(
-                    (mp: any) => mp.playerId === legWinnerId,
+                const completedLegData = legs.find(
+                    (l: any) =>
+                        l.setNumber === persistSetNum &&
+                        l.legNumber === persistLegNum,
                 );
+                const currentFirstMp = completedLegData
+                    ? matchData.matchPlayers.find(
+                          (mp: any) =>
+                              mp.id === completedLegData.firstThrowerId,
+                      )
+                    : null;
+                const currentFirstIndex = currentFirstMp
+                    ? matchData.matchPlayers.findIndex(
+                          (mp: any) => mp.id === currentFirstMp.id,
+                      )
+                    : 0;
+                const nextFirstIndex =
+                    (currentFirstIndex + 1) % matchData.matchPlayers.length;
                 const firstThrowerId =
-                    firstThrowerMp?.id || matchData.matchPlayers[0]?.id || "";
+                    matchData.matchPlayers[nextFirstIndex]?.id || "";
 
                 await fetch(`/api/matches/${matchId}/legs`, {
                     method: "POST",
@@ -956,14 +1019,27 @@
                                     >{p1Stats.threeDartAvg.toFixed(1)}</span
                                 >
                             </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs text-zinc-400"
-                                    >Checkout %</span
+                            <a
+                                href="/players/{p1.id}/checkout"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="flex justify-between items-center group -mx-2 px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
+                                title="View checkout breakdown"
+                            >
+                                <span
+                                    class="text-xs text-zinc-400 flex items-center gap-1"
+                                    >Double Conv.
+                                    <IconExternalLink
+                                        size={10}
+                                        class="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500"
+                                    />
+                                </span>
+                                <span
+                                    class="text-sm font-mono font-medium group-hover:text-blue-400 transition-colors"
                                 >
-                                <span class="text-sm font-mono font-medium"
-                                    >{p1Stats.checkoutPct.toFixed(0)}%</span
-                                >
-                            </div>
+                                    {p1Stats.doubleConversion.toFixed(0)}%
+                                </span>
+                            </a>
 
                             <div
                                 class="pt-2 mt-1 border-t border-zinc-100 dark:border-white/5"
@@ -1571,14 +1647,27 @@
                                     >{p2Stats.threeDartAvg.toFixed(1)}</span
                                 >
                             </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs text-zinc-400"
-                                    >Checkout %</span
+                            <a
+                                href="/players/{p2.id}/checkout"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="flex justify-between items-center group -mx-2 px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
+                                title="View checkout breakdown"
+                            >
+                                <span
+                                    class="text-xs text-zinc-400 flex items-center gap-1"
+                                    >Double Conv.
+                                    <IconExternalLink
+                                        size={10}
+                                        class="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500"
+                                    />
+                                </span>
+                                <span
+                                    class="text-sm font-mono font-medium group-hover:text-blue-400 transition-colors"
                                 >
-                                <span class="text-sm font-mono font-medium"
-                                    >{p2Stats.checkoutPct.toFixed(0)}%</span
-                                >
-                            </div>
+                                    {p2Stats.doubleConversion.toFixed(0)}%
+                                </span>
+                            </a>
 
                             <div
                                 class="pt-2 mt-1 border-t border-zinc-100 dark:border-white/5"
@@ -1852,6 +1941,7 @@
                     </DoubleBezel>
 
                     <!-- Muted mirror: Stats -->
+                    <!-- Solo Player Stats -->
                     <DoubleBezel>
                         <div class="space-y-1.5 mt-2">
                             <div class="flex justify-between items-center">
@@ -1862,14 +1952,27 @@
                                     >{spStats.threeDartAvg.toFixed(1)}</span
                                 >
                             </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs text-zinc-400"
-                                    >Checkout %</span
+                            <a
+                                href="/players/{sp.id}/checkout"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="flex justify-between items-center group -mx-2 px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
+                                title="View checkout breakdown"
+                            >
+                                <span
+                                    class="text-xs text-zinc-400 flex items-center gap-1"
+                                    >Double Conv.
+                                    <IconExternalLink
+                                        size={10}
+                                        class="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500"
+                                    />
+                                </span>
+                                <span
+                                    class="text-sm font-mono font-medium group-hover:text-blue-400 transition-colors"
                                 >
-                                <span class="text-sm font-mono font-medium"
-                                    >{spStats.checkoutPct.toFixed(0)}%</span
-                                >
-                            </div>
+                                    {spStats.doubleConversion.toFixed(0)}%
+                                </span>
+                            </a>
 
                             <div
                                 class="pt-2 mt-1 border-t border-zinc-100 dark:border-white/5"

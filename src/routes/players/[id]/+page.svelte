@@ -20,6 +20,7 @@
         IconMail,
         IconCheck,
         IconPencil,
+        IconExternalLink,
     } from "@tabler/icons-svelte";
 
     let playerId = $derived($page.params.id as string);
@@ -302,18 +303,34 @@
                         </div>
                     </div>
                 </DoubleBezel>
-                <DoubleBezel>
-                    <div class="text-center">
-                        <div
-                            class="text-xs text-zinc-400 uppercase tracking-wider mb-1"
-                        >
-                            Checkout %
+                <a
+                    href="/players/{playerId}/checkout"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="block group"
+                    title="View detailed checkout breakdown"
+                >
+                    <DoubleBezel
+                        class="transition-all duration-200 group-hover:ring-2 group-hover:ring-blue-500/50"
+                    >
+                        <div class="text-center">
+                            <div
+                                class="text-xs text-zinc-400 uppercase tracking-wider mb-1 flex items-center justify-center gap-1"
+                            >
+                                Double Conversion
+                                <IconExternalLink
+                                    size={12}
+                                    class="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500"
+                                />
+                            </div>
+                            <div
+                                class="text-3xl font-display font-bold group-hover:text-blue-400 transition-colors"
+                            >
+                                {stats?.doubleConversion ?? "0"}%
+                            </div>
                         </div>
-                        <div class="text-3xl font-display font-bold">
-                            {stats?.checkoutPct ?? "0"}%
-                        </div>
-                    </div>
-                </DoubleBezel>
+                    </DoubleBezel>
+                </a>
             </div>
 
             <!-- Detailed Stats -->
@@ -527,23 +544,47 @@
                             </div>
                         </div>
                     </DoubleBezel>
-                    <DoubleBezel>
-                        <div class="text-center">
-                            <div
-                                class="text-xs text-zinc-400 uppercase tracking-wider mb-1"
-                            >
-                                Checkout %
+                    <a
+                        href="/players/{playerId}/checkout"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="block group"
+                        title="View detailed checkout breakdown"
+                    >
+                        <DoubleBezel
+                            class="transition-all duration-200 group-hover:ring-2 group-hover:ring-blue-500/50"
+                        >
+                            <div class="text-center">
+                                <div
+                                    class="text-xs text-zinc-400 uppercase tracking-wider mb-1 flex items-center justify-center gap-1"
+                                >
+                                    Double Conversion
+                                    <IconExternalLink
+                                        size={12}
+                                        class="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500"
+                                    />
+                                </div>
+                                <div
+                                    class="text-3xl font-display font-bold group-hover:text-blue-400 transition-colors"
+                                >
+                                    {s.doubleConversion}%
+                                </div>
+                                <div
+                                    class="text-xs {s.doubleConversion >= 30
+                                        ? 'text-emerald-400'
+                                        : s.doubleConversion >= 20
+                                          ? 'text-blue-400'
+                                          : 'text-amber-400'} mt-1 font-medium"
+                                >
+                                    {s.doubleConversion >= 30
+                                        ? "Elite"
+                                        : s.doubleConversion >= 20
+                                          ? "Strong"
+                                          : "Needs Work"}
+                                </div>
                             </div>
-                            <div class="text-3xl font-display font-bold">
-                                {s.checkoutPct}%
-                            </div>
-                            <div
-                                class="text-xs {coLevel.color} mt-1 font-medium"
-                            >
-                                {coLevel.label}
-                            </div>
-                        </div>
-                    </DoubleBezel>
+                        </DoubleBezel>
+                    </a>
                     <DoubleBezel>
                         <div class="text-center">
                             <div
@@ -691,7 +732,7 @@
                                         ></div>
                                     </div>
                                     <div
-                                        class="text-xs font-mono text-zinc-400 w-14 text-right"
+                                        class="text-xs font-mono text-zinc-400 w-20 text-right whitespace-nowrap"
                                     >
                                         {bracket.count}
                                         <span class="text-zinc-500"
@@ -772,7 +813,7 @@
                                             {/if}
                                         </div>
                                         <div
-                                            class="text-xs font-mono w-20 text-right"
+                                            class="text-xs font-mono w-20 text-right whitespace-nowrap"
                                         >
                                             {#if range.attempts > 0}
                                                 <span class="text-zinc-300"

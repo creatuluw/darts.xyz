@@ -119,13 +119,14 @@ export function completeLeg(state: MatchState, winnerIndex: number): MatchState 
     return completeSet({ ...state, players: updatedPlayers, currentLeg: completedLeg }, winnerIndex);
   }
 
-  // Start next leg
+  // Start next leg — alternate who throws first
   const nextLegNumber = state.currentLeg.legNumber + 1;
+  const nextFirstThrowerIndex = (state.currentLeg.firstThrowerIndex + 1) % state.players.length;
   const nextLeg: LegState = {
     setNumber: state.currentLeg.setNumber,
     legNumber: nextLegNumber,
-    currentPlayerIndex: winnerIndex, // leg winner throws first
-    firstThrowerIndex: winnerIndex,
+    currentPlayerIndex: nextFirstThrowerIndex,
+    firstThrowerIndex: nextFirstThrowerIndex,
     turns: [],
     isComplete: false,
     winnerId: null,
@@ -161,13 +162,14 @@ export function completeSet(state: MatchState, winnerIndex: number): MatchState 
     return completeMatch({ ...state, players: updatedPlayers }, winnerIndex);
   }
 
-  // Start next set
+  // Start next set — alternate who throws first
   const nextSetNumber = state.currentLeg.setNumber + 1;
+  const nextFirstThrowerIndex = (state.currentLeg.firstThrowerIndex + 1) % state.players.length;
   const nextLeg: LegState = {
     setNumber: nextSetNumber,
     legNumber: 1,
-    currentPlayerIndex: winnerIndex, // set winner throws first
-    firstThrowerIndex: winnerIndex,
+    currentPlayerIndex: nextFirstThrowerIndex,
+    firstThrowerIndex: nextFirstThrowerIndex,
     turns: [],
     isComplete: false,
     winnerId: null,
