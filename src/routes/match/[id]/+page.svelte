@@ -905,35 +905,138 @@
                     <a href="/history/{matchId}">
                         <PillButton>View Match Details</PillButton>
                     </a>
-                            </div>
+                </div>
+            </div>
+        {/if}
 
-                            <!-- Input Mode -->
-                            <div class="space-y-3">
-                                <div class="flex items-center gap-2 text-zinc-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="4" y="4" width="16" height="16" rx="2" />
-                                        <path d="M4 12h16" />
-                                        <path d="M12 4v16" />
-                                    </svg>
-                                    <span class="text-sm font-medium">Score Input</span>
-                                </div>
-                                <p class="text-xs text-zinc-500">
-                                    Choose between the dartboard or a number pad for entering scores.
-                                </p>
-                                <div class="flex gap-2">
-                                    <button
-                                        onclick={() => (inputMode = "board")}
-                                        class="flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors {inputMode === 'board' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-100 text-zinc-500 dark:bg-white/10 dark:text-zinc-400'}"
-                                    >
-                                        Dartboard
-                                    </button>
-                                    <button
-                                        onclick={() => (inputMode = "numpad")}
-                                        class="flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors {inputMode === 'numpad' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-100 text-zinc-500 dark:bg-white/10 dark:text-zinc-400'}"
-                                    >
-                                        Number Pad
-                                    </button>
-                                </div>
+        <!-- Header with Tabs -->
+        <div class="grid grid-cols-3 items-center mb-4">
+            <div>
+                <span class="text-xs text-zinc-400 font-medium"
+                    >Set {matchState.currentLeg.setNumber} · Leg {matchState
+                        .currentLeg.legNumber}</span
+                >
+            </div>
+            <div class="flex justify-center gap-2">
+                <button
+                    onclick={() => (activeTab = "board")}
+                    class="px-6 py-1.5 text-sm font-medium rounded transition-colors cursor-pointer border border-[#E2DFD8] {activeTab ===
+                    'board'
+                        ? 'bg-white text-zinc-900 font-semibold'
+                        : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
+                >
+                    Board
+                </button>
+                <button
+                    onclick={() => (activeTab = "turns")}
+                    class="px-6 py-1.5 text-sm font-medium rounded transition-colors cursor-pointer border border-[#E2DFD8] {activeTab ===
+                    'turns'
+                        ? 'bg-white text-zinc-900 font-semibold'
+                        : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
+                >
+                    Turns
+                </button>
+                <button
+                    onclick={() => (activeTab = "stats")}
+                    class="px-6 py-1.5 text-sm font-medium rounded transition-colors cursor-pointer border border-[#E2DFD8] {activeTab ===
+                    'stats'
+                        ? 'bg-white text-zinc-900 font-semibold'
+                        : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
+                >
+                    Stats
+                </button>
+                <button
+                    onclick={() => (activeTab = "settings")}
+                    class="px-6 py-1.5 text-sm font-medium rounded transition-colors cursor-pointer border border-[#E2DFD8] {activeTab ===
+                    'settings'
+                        ? 'bg-white text-zinc-900 font-semibold'
+                        : 'bg-transparent text-zinc-400 hover:bg-black hover:text-white'}"
+                >
+                    Settings
+                </button>
+            </div>
+            <div class="flex justify-end">
+                <button
+                    onclick={handleAbandon}
+                    class="text-xs text-zinc-400 hover:text-red-500 transition-colors"
+                >
+                    Abandon
+                </button>
+            </div>
+        </div>
+
+        <!-- 3-Column Bento Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+            <!-- ============================================ -->
+            <!-- LEFT: Player 1 Scoreboard + Stats            -->
+            <!-- ============================================ -->
+            {#if matchState.players[0]}
+                {@const p1 = matchState.players[0]}
+                {@const p1Active =
+                    matchState.currentLeg.currentPlayerIndex === 0}
+                {@const p1Turns = getPlayerTurns(p1.id)}
+                {@const p1Stats = computeMatchStats(p1Turns)}
+                {@const p1Darts = getDartsThrown(p1.id)}
+                {@const p1LifetimeAvg = playerStats[p1.id]?.threeDartAvg
+                    ? Number(playerStats[p1.id].threeDartAvg).toFixed(1)
+                    : "—"}
+                <div class="md:col-span-3 order-1 md:order-none space-y-3">
+                    <!-- Player 1 Scoreboard -->
+                    <DoubleBezel>
+                        <div class="text-center">
+                            <div
+                                class="font-display font-black text-8xl tracking-tight leading-none {p1Active
+                                    ? 'text-emerald-600 dark:text-emerald-400'
+                                    : ''}"
+                            >
+                                <AnimatedNumber value={p1.remainingScore} />
+                            </div>
+                            <div
+                                class="mt-2 font-medium text-sm {p1Active
+                                    ? 'text-emerald-700 dark:text-emerald-400'
+                                    : ''}"
+                            >
+                                {#if p1Active}
+                                    <IconPlayerPlay
+                                        size={14}
+                                        class="inline -mt-0.5 text-emerald-500 mr-0.5"
+                                    />
+                                {/if}
+                                {p1.name}
+                            </div>
+                            <div
+                                class="mt-2 flex justify-center gap-4 text-xs font-mono text-zinc-400"
+                            >
+                                <span
+                                    >Sets
+                                    <span
+                                        class="font-bold text-sm text-zinc-700 dark:text-zinc-300"
+                                        >{p1.setsWon}</span
+                                    ></span
+                                >
+                                <span
+                                    >Legs
+                                    <span
+                                        class="font-bold text-sm text-zinc-700 dark:text-zinc-300"
+                                        >{p1.legsWon}</span
+                                    ></span
+                                >
+                            </div>
+                            <div
+                                class="mt-1.5 flex justify-center gap-3 text-[10px] text-zinc-400"
+                            >
+                                <span
+                                    >Darts
+                                    <span class="font-mono font-medium"
+                                        >{p1Darts}</span
+                                    ></span
+                                >
+                                <span
+                                    >Avg
+                                    <span class="font-mono font-medium"
+                                        >{p1Stats.threeDartAvg.toFixed(1)}</span
+                                    ></span
+                                >
                             </div>
                         </div>
                     </DoubleBezel>
@@ -1165,7 +1268,7 @@
                                                 <button
                                                     onclick={() =>
                                                         (showDeleteConfirm = true)}
-                                                    class="text-zinc-300 hover:text-red-500 transition-colors cursor-pointer"
+                                                    class="flex items-center justify-center w-6 h-6 rounded text-zinc-300 hover:text-red-500 transition-colors cursor-pointer"
                                                     title="Delete last turn"
                                                 >
                                                     <IconTrash size={12} />
@@ -1299,13 +1402,13 @@
                                     {#if currentDarts.length > 0}
                                         <button
                                             onclick={clearAllDarts}
-                                            class="flex items-center justify-center w-6 h-8 rounded-[5px] bg-red-600 text-white hover:bg-red-500 transition-colors touch-manipulation"
+                                            class="flex items-center justify-center w-8 h-8 rounded-[5px] bg-red-600 text-white hover:bg-red-500 transition-colors touch-manipulation"
                                             aria-label="Clear all darts"
                                         >
                                             <IconTrash size={14} />
                                         </button>
                                     {:else}
-                                        <span class="flex items-center justify-center w-6 h-8 rounded-[5px] bg-zinc-200 dark:bg-white/10 text-zinc-400 dark:text-zinc-500">
+                                        <span class="flex items-center justify-center w-8 h-8 rounded-[5px] bg-zinc-200 dark:bg-white/10 text-zinc-400 dark:text-zinc-500">
                                             <IconTrash size={14} />
                                         </span>
                                     {/if}
@@ -1878,7 +1981,7 @@
                                                 <button
                                                     onclick={() =>
                                                         (showDeleteConfirm = true)}
-                                                    class="text-zinc-300 hover:text-red-500 transition-colors cursor-pointer"
+                                                    class="flex items-center justify-center w-6 h-6 rounded text-zinc-300 hover:text-red-500 transition-colors cursor-pointer"
                                                     title="Delete last turn"
                                                 >
                                                     <IconTrash size={12} />
