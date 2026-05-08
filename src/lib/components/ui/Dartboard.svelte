@@ -306,12 +306,14 @@
         }
 
         // After zoom: pan by tracking delta between successive move events
+        // Inverted so the finger feels like it's sliding across a fixed board
+        // (finger moves right → board content shifts left, revealing area to the right)
         if (zoomActive) {
             e.preventDefault();                 // stop browser scrolling while zoomed
             const deltaX = t.clientX - prevTouchX;
             const deltaY = t.clientY - prevTouchY;
-            panX = clamp(panX + deltaX, -MAX_PAN_PX, MAX_PAN_PX);
-            panY = clamp(panY + deltaY, -MAX_PAN_PX, MAX_PAN_PX);
+            panX = clamp(panX - deltaX, -MAX_PAN_PX, MAX_PAN_PX);
+            panY = clamp(panY - deltaY, -MAX_PAN_PX, MAX_PAN_PX);
             prevTouchX = t.clientX;
             prevTouchY = t.clientY;
         }
