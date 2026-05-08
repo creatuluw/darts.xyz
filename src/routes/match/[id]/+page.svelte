@@ -1375,9 +1375,9 @@
                                                 <span class="w-[25%] flex justify-center items-center">
                                                     <button
                                                         onclick={() => removeDartAt(i)}
-                                                        class="flex items-center justify-center w-5 h-4 rounded-[3px] text-sm leading-none bg-red-600 text-white hover:bg-red-500 transition-colors touch-manipulation"
+                                                        class="flex items-center justify-center w-5 h-5 -ml-[1px] rounded-[3px] text-sm leading-none bg-red-600 text-white hover:bg-red-500 transition-colors touch-manipulation cursor-pointer"
                                                         aria-label="Remove dart"
-                                                    >&times;</button>
+                                                    ><span class="mt-[1px]">&times;</span></button>
                                                 </span>
                                             </span>
                                         {:else if i === activeSlotIndex}
@@ -1402,7 +1402,7 @@
                                     {#if currentDarts.length > 0}
                                         <button
                                             onclick={clearAllDarts}
-                                            class="flex items-center justify-center w-8 h-8 rounded-[5px] bg-red-600 text-white hover:bg-red-500 transition-colors touch-manipulation"
+                                            class="flex items-center justify-center w-8 h-8 rounded-[5px] bg-red-600 text-white hover:bg-red-500 transition-colors touch-manipulation cursor-pointer"
                                             aria-label="Clear all darts"
                                         >
                                             <IconTrash size={14} />
