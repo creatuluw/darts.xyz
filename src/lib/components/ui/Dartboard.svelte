@@ -163,16 +163,155 @@
     function hideTooltip() {
         tooltip = null;
     }
+
+    /* ── Touch long-press zoom ── */
+    let zoomActive = $state(false);
+    let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+    let touchId: number | null = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchMoved = false;
+    const LONG_PRESS_MS = 400;
+    const MOVE_THRESHOLD_PX = 15;
+
+    function findTouch(touches: TouchList, id: number): Touch | undefined {
+        for (let i = 0; i < touches.length; i++) {
+            if (touches[i].identifier === id) return touches[i];
+        }
+        return undefined;
+    }
+
+    function getHitFromPoint(clientX: number, clientY: number) {
+        if (!svgEl) return null;
+        const rect = svgEl.getBoundingClientRect();
+        const scaleX = 500 / rect.width;
+        const scaleY = 500 / rect.height;
+        const x = (clientX - rect.left) * scaleX;
+        const y = (clientY - rect.top) * scaleY;
+        const dx = x - CX;
+        const dy = y - CY;
+        const d = Math.sqrt(dx * dx + dy * dy);
+
+        let segment = 0;
+        let multiplier: 1 | 2 | 3 = 1;
+
+        if (d <= R.bullseye) {
+            segment = 25;
+            multiplier = 2;
+        } else if (d <= R.bull) {
+            segment = 25;
+            multiplier = 1;
+        } else {
+            let angle = Math.atan2(dx, -dy);
+            if (angle < 0) angle += 2 * Math.PI;
+            const idx = Math.floor((angle + segAngle / 2) / segAngle) % 20;
+            segment = NUMBERS[idx];
+
+            if (d <= R.innerSingle) {
+                multiplier = 1;
+            } else if (d <= R.tripleOuter) {
+                multiplier = 3;
+            } else if (d <= R.outerSingle) {
+                multiplier = 1;
+            } else if (d <= R.doubleOuter) {
+                multiplier = 2;
+            } else {
+                return null;
+            }
+        }
+        return { segment, multiplier };
+    }
+
+    function handleTouchStart(e: TouchEvent) {
+        if (disabled) return;
+        e.preventDefault();
+        if (touchId !== null) return;
+        const t = e.touches[0];
+        touchId = t.identifier;
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        touchMoved = false;
+
+        longPressTimer = setTimeout(() => {
+            if (touchId !== null && !touchMoved) {
+                zoomActive = true;
+                if (wrapperEl && svgEl) {
+                    const rect = wrapperEl.getBoundingClientRect();
+                    const ox = ((touchStartX - rect.left) / rect.width) * 100;
+                    const oy = ((touchStartY - rect.top) / rect.height) * 100;
+                    svgEl.style.transformOrigin = `${ox}% ${oy}%`;
+                }
+            }
+        }, LONG_PRESS_MS);
+    }
+
+    function handleTouchMove(e: TouchEvent) {
+        if (touchId === null) return;
+        const t = findTouch(e.touches, touchId);
+        if (!t) return;
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+        if (Math.sqrt(dx * dx + dy * dy) > MOVE_THRESHOLD_PX) {
+            touchMoved = true;
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        }
+    }
+
+    function handleTouchEnd(e: TouchEvent) {
+        if (touchId === null) return;
+        const t = findTouch(e.changedTouches, touchId);
+        if (!t) return;
+        touchId = null;
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+
+        if (zoomActive) {
+            zoomActive = false;
+            if (svgEl) svgEl.style.transformOrigin = "";
+            const hit = getHitFromPoint(t.clientX, t.clientY);
+            if (hit) onHit(hit.segment, hit.multiplier);
+            e.preventDefault();
+        } else if (!touchMoved) {
+            const hit = getHitFromPoint(t.clientX, t.clientY);
+            if (hit) onHit(hit.segment, hit.multiplier);
+            e.preventDefault();
+        }
+    }
+
+    function handleTouchCancel() {
+        touchId = null;
+        touchMoved = false;
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+        if (zoomActive) {
+            zoomActive = false;
+            if (svgEl) svgEl.style.transformOrigin = "";
+        }
+    }
 </script>
 
-<div class="relative w-full" bind:this={wrapperEl}>
+<div
+    class="relative w-full"
+    bind:this={wrapperEl}
+    ontouchstart={handleTouchStart}
+    ontouchmove={handleTouchMove}
+    ontouchend={handleTouchEnd}
+    ontouchcancel={handleTouchCancel}
+>
     <svg
         bind:this={svgEl}
         viewBox="0 0 500 500"
         xmlns="http://www.w3.org/2000/svg"
-        class="w-full select-none {disabled
+        class="w-full select-none transition-transform duration-300 ease-out {disabled
             ? 'opacity-40 pointer-events-none'
-            : ''}"
+            : ''} {zoomActive ? 'tablet-zoom' : ''}"
     >
         <circle cx={CX} cy={CY} r={R.numberOuter} fill="#0d0d0d" />
         <circle cx={CX} cy={CY} r={R.wireOuter} fill="#111" />
@@ -312,5 +451,9 @@
     }
     .seg-black:hover {
         fill: #555555;
+    }
+    .tablet-zoom {
+        transform: scale(1.25);
+        transition: transform 0.3s ease-out;
     }
 </style>

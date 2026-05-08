@@ -104,43 +104,55 @@ export class DartsCaller {
     this.isInitialized = true;
   }
 
-  private async doInitialize(): Promise<void> {
-    try {
-      // Initialize audio effects
-      if (
-        this.options.useEffects &&
-        typeof window !== "undefined" &&
-        "AudioContext" in window
-      ) {
-        const profileConfig = VOICE_PROFILES[this.options.profile];
-        this.effects = new DramaticVoiceEffects({
-          ...profileConfig,
-          outputVolume: this.options.volume,
-          enabled: true,
-        });
-        await this.effects.initialize();
-      }
-
-      // Initialize Kokoro TTS (for player-specific events)
-      if (typeof window !== "undefined" && "AudioContext" in window) {
+    private async doInitialize(): Promise<void> {
         try {
-          this.tts = await KokoroTTS.from_pretrained(
-            "onnx-community/Kokoro-82M-v1.0-ONNX",
-            {
-              dtype: "q8",
-              device: "wasm",
-            },
-          );
-          console.log("Kokoro TTS initialized with voice:", this.options.voice);
-        } catch (err) {
-          console.warn("Kokoro initialization failed:", err);
-          this.tts = null;
+            // Initialize audio effects
+            if (
+                this.options.useEffects &&
+                typeof window !== "undefined" &&
+                "AudioContext" in window
+            ) {
+                const profileConfig = VOICE_PROFILES[this.options.profile];
+                this.effects = new DramaticVoiceEffects({
+                    ...profileConfig,
+                    outputVolume: this.options.volume,
+                    enabled: true,
+                });
+                await this.effects.initialize();
+            }
+
+            // Kokoro TTS is loaded lazily via ensureKokoro() only when
+            // player-specific announcements are actually needed.
+        } catch (error) {
+            console.error("DartsCaller initialization failed:", error);
         }
-      }
-    } catch (error) {
-      console.error("DartsCaller initialization failed:", error);
     }
-  }
+
+    private kokoroInitPromise: Promise<void> | null = null;
+
+    private async ensureKokoro(): Promise<void> {
+        if (this.tts) return;
+        if (this.kokoroInitPromise) return this.kokoroInitPromise;
+
+        this.kokoroInitPromise = (async () => {
+            if (typeof window === "undefined" || !("AudioContext" in window)) return;
+            try {
+                this.tts = await KokoroTTS.from_pretrained(
+                    "onnx-community/Kokoro-82M-v1.0-ONNX",
+                    {
+                        dtype: "q8",
+                        device: "wasm",
+                    },
+                );
+                console.log("Kokoro TTS initialized with voice:", this.options.voice);
+            } catch (err) {
+                console.warn("Kokoro initialization failed:", err);
+                this.tts = null;
+            }
+        })();
+
+        await this.kokoroInitPromise;
+    }
 
   setProfile(profile: "dartsCaller" | "dramatic" | "subtle"): void {
     this.options.profile = profile;
@@ -150,9 +162,10 @@ export class DartsCaller {
     }
   }
 
-  isUsingKokoro(): boolean {
-    return this.tts !== null;
-  }
+    isUsingKokoro(): boolean {
+        // Kokoro is lazy-loaded; this only returns true after it's been used
+        return this.tts !== null;
+    }
 
   /**
    * Play a pre-generated audio file from the ElevenLabs soundboard
@@ -390,12 +403,13 @@ export class DartsCaller {
   /**
    * Speak using Kokoro TTS with effects
    */
-  private async speakKokoro(
-    text: string,
-    speed: number = 1.0,
-    pitch: number = 1.0,
-  ): Promise<AnnouncementResult> {
-    if (this.tts) {
+    private async speakKokoro(
+        text: string,
+        speed: number = 1.0,
+        pitch: number = 1.0,
+    ): Promise<AnnouncementResult> {
+        await this.ensureKokoro();
+        if (this.tts) {
       try {
         const rawAudio = await this.tts.generate(text, {
           voice: this.options.voice as any,
@@ -566,6 +580,7 @@ export class DartsCaller {
     this.audioBufferCache.clear();
     this.inFlightFetches.clear();
     this.tts = null;
+    this.kokoroInitPromise = null;
     this.isInitialized = false;
     this.initPromise = null;
   }

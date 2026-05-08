@@ -37,20 +37,6 @@
         TurnRecord,
     } from "$lib/game";
     import {
-        announceScore,
-        announceBust,
-        announceCheckout,
-        announce180,
-        announceGameOn,
-        announceLegWinner,
-        announceSetWinner,
-        announceMatchWinner,
-        announceNextLeg,
-        announceNextSet,
-        announceFirstThrow,
-        initDartsCaller,
-    } from "$lib/utils/darts-caller";
-    import {
         voiceSettings,
         VOICE_OPTIONS,
         getVoicePrefix,
@@ -96,9 +82,11 @@
             voiceSettings.set(inGameVoiceId);
             const setting = VOICE_OPTIONS.find((v) => v.id === inGameVoiceId);
             if (setting) {
-                initDartsCaller({
-                    profile: "dartsCaller",
-                    voicePrefix: setting.prefix,
+                import("$lib/utils/darts-caller").then(({ initDartsCaller }) => {
+                    initDartsCaller({
+                        profile: "dartsCaller",
+                        voicePrefix: setting.prefix,
+                    });
                 });
                 addToast(`Caller voice changed to ${setting.name}`, "success");
             }
@@ -338,7 +326,7 @@
 
         // Announce GAME ON for fresh matches (no turns yet)
         if (allTurns.length === 0) {
-            announceGameOn();
+            import("$lib/utils/darts-caller").then((caller) => caller.announceGameOn());
         }
 
         const config = {
@@ -769,30 +757,32 @@
                 matchState?.players.find((p) => p.id === prePlayerId)?.name ??
                 "Unknown";
 
-            // Announce score
-            if (lastTurn.totalScore === 180) {
-                announce180();
-            } else if (lastTurn.totalScore > 0) {
-                announceScore(lastTurn.totalScore);
-            }
-
-            // Handle bust or checkout
-            if (lastTurn.isBust) {
-                setTimeout(() => announceBust(), 300);
-            } else if (checkoutHappened) {
-                setTimeout(() => announceCheckout(playerName), 300);
-                setTimeout(() => announceLegWinner(playerName), 600);
-
-                // Detect and announce set winner
-                // If set number changed, the previous set just ended
-                if (postLeg.setNumber !== preLegSetNum) {
-                    const setWinnerName = playerName;
-                    setTimeout(() => announceSetWinner(setWinnerName), 1000);
-                    setTimeout(() => announceNextSet(), 1300);
+            import("$lib/utils/darts-caller").then((caller) => {
+                // Announce score
+                if (lastTurn.totalScore === 180) {
+                    caller.announce180();
+                } else if (lastTurn.totalScore > 0) {
+                    caller.announceScore(lastTurn.totalScore);
                 }
 
-                setTimeout(() => announceNextLeg(), 1600);
-            }
+                // Handle bust or checkout
+                if (lastTurn.isBust) {
+                    setTimeout(() => caller.announceBust(), 300);
+                } else if (checkoutHappened) {
+                    setTimeout(() => caller.announceCheckout(playerName), 300);
+                    setTimeout(() => caller.announceLegWinner(playerName), 600);
+
+                    // Detect and announce set winner
+                    // If set number changed, the previous set just ended
+                    if (postLeg.setNumber !== preLegSetNum) {
+                        const setWinnerName = playerName;
+                        setTimeout(() => caller.announceSetWinner(setWinnerName), 1000);
+                        setTimeout(() => caller.announceNextSet(), 1300);
+                    }
+
+                    setTimeout(() => caller.announceNextLeg(), 1600);
+                }
+            });
         }
 
         // Announce match winner (after all leg/set announcements complete)
@@ -800,7 +790,11 @@
             const winnerId = matchState?.winnerId;
             const winner = matchState?.players.find((p) => p.id === winnerId);
             if (winner) {
-                setTimeout(() => announceMatchWinner(winner.name), 2500);
+                setTimeout(() => {
+                    import("$lib/utils/darts-caller").then((caller) => {
+                        caller.announceMatchWinner(winner.name);
+                    });
+                }, 2500);
             }
         }
     }
