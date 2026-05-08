@@ -1293,22 +1293,24 @@
                                 {#each dartSlots as dart, i}
                                     {#if dart}
                                         <span
-                                            class="inline-flex items-center gap-1 rounded-[5px] px-2.5 py-1 text-xs font-mono bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
+                                            class="inline-flex items-center justify-center gap-1 rounded-[5px] px-2.5 py-1 text-xs font-mono bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 w-[6.5rem]"
                                         >
-                                            {dart.multiplier === 3
-                                                ? "T"
-                                                : dart.multiplier === 2
-                                                  ? "D"
-                                                  : ""}{dart.segment === 25
-                                                ? dart.multiplier === 2
-                                                    ? "Bull"
-                                                    : "25"
-                                                : dart.segment}
-                                            <span
-                                                class="text-zinc-400 dark:text-zinc-500"
-                                                >({dart.score})</span
-                                            >
-                                            <span class="text-zinc-500 dark:text-zinc-400 mx-0.5">|</span>
+                                            <span class="inline-flex items-center gap-1">
+                                                {dart.multiplier === 3
+                                                    ? "T"
+                                                    : dart.multiplier === 2
+                                                      ? "D"
+                                                      : ""}{dart.segment === 25
+                                                    ? dart.multiplier === 2
+                                                        ? "Bull"
+                                                        : "25"
+                                                    : dart.segment}
+                                                <span
+                                                    class="text-zinc-400 dark:text-zinc-500"
+                                                    >({dart.score})</span
+                                                >
+                                            </span>
+                                            <span class="text-zinc-500 dark:text-zinc-400">|</span>
                                             <button
                                                 onclick={() => removeDartAt(i)}
                                                 class="flex items-center justify-center w-5 h-4 rounded-[3px] text-sm leading-none bg-red-600 text-white hover:bg-red-500 transition-colors touch-manipulation"
@@ -1317,13 +1319,13 @@
                                         </span>
                                     {:else if i === activeSlotIndex}
                                         <span
-                                            class="inline-flex items-center justify-center rounded-[5px] px-2.5 py-1 text-xs font-mono border-2 border-dashed border-zinc-400 dark:border-zinc-500 text-zinc-500 dark:text-zinc-400 animate-pulse"
+                                            class="inline-flex items-center justify-center rounded-[5px] px-2.5 py-1 text-xs font-mono border-2 border-dashed border-zinc-400 dark:border-zinc-500 text-zinc-500 dark:text-zinc-400 animate-pulse w-[6.5rem]"
                                         >
                                             {i + 1}
                                         </span>
                                     {:else}
                                         <span
-                                            class="inline-flex items-center justify-center rounded-[5px] px-2.5 py-1 text-xs font-mono border border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-400 dark:text-zinc-500"
+                                            class="inline-flex items-center justify-center rounded-[5px] px-2.5 py-1 text-xs font-mono border border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-400 dark:text-zinc-500 w-[6.5rem]"
                                         >
                                             {i + 1}
                                         </span>
