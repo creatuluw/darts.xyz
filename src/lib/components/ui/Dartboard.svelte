@@ -133,6 +133,7 @@
     });
 
     function hit(seg: number, mult: Multiplier) {
+        if (lastTouchHitTime && performance.now() - lastTouchHitTime < 400) return;
         if (!disabled) onHit(seg, mult);
     }
 
@@ -211,6 +212,7 @@
     let touchStartX = 0;
     let touchStartY = 0;
     let touchMoved = false;
+    let lastTouchHitTime = 0;
 
     // Pan state (only active while zoomed)
     let panX = $state(0);
@@ -375,11 +377,11 @@
             e.preventDefault();                 // stop delayed click synthesis
             const hit = getHitFromPoint(t.clientX, t.clientY);
             resetZoom();
-            if (hit) onHit(hit.segment, hit.multiplier);
+            if (hit) { lastTouchHitTime = performance.now(); onHit(hit.segment, hit.multiplier); }
         } else if (!touchMoved) {
             // Short tap = instant score
             const hit = getHitFromPoint(t.clientX, t.clientY);
-            if (hit) onHit(hit.segment, hit.multiplier);
+            if (hit) { lastTouchHitTime = performance.now(); onHit(hit.segment, hit.multiplier); }
         }
         // else: finger scrolled away before zoom → do nothing
     }
