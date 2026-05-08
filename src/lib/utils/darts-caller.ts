@@ -496,6 +496,10 @@ export class DartsCaller {
       await ctx.resume();
     }
 
+    if (this.effects) {
+      await this.effects.resumeAudioContext();
+    }
+
     this.stopCurrentSource();
 
     const source = ctx.createBufferSource();

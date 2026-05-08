@@ -286,13 +286,19 @@
         loadingStore.start("data", "Loading match data...");
         loadingStore.start("stats", "Loading player stats...");
 
-        import("$lib/utils/darts-caller").then(async ({ initDartsCaller }) => {
-            await initDartsCaller({
-                profile: "dartsCaller",
-                voicePrefix: getVoicePrefix(),
+        import("$lib/utils/darts-caller")
+            .then(async ({ initDartsCaller }) => {
+                await initDartsCaller({
+                    profile: "dartsCaller",
+                    voicePrefix: getVoicePrefix(),
+                });
+            })
+            .catch((err) => {
+                console.warn("Voice caller initialization failed:", err);
+            })
+            .finally(() => {
+                loadingStore.finish("audio");
             });
-            loadingStore.finish("audio");
-        });
 
         const res = await fetch(`/api/matches/${matchId}`);
         const data = await res.json();

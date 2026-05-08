@@ -141,11 +141,9 @@ export class DramaticVoiceEffects {
     }
 
     try {
-      // Create audio context (resume if suspended)
+      // Create audio context - don't await resume here since it requires
+      // a user gesture and will hang on page load; resume lazily before playback
       this.audioContext = new AudioContext();
-      if (this.audioContext.state === "suspended") {
-        await this.audioContext.resume();
-      }
 
       const ctx = this.audioContext;
       const opt = this.options;
@@ -308,6 +306,18 @@ export class DramaticVoiceEffects {
       console.error("Error processing audio:", error);
       return audioBuffer;
     }
+  }
+
+  /**
+   * Resume the audio context (needed after user gesture on some browsers).
+   * Returns true if the context is running.
+   */
+  async resumeAudioContext(): Promise<boolean> {
+    if (!this.audioContext) return false;
+    if (this.audioContext.state === "suspended") {
+      await this.audioContext.resume();
+    }
+    return this.audioContext.state === "running";
   }
 
   /**
