@@ -142,10 +142,8 @@
     let svgEl: SVGSVGElement | undefined = $state();
 
     function showTooltip(e: MouseEvent, label: string) {
-        if (!wrapperEl || !svgEl) return;
+        if (!wrapperEl || !svgEl || zoomActive) return;
         const rect = wrapperEl.getBoundingClientRect();
-        const svgRect = svgEl.getBoundingClientRect();
-        const scale = svgRect.width / 500;
         tooltip = {
             label,
             x: e.clientX - rect.left,
@@ -154,7 +152,7 @@
     }
 
     function moveTooltip(e: MouseEvent) {
-        if (!tooltip || !wrapperEl) return;
+        if (!tooltip || !wrapperEl || zoomActive) return;
         const rect = wrapperEl.getBoundingClientRect();
         tooltip.x = e.clientX - rect.left;
         tooltip.y = e.clientY - rect.top;
@@ -162,6 +160,39 @@
 
     function hideTooltip() {
         tooltip = null;
+    }
+
+    /* ── Touch hover highlight (during zoomed pan) ── */
+    let touchHover = $state<{
+        segment: number;
+        multiplier: 1 | 2 | 3;
+        label: string;
+        score: number;
+    } | null>(null);
+
+    function updateTouchHover(clientX: number, clientY: number) {
+        const hit = getHitFromPoint(clientX, clientY);
+        if (!hit) {
+            touchHover = null;
+            return;
+        }
+        const score = hit.segment * hit.multiplier;
+        let label: string;
+        if (hit.segment === 25) {
+            label = hit.multiplier === 2 ? "Bull (50)" : "25";
+        } else {
+            label =
+                (hit.multiplier === 3
+                    ? "T"
+                    : hit.multiplier === 2
+                      ? "D"
+                      : "") + hit.segment;
+        }
+        touchHover = { ...hit, label, score };
+    }
+
+    function isTouchHover(seg: number, mult: 1 | 2 | 3) {
+        return zoomActive && touchHover?.segment === seg && touchHover?.multiplier === mult;
     }
 
     /* ── Touch long-press zoom + pan ── */
@@ -254,6 +285,7 @@
         panY = 0;
         prevTouchX = 0;
         prevTouchY = 0;
+        touchHover = null;
     }
 
     function handleTouchStart(e: TouchEvent) {
@@ -316,6 +348,7 @@
             panY = clamp(panY - deltaY, -MAX_PAN_PX, MAX_PAN_PX);
             prevTouchX = t.clientX;
             prevTouchY = t.clientY;
+            updateTouchHover(t.clientX, t.clientY);
         }
     }
 
@@ -371,7 +404,7 @@
         class="w-full select-none {disabled
             ? 'opacity-40 pointer-events-none'
             : ''}"
-        style="transform: {zoomActive ? `translate(${panX.toFixed(1)}px, ${panY.toFixed(1)}px) scale(${ZOOM_SCALE})` : 'scale(1)'}; transition: transform 0.25s ease-out; touch-action: none;"
+        style="transform: {zoomActive ? `translate(${panX.toFixed(1)}px, ${panY.toFixed(1)}px) scale(${ZOOM_SCALE})` : 'scale(1)'}; transition: {zoomActive ? 'none' : 'transform 0.25s ease-out'}; touch-action: none; will-change: transform;"
     >
         <circle cx={CX} cy={CY} r={R.numberOuter} fill="#0d0d0d" />
         <circle cx={CX} cy={CY} r={R.wireOuter} fill="#111" />
@@ -387,6 +420,7 @@
                 stroke-width="1.5"
                 stroke-linejoin="round"
                 class="seg"
+                class:seg-active={isTouchHover(seg.num, 2)}
                 onclick={() => hit(seg.num, 2)}
                 onmouseenter={(e) => showTooltip(e, "D" + seg.num + " (" + (seg.num * 2) + ")")}
                 onmousemove={moveTooltip}
@@ -401,6 +435,7 @@
                 stroke-linejoin="round"
                 class="seg"
                 class:seg-black={seg.isBlack}
+                class:seg-active={isTouchHover(seg.num, 1)}
                 onclick={() => hit(seg.num, 1)}
                 onmouseenter={(e) => showTooltip(e, `${seg.num}`)}
                 onmousemove={moveTooltip}
@@ -414,6 +449,7 @@
                 stroke-width="1.5"
                 stroke-linejoin="round"
                 class="seg"
+                class:seg-active={isTouchHover(seg.num, 3)}
                 onclick={() => hit(seg.num, 3)}
                 onmouseenter={(e) => showTooltip(e, "T" + seg.num + " (" + (seg.num * 3) + ")")}
                 onmousemove={moveTooltip}
@@ -428,6 +464,7 @@
                 stroke-linejoin="round"
                 class="seg"
                 class:seg-black={seg.isBlack}
+                class:seg-active={isTouchHover(seg.num, 1)}
                 onclick={() => hit(seg.num, 1)}
                 onmouseenter={(e) => showTooltip(e, `${seg.num}`)}
                 onmousemove={moveTooltip}
@@ -443,6 +480,7 @@
             stroke={COL.wire}
             stroke-width="1.5"
             class="seg"
+            class:seg-active={isTouchHover(25, 1)}
             onclick={() => hit(25, 1)}
             onmouseenter={(e) => showTooltip(e, "25")}
             onmousemove={moveTooltip}
@@ -457,6 +495,7 @@
             stroke={COL.wire}
             stroke-width="1.5"
             class="seg"
+            class:seg-active={isTouchHover(25, 2)}
             onclick={() => hit(25, 2)}
             onmouseenter={(e) => showTooltip(e, "Bull (50)")}
             onmousemove={moveTooltip}
@@ -490,6 +529,17 @@
         />
     </svg>
 
+    {#if touchHover && zoomActive}
+        <div class="pointer-events-none absolute top-2 left-0 right-0 flex justify-between px-3 z-10">
+            <div class="rounded-md bg-zinc-900/90 px-2.5 py-1 text-xs font-medium text-white shadow-lg ring-1 ring-white/10">
+                {touchHover.label}
+            </div>
+            <div class="rounded-md bg-zinc-900/90 px-2.5 py-1 text-xs font-medium text-white shadow-lg ring-1 ring-white/10">
+                {touchHover.score}
+            </div>
+        </div>
+    {/if}
+
     {#if tooltip}
         <div
             class="pointer-events-none absolute whitespace-nowrap rounded-md bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg ring-1 ring-white/10 -translate-x-1/2 -translate-y-[calc(100%+8px)]"
@@ -511,5 +561,8 @@
     }
     .seg-black:hover {
         fill: #555555;
+    }
+    .seg-active {
+        filter: brightness(1.4) saturate(1.3);
     }
 </style>
