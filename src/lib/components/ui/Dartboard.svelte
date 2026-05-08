@@ -176,6 +176,10 @@
             touchHover = null;
             return;
         }
+        if (hit.segment === 0 || hit.multiplier === 0) {
+            touchHover = { segment: 0, multiplier: 0, label: "Miss", score: 0 };
+            return;
+        }
         const score = hit.segment * hit.multiplier;
         let label: string;
         if (hit.segment === 25) {
@@ -271,8 +275,12 @@
                 multiplier = 1;
             } else if (d <= R.doubleOuter) {
                 multiplier = 2;
+            } else if (d <= R.numberOuter) {
+                // Outside the double ring but inside the number ring = miss
+                return { segment: 0, multiplier: 0 };
             } else {
-                return null;
+                // Completely outside the board = miss
+                return { segment: 0, multiplier: 0 };
             }
         }
         return { segment, multiplier };
@@ -406,8 +414,28 @@
             : ''}"
         style="transform: {zoomActive ? `translate(${panX.toFixed(1)}px, ${panY.toFixed(1)}px) scale(${ZOOM_SCALE})` : 'scale(1)'}; transition: {zoomActive ? 'none' : 'transform 0.25s ease-out'}; touch-action: none; will-change: transform;"
     >
-        <circle cx={CX} cy={CY} r={R.numberOuter} fill="#0d0d0d" />
-        <circle cx={CX} cy={CY} r={R.wireOuter} fill="#111" />
+        <circle
+            cx={CX}
+            cy={CY}
+            r={R.numberOuter}
+            fill="#0d0d0d"
+            style="cursor: pointer;"
+            onclick={() => hit(0, 0)}
+            onmouseenter={(e) => showTooltip(e, "Miss")}
+            onmousemove={moveTooltip}
+            onmouseleave={hideTooltip}
+        />
+        <circle
+            cx={CX}
+            cy={CY}
+            r={R.wireOuter}
+            fill="#111"
+            style="cursor: pointer;"
+            onclick={() => hit(0, 0)}
+            onmouseenter={(e) => showTooltip(e, "Miss")}
+            onmousemove={moveTooltip}
+            onmouseleave={hideTooltip}
+        />
 
         {#each segments as seg}
             {@const singleColor = seg.isEven ? COL.cream : COL.black}
