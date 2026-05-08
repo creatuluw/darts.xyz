@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { IconPalette, IconCheck } from "@tabler/icons-svelte";
+    import { IconPalette, IconCheck, IconSun, IconMoon } from "@tabler/icons-svelte";
     import { themeStore } from "$lib/stores/theme";
 
     type ThemeOption = {
@@ -32,12 +32,19 @@
 
     let showMenu = $state(false);
     let currentTheme = $state("focus");
+    let currentMode = $state<"light" | "dark">("light");
 
     $effect(() => {
-        const unsub = themeStore.subscribe((t) => {
+        const unsubTheme = themeStore.theme.subscribe((t) => {
             currentTheme = t;
         });
-        return unsub;
+        const unsubMode = themeStore.mode.subscribe((m) => {
+            currentMode = m;
+        });
+        return () => {
+            unsubTheme();
+            unsubMode();
+        };
     });
 
     function toggleMenu() {
@@ -45,8 +52,11 @@
     }
 
     function selectTheme(name: string) {
-        themeStore.setTheme(name as any);
-        showMenu = false;
+        themeStore.theme.setTheme(name as any);
+    }
+
+    function toggleMode() {
+        themeStore.mode.toggle();
     }
 
     function handleClickOutside(e: MouseEvent) {
@@ -66,6 +76,30 @@
         <div
             class="absolute bottom-full left-0 mb-2 w-64 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl rounded-2xl ring-1 ring-black/6 dark:ring-white/10 shadow-xl shadow-black/8 p-2 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
         >
+            <div class="flex items-center justify-between px-3 py-1.5">
+                <p
+                    class="text-[10px] uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 font-medium"
+                >
+                    Appearance
+                </p>
+                <button
+                    onclick={toggleMode}
+                    class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 {currentMode === 'dark'
+                        ? 'bg-zinc-800 dark:bg-white text-white dark:text-zinc-900'
+                        : 'bg-zinc-100 dark:bg-white/10 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-white/15'} cursor-pointer"
+                >
+                    {#if currentMode === 'dark'}
+                        <IconMoon size={12} />
+                        Dark
+                    {:else}
+                        <IconSun size={12} />
+                        Light
+                    {/if}
+                </button>
+            </div>
+
+            <div class="border-t border-zinc-100 dark:border-white/5 mx-3"></div>
+
             <p
                 class="px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 font-medium"
             >
