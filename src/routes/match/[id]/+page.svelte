@@ -62,6 +62,19 @@
     let showCheckout = $state(false);
     let showDeleteConfirm = $state(false);
 
+    // Input mode: board or numpad
+    let inputMode = $state<"board" | "numpad">(
+        typeof localStorage !== "undefined" && localStorage.getItem("inputMode") === "numpad" ? "numpad" : "board"
+    );
+    $effect(() => {
+        if (typeof localStorage !== "undefined") {
+            localStorage.setItem("inputMode", inputMode);
+        }
+    });
+
+    // Numpad multiplier state
+    let numpadMultiplier = $state<1 | 2 | 3>(1);
+
     // Active tab state
     let activeTab = $state<"board" | "turns" | "stats" | "settings">("board");
 
@@ -581,6 +594,10 @@
     function removeDartAt(index: number) {
         dartSlots[index] = null;
         dartSlots = [...dartSlots];
+    }
+
+    function clearAllDarts() {
+        dartSlots = [null, null, null];
     }
 
     async function submitCurrentTurn() {
@@ -1278,78 +1295,146 @@
             <!-- ============================================ -->
             <div class="md:col-span-6 order-3 md:order-none space-y-3">
                 {#if activeTab === "board"}
-                    <!-- Dartboard Input -->
+                    <!-- Dartboard / Numpad Input -->
                     <DoubleBezel>
                         <div class="space-y-0">
-                            <div class="w-full">
-                                <Dartboard
-                                    onHit={addDart}
-                                    disabled={currentDarts.length >= 3}
-                                />
-                            </div>
-
-                            <!-- Current Darts - 3 fixed slots -->
-                            <div class="flex items-center justify-center gap-2 min-h-8">
-                                {#each dartSlots as dart, i}
-                                    {#if dart}
-                                        <span
-                                            class="inline-flex items-center justify-center gap-1 rounded-[5px] px-2.5 py-1 text-xs font-mono bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 w-[6.5rem]"
-                                        >
-                                            <span class="inline-flex items-center gap-1">
-                                                {dart.multiplier === 3
-                                                    ? "T"
-                                                    : dart.multiplier === 2
-                                                      ? "D"
-                                                      : ""}{dart.segment === 25
-                                                    ? dart.multiplier === 2
-                                                        ? "Bull"
-                                                        : "25"
-                                                    : dart.segment}
-                                                <span
-                                                    class="text-zinc-400 dark:text-zinc-500"
-                                                    >({dart.score})</span
-                                                >
-                                            </span>
-                                            <span class="text-zinc-500 dark:text-zinc-400">|</span>
+                            {#if inputMode === "board"}
+                                <div class="w-full">
+                                    <Dartboard
+                                        onHit={addDart}
+                                        disabled={currentDarts.length >= 3}
+                                    />
+                                </div>
+                            {:else}
+                                <!-- Numpad Input -->
+                                <div class="w-full px-1 py-2 space-y-2">
+                                    <!-- Multiplier row -->
+                                    <div class="flex gap-1.5">
+                                        <button
+                                            onclick={() => (numpadMultiplier = 1)}
+                                            class="flex-1 rounded-md py-2 text-sm font-bold transition-colors text-white dark:text-zinc-900 {numpadMultiplier === 1 ? 'bg-zinc-800 dark:bg-white' : 'bg-zinc-200 dark:bg-white/20'}"
+                                        >Single</button>
+                                        <button
+                                            onclick={() => (numpadMultiplier = 2)}
+                                            class="flex-1 rounded-md py-2 text-sm font-bold transition-colors {numpadMultiplier === 2 ? 'bg-red-600 text-white' : 'bg-red-200 text-red-800 dark:bg-red-900/40 dark:text-red-300'}"
+                                        >Double</button>
+                                        <button
+                                            onclick={() => (numpadMultiplier = 3)}
+                                            class="flex-1 rounded-md py-2 text-sm font-bold transition-colors {numpadMultiplier === 3 ? 'bg-green-600 text-white' : 'bg-green-200 text-green-800 dark:bg-green-900/40 dark:text-green-300'}"
+                                        >Triple</button>
+                                    </div>
+                                    <!-- Number grid: 1-20 darts order -->
+                                    <div class="grid grid-cols-5 gap-1.5">
+                                        {#each [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5] as num}
                                             <button
-                                                onclick={() => removeDartAt(i)}
-                                                class="flex items-center justify-center w-5 h-4 rounded-[3px] text-sm leading-none bg-red-600 text-white hover:bg-red-500 transition-colors touch-manipulation"
-                                                aria-label="Remove dart"
-                                            >&times;</button>
-                                        </span>
-                                    {:else if i === activeSlotIndex}
-                                        <span
-                                            class="inline-flex items-center justify-center rounded-[5px] px-2.5 py-1 text-xs font-mono border-2 border-dashed border-zinc-400 dark:border-zinc-500 text-zinc-500 dark:text-zinc-400 animate-pulse w-[6.5rem]"
+                                                onclick={() => addDart(num, numpadMultiplier)}
+                                                disabled={currentDarts.length >= 3}
+                                                class="rounded-md py-2.5 text-sm font-mono font-bold transition-colors {numpadMultiplier === 1 ? 'bg-zinc-100 dark:bg-white/10 text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-white/15' : numpadMultiplier === 2 ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50'} disabled:opacity-30 disabled:pointer-events-none"
+                                            >{numpadMultiplier === 3 ? 'T' : numpadMultiplier === 2 ? 'D' : ''}{num}</button>
+                                        {/each}
+                                    </div>
+                                    <!-- Bull & Miss row -->
+                                    <div class="flex gap-1.5">
+                                        <button
+                                            onclick={() => addDart(25, numpadMultiplier === 1 ? 1 : numpadMultiplier)}
+                                            disabled={numpadMultiplier === 3 || currentDarts.length >= 3}
+                                            class="flex-1 rounded-md py-2.5 text-sm font-bold transition-colors bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50 disabled:opacity-30 disabled:pointer-events-none"
+                                        >{numpadMultiplier === 2 ? 'Bull' : '25'}</button>
+                                        <button
+                                            onclick={() => addDart(0, 0 as Multiplier)}
+                                            disabled={currentDarts.length >= 3}
+                                            class="flex-1 rounded-md py-2.5 text-sm font-bold transition-colors bg-zinc-200 dark:bg-white/10 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-300 dark:hover:bg-white/15 disabled:opacity-30 disabled:pointer-events-none"
+                                        >Miss</button>
+                                    </div>
+                                </div>
+                            {/if}
+
+                            <!-- Current Darts - 3 fixed slots + total -->
+                            <div class="flex items-center justify-center gap-2 mt-2 mb-4 h-10">
+                                <div class="flex items-center gap-2">
+                                    {#each dartSlots as dart, i}
+                                        {#if dart}
+                                            <span
+                                                class="inline-flex items-center rounded-[5px] text-xs font-mono bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 w-[6.5rem] h-8"
+                                            >
+                                                <span class="w-[75%] inline-flex items-center justify-center gap-1">
+                                                    {dart.multiplier === 3
+                                                        ? "T"
+                                                        : dart.multiplier === 2
+                                                          ? "D"
+                                                          : ""}{dart.segment === 25
+                                                        ? dart.multiplier === 2
+                                                            ? "Bull"
+                                                            : "25"
+                                                        : dart.segment}
+                                                    <span
+                                                        class="text-zinc-400 dark:text-zinc-500"
+                                                        >({dart.score})</span
+                                                    >
+                                                </span>
+                                                <span class="w-[25%] flex justify-center items-center">
+                                                    <button
+                                                        onclick={() => removeDartAt(i)}
+                                                        class="flex items-center justify-center w-5 h-4 rounded-[3px] text-sm leading-none bg-red-600 text-white hover:bg-red-500 transition-colors touch-manipulation"
+                                                        aria-label="Remove dart"
+                                                    >&times;</button>
+                                                </span>
+                                            </span>
+                                        {:else if i === activeSlotIndex}
+                                            <span
+                                                class="inline-flex items-center justify-center rounded-[5px] px-2.5 py-1.5 text-xs font-mono border border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-500 dark:text-zinc-400 w-[6.5rem] h-8 animate-[pulse-bg_3s_ease-in-out_infinite] bg-zinc-100 dark:bg-white/5"
+                                            >
+                                                {i + 1}
+                                            </span>
+                                        {:else}
+                                            <span
+                                                class="inline-flex items-center justify-center rounded-[5px] px-2.5 py-1.5 text-xs font-mono border border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-400 dark:text-zinc-500 w-[6.5rem] h-8"
+                                            >
+                                                {i + 1}
+                                            </span>
+                                        {/if}
+                                    {/each}
+                                </div>
+                                <div class="inline-flex items-center gap-1">
+                                    <span class="inline-flex items-center justify-center rounded-[5px] w-[3.5rem] h-8 text-sm font-mono font-bold {currentDarts.length > 0 ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'border border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-400 dark:text-zinc-500'}">
+                                        {currentDarts.length > 0 ? turnTotal : '='}
+                                    </span>
+                                    {#if currentDarts.length > 0}
+                                        <button
+                                            onclick={clearAllDarts}
+                                            class="flex items-center justify-center w-6 h-8 rounded-[5px] bg-red-600 text-white hover:bg-red-500 transition-colors touch-manipulation"
+                                            aria-label="Clear all darts"
                                         >
-                                            {i + 1}
-                                        </span>
+                                            <IconTrash size={14} />
+                                        </button>
                                     {:else}
-                                        <span
-                                            class="inline-flex items-center justify-center rounded-[5px] px-2.5 py-1 text-xs font-mono border border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-400 dark:text-zinc-500 w-[6.5rem]"
-                                        >
-                                            {i + 1}
+                                        <span class="flex items-center justify-center w-6 h-8 rounded-[5px] bg-zinc-200 dark:bg-white/10 text-zinc-400 dark:text-zinc-500">
+                                            <IconTrash size={14} />
                                         </span>
                                     {/if}
-                                {/each}
+                                </div>
                             </div>
 
                             <!-- Action Buttons -->
                             <div class="flex items-center justify-center gap-2">
-                                <button
-                                    onclick={() => addDart(0, 0 as Multiplier)}
-                                    disabled={currentDarts.length >= 3}
-                                    class="rounded px-3 py-1 text-xs font-bold bg-zinc-100 dark:bg-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/15 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                {#if inputMode === "board"}
+                                    <button
+                                        onclick={() => addDart(0, 0 as Multiplier)}
+                                        disabled={currentDarts.length >= 3}
+                                        class="rounded px-3 py-1 text-xs font-bold bg-zinc-100 dark:bg-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/15 disabled:opacity-30 disabled:pointer-events-none transition-colors"
                                     >Miss</button
                                 >
+                                {/if}
                                 <button
                                     onclick={removeLastDart}
                                     disabled={currentDarts.length === 0}
                                     class="rounded px-3 py-1 text-xs font-bold bg-zinc-100 dark:bg-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/15 disabled:opacity-30 disabled:pointer-events-none transition-colors inline-flex items-center gap-1"
-                                    ><IconArrowBack size={12} /> Undo</button
+                                ><IconArrowBack size={12} /> Undo</button
                                 >
                                 <PillButton
                                     onclick={submitCurrentTurn}
                                     disabled={currentDarts.length === 0}
+                                    size="sm"
                                 >
                                     Submit ({currentDarts.length})
                                 </PillButton>

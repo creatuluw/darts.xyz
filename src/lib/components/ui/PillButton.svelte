@@ -4,6 +4,7 @@
         onclick,
         children,
         variant = "primary",
+        size = "md",
         class: className = "",
         disabled = false,
     }: {
@@ -11,12 +12,18 @@
         onclick?: () => void;
         children: any;
         variant?: "primary" | "secondary" | "ghost" | "danger";
+        size?: "sm" | "md";
         class?: string;
         disabled?: boolean;
     } = $props();
 
     const baseClasses =
-        "rounded-full px-6 py-3 font-medium transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer inline-flex items-center gap-2";
+        "rounded-full font-medium transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer inline-flex items-center gap-2";
+
+    const sizeClasses = {
+        sm: "px-3 h-10 text-xs",
+        md: "px-6 py-3",
+    };
 
     const variantClasses = {
         primary:
@@ -32,7 +39,7 @@
     {type}
     {onclick}
     {disabled}
-    class="{baseClasses} {variantClasses[variant]} {className}"
+    class="{baseClasses} {sizeClasses[size]} {variantClasses[variant]} {className}"
 >
     {@render children()}
 </button>
