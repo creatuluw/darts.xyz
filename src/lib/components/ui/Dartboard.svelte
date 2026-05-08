@@ -556,13 +556,21 @@
         cursor: pointer;
         transition: filter 0.12s;
     }
-    .seg:hover {
-        filter: brightness(1.25);
-    }
-    .seg-black:hover {
-        fill: #555555;
+    /* Only apply hover on devices with a fine pointing device (mouse/stylus).
+       Touch devices get stuck :hover on the first touched element, which
+       would mask our dynamic seg-active highlight. */
+    @media (hover: hover) and (pointer: fine) {
+        .seg:hover {
+            filter: brightness(1.25);
+        }
+        .seg-black:hover {
+            fill: #555555;
+        }
     }
     .seg-active {
-        filter: brightness(1.4) saturate(1.3);
+        filter: brightness(1.7) saturate(1.4) !important;
+    }
+    .seg-active.seg-black {
+        fill: #777777 !important;
     }
 </style>
