@@ -52,8 +52,13 @@
     let loading = $state(true);
     let isSoloGame = $derived(matchState?.players.length === 1);
 
-    // Dart input state
-    let currentDarts = $state<DartData[]>([]);
+    // Dart input state - 3 fixed slots with active slot tracking
+    type DartSlot = DartData | null;
+    let dartSlots = $state<[DartSlot, DartSlot, DartSlot]>([null, null, null]);
+    let activeSlotIndex = $derived(dartSlots.findIndex((d) => d === null));
+
+    let currentDarts = $derived(dartSlots.filter((d): d is DartData => d !== null));
+    let filledSlotCount = $derived(currentDarts.length);
     let showCheckout = $state(false);
     let showDeleteConfirm = $state(false);
 
@@ -558,13 +563,24 @@
     });
 
     function addDart(segment: number, multiplier: Multiplier) {
-        if (currentDarts.length >= 3) return;
+        if (activeSlotIndex === -1) return;
         const score = segment === 0 ? 0 : segment * multiplier;
-        currentDarts = [...currentDarts, { segment, multiplier, score }];
+        const dart: DartData = { segment, multiplier, score };
+        dartSlots[activeSlotIndex] = dart;
+        dartSlots = [...dartSlots];
     }
 
     function removeLastDart() {
-        currentDarts = currentDarts.slice(0, -1);
+        const lastFilled = dartSlots.map((d, i) => d !== null ? i : -1).filter(i => i !== -1).pop();
+        if (lastFilled !== undefined) {
+            dartSlots[lastFilled] = null;
+            dartSlots = [...dartSlots];
+        }
+    }
+
+    function removeDartAt(index: number) {
+        dartSlots[index] = null;
+        dartSlots = [...dartSlots];
     }
 
     async function submitCurrentTurn() {
@@ -620,7 +636,7 @@
         }
 
         if (!lastTurn) {
-            currentDarts = [];
+            dartSlots = [null, null, null];
             return;
         }
 
@@ -755,7 +771,7 @@
             setTimeout(() => goto(`/history/${matchId}`), 2000);
         }
 
-        currentDarts = [];
+        dartSlots = [null, null, null];
 
         // Announce the score like a darts caller
         if (lastTurn) {
@@ -1272,31 +1288,46 @@
                                 />
                             </div>
 
-                            <!-- Current Darts -->
-                            <div
-                                class="flex items-center justify-center gap-2 min-h-8 {currentDarts.length >
-                                0
-                                    ? ''
-                                    : 'invisible'}"
-                            >
-                                {#each currentDarts as dart, i}
-                                    <span
-                                        class="rounded-[5px] px-2.5 py-1 text-xs font-mono bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
-                                    >
-                                        {dart.multiplier === 3
-                                            ? "T"
-                                            : dart.multiplier === 2
-                                              ? "D"
-                                              : ""}{dart.segment === 25
-                                            ? dart.multiplier === 2
-                                                ? "Bull"
-                                                : "25"
-                                            : dart.segment}
+                            <!-- Current Darts - 3 fixed slots -->
+                            <div class="flex items-center justify-center gap-2 min-h-8">
+                                {#each dartSlots as dart, i}
+                                    {#if dart}
                                         <span
-                                            class="text-zinc-400 dark:text-zinc-500 ml-1"
-                                            >({dart.score})</span
+                                            class="inline-flex items-center gap-1 rounded-[5px] px-2.5 py-1 text-xs font-mono bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
                                         >
-                                    </span>
+                                            {dart.multiplier === 3
+                                                ? "T"
+                                                : dart.multiplier === 2
+                                                  ? "D"
+                                                  : ""}{dart.segment === 25
+                                                ? dart.multiplier === 2
+                                                    ? "Bull"
+                                                    : "25"
+                                                : dart.segment}
+                                            <span
+                                                class="text-zinc-400 dark:text-zinc-500"
+                                                >({dart.score})</span
+                                            >
+                                            <span class="text-zinc-500 dark:text-zinc-400 mx-0.5">|</span>
+                                            <button
+                                                onclick={() => removeDartAt(i)}
+                                                class="flex items-center justify-center w-5 h-4 rounded-[3px] text-sm leading-none bg-red-600 text-white hover:bg-red-500 transition-colors touch-manipulation"
+                                                aria-label="Remove dart"
+                                            >&times;</button>
+                                        </span>
+                                    {:else if i === activeSlotIndex}
+                                        <span
+                                            class="inline-flex items-center justify-center rounded-[5px] px-2.5 py-1 text-xs font-mono border-2 border-dashed border-zinc-400 dark:border-zinc-500 text-zinc-500 dark:text-zinc-400 animate-pulse"
+                                        >
+                                            {i + 1}
+                                        </span>
+                                    {:else}
+                                        <span
+                                            class="inline-flex items-center justify-center rounded-[5px] px-2.5 py-1 text-xs font-mono border border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-400 dark:text-zinc-500"
+                                        >
+                                            {i + 1}
+                                        </span>
+                                    {/if}
                                 {/each}
                             </div>
 
