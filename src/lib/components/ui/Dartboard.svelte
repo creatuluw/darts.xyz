@@ -164,15 +164,24 @@
         tooltip = null;
     }
 
-    /* ── Touch long-press zoom ── */
+    /* ── Touch long-press zoom + pan ── */
+    const LONG_PRESS_MS = 350;       // iOS / Android standard long-press threshold
+    const TAP_SLOP_PX = 15;          // movement allowed before we cancel long-press
+    const ZOOM_SCALE = 1.35;
+    const MAX_PAN_PX = 120;          // keep board from vanishing off-screen
+
     let zoomActive = $state(false);
     let longPressTimer: ReturnType<typeof setTimeout> | null = null;
     let touchId: number | null = null;
     let touchStartX = 0;
     let touchStartY = 0;
     let touchMoved = false;
-    const LONG_PRESS_MS = 400;
-    const MOVE_THRESHOLD_PX = 15;
+
+    // Pan state (only active while zoomed)
+    let panX = $state(0);
+    let panY = $state(0);
+    let prevTouchX = 0;
+    let prevTouchY = 0;
 
     function findTouch(touches: TouchList, id: number): Touch | undefined {
         for (let i = 0; i < touches.length; i++) {
@@ -181,15 +190,31 @@
         return undefined;
     }
 
-    function getHitFromPoint(clientX: number, clientY: number) {
+    function clamp(n: number, min: number, max: number) {
+        return Math.max(min, Math.min(max, n));
+    }
+
+    /**
+     * Convert screen coordinates to SVG internal coordinates (0-500).
+     * Accounts for current CSS transform (scale + translate).
+     */
+    function screenToSvg(clientX: number, clientY: number) {
         if (!svgEl) return null;
         const rect = svgEl.getBoundingClientRect();
         const scaleX = 500 / rect.width;
         const scaleY = 500 / rect.height;
-        const x = (clientX - rect.left) * scaleX;
-        const y = (clientY - rect.top) * scaleY;
-        const dx = x - CX;
-        const dy = y - CY;
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY,
+        };
+    }
+
+    function getHitFromPoint(clientX: number, clientY: number) {
+        const pt = screenToSvg(clientX, clientY);
+        if (!pt) return null;
+
+        const dx = pt.x - CX;
+        const dy = pt.y - CY;
         const d = Math.sqrt(dx * dx + dy * dy);
 
         let segment = 0;
@@ -222,15 +247,31 @@
         return { segment, multiplier };
     }
 
+    function resetZoom() {
+        zoomActive = false;
+        if (svgEl) svgEl.style.transformOrigin = "";
+        panX = 0;
+        panY = 0;
+        prevTouchX = 0;
+        prevTouchY = 0;
+    }
+
     function handleTouchStart(e: TouchEvent) {
         if (disabled) return;
+        // Prevent browser default behaviours: context menu, text selection,
+        // callout, magnifier, and delayed click synthesis.
         e.preventDefault();
-        if (touchId !== null) return;
+
+        if (touchId !== null) return;           // ignore multi-touch
         const t = e.touches[0];
         touchId = t.identifier;
         touchStartX = t.clientX;
         touchStartY = t.clientY;
         touchMoved = false;
+        panX = 0;
+        panY = 0;
+        prevTouchX = t.clientX;
+        prevTouchY = t.clientY;
 
         longPressTimer = setTimeout(() => {
             if (touchId !== null && !touchMoved) {
@@ -249,14 +290,30 @@
         if (touchId === null) return;
         const t = findTouch(e.touches, touchId);
         if (!t) return;
+
         const dx = t.clientX - touchStartX;
         const dy = t.clientY - touchStartY;
-        if (Math.sqrt(dx * dx + dy * dy) > MOVE_THRESHOLD_PX) {
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        // Before zoom: if finger drifted past slop, cancel the long-press
+        if (!zoomActive && dist > TAP_SLOP_PX) {
             touchMoved = true;
             if (longPressTimer) {
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
             }
+            return;
+        }
+
+        // After zoom: pan by tracking delta between successive move events
+        if (zoomActive) {
+            e.preventDefault();                 // stop browser scrolling while zoomed
+            const deltaX = t.clientX - prevTouchX;
+            const deltaY = t.clientY - prevTouchY;
+            panX = clamp(panX + deltaX, -MAX_PAN_PX, MAX_PAN_PX);
+            panY = clamp(panY + deltaY, -MAX_PAN_PX, MAX_PAN_PX);
+            prevTouchX = t.clientX;
+            prevTouchY = t.clientY;
         }
     }
 
@@ -265,22 +322,23 @@
         const t = findTouch(e.changedTouches, touchId);
         if (!t) return;
         touchId = null;
+
         if (longPressTimer) {
             clearTimeout(longPressTimer);
             longPressTimer = null;
         }
 
         if (zoomActive) {
-            zoomActive = false;
-            if (svgEl) svgEl.style.transformOrigin = "";
+            e.preventDefault();                 // stop delayed click synthesis
             const hit = getHitFromPoint(t.clientX, t.clientY);
+            resetZoom();
             if (hit) onHit(hit.segment, hit.multiplier);
-            e.preventDefault();
         } else if (!touchMoved) {
+            // Short tap = instant score
             const hit = getHitFromPoint(t.clientX, t.clientY);
             if (hit) onHit(hit.segment, hit.multiplier);
-            e.preventDefault();
         }
+        // else: finger scrolled away before zoom → do nothing
     }
 
     function handleTouchCancel() {
@@ -290,28 +348,28 @@
             clearTimeout(longPressTimer);
             longPressTimer = null;
         }
-        if (zoomActive) {
-            zoomActive = false;
-            if (svgEl) svgEl.style.transformOrigin = "";
-        }
+        resetZoom();
     }
 </script>
 
 <div
-    class="relative w-full"
+    class="relative w-full overflow-hidden"
     bind:this={wrapperEl}
     ontouchstart={handleTouchStart}
     ontouchmove={handleTouchMove}
     ontouchend={handleTouchEnd}
     ontouchcancel={handleTouchCancel}
+    oncontextmenu={(e) => e.preventDefault()}
+    style="touch-action: none;"
 >
     <svg
         bind:this={svgEl}
         viewBox="0 0 500 500"
         xmlns="http://www.w3.org/2000/svg"
-        class="w-full select-none transition-transform duration-300 ease-out {disabled
+        class="w-full select-none {disabled
             ? 'opacity-40 pointer-events-none'
-            : ''} {zoomActive ? 'tablet-zoom' : ''}"
+            : ''}"
+        style="transform: {zoomActive ? `translate(${panX.toFixed(1)}px, ${panY.toFixed(1)}px) scale(${ZOOM_SCALE})` : 'scale(1)'}; transition: transform 0.25s ease-out; touch-action: none;"
     >
         <circle cx={CX} cy={CY} r={R.numberOuter} fill="#0d0d0d" />
         <circle cx={CX} cy={CY} r={R.wireOuter} fill="#111" />
@@ -451,9 +509,5 @@
     }
     .seg-black:hover {
         fill: #555555;
-    }
-    .tablet-zoom {
-        transform: scale(1.25);
-        transition: transform 0.3s ease-out;
     }
 </style>
