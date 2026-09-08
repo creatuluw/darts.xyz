@@ -506,7 +506,7 @@
             cx={CX}
             cy={CY}
             r={R.bull}
-            fill={COL.red}
+            fill={COL.green}
             stroke={COL.wire}
             stroke-width="1.5"
             class="seg"
@@ -521,7 +521,7 @@
             cx={CX}
             cy={CY}
             r={R.bullseye}
-            fill={COL.green}
+            fill={COL.red}
             stroke={COL.wire}
             stroke-width="1.5"
             class="seg"
