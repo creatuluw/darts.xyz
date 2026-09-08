@@ -21,3 +21,4 @@ Knowledge graph: concepts, entities, and artifacts that make up this project.
 - [Email store (email.ts)](./entities/email-store-email-ts.md) — `src/lib/stores/email.ts` — the single source of truth for the signed-in player identity. All routes read through it (no route reads `darts_email` directly); th
 - [Spectator Interviews (Trebles & Territories)](./entities/spectator-interviews-trebles-territories.md) — Spectator Interviews (Trebles & Territories)
 - [TV second screen (cast views)](./entities/tv-second-screen-cast-views.md) — Read-only big-screen views of a live match, meant for tab-casting to a TV in the room: one route for classic matches, one for conquest. The scorer pages carry c
+- [docs/risk/ assets (Risk board SVGs + notes)](./artifacts/docs-risk-assets-risk-board-svgs-notes.md) — Reference assets for the Risk-style conquest mode ([[risk-darts-proposed-game-mode]] / Trebles & Territories): two classic Risk board SVGs (`Risk_board.svg` ~50

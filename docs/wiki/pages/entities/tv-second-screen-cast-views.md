@@ -15,8 +15,8 @@ Read-only big-screen views of a live match, meant for tab-casting to a TV in the
 - **Routes**: `src/routes/match/[id]/tv/+page.svelte` (classic) and `src/routes/match/conquest/[id]/tv/+page.svelte` (conquest — rolling turn log + map)
 - **Transport**: polls the existing REST API (~1s), no websockets; winner-freeze stops updates; zero caller audio (the scorer keeps the sound)
 - **Auth**: public-by-link — conquest access rides the unguessable `conquest_games.id` uuid
-- **Conquest state**: reads the server-persisted [conquest-state-server-persisted|write-through state](./conquest-state-server-persisted-write-through-state.md) (`conquest_games` jsonb)
-- **Component**: [spectator-interviews-trebles-territories|TvCommentary](./spectator-interviews-trebles-territories-tvcommentary.md) (`src/lib/components/tv/TvCommentary.svelte`) — interview cadence, pause, generation, playback queue, subtitles
+- **Conquest state**: reads the server-persisted [write-through conquest state](../../decisions/conquest-state-server-persisted.md) (`conquest_games` jsonb)
+- **Component**: [spectator-interviews TvCommentary component](./spectator-interviews-trebles-territories.md) (`src/lib/components/tv/TvCommentary.svelte`) — interview cadence, pause, generation, playback queue, subtitles
 - **Tests**: cast-button specs in match-ui + conquest E2E; TV pages driven in fake-commentary mode
 
 ## Relationships
@@ -27,4 +27,5 @@ Read-only big-screen views of a live match, meant for tab-casting to a TV in the
 
 ## Lifecycle
 
-- First added: 2026-09-08, PR #3 (stacked on the Trebles & Territories PR #2)
+- First added: 2026-09-08 — built on `feature/2nd-tv-screen-cast-realtime`, stacked on the Trebles & Territories branch
+- Significant changes: 2026-09-08 — merged to master via **PR #7** (`f0c28b5`), deploying to Railway production (cast buttons on both scorers + `/match/[id]/tv` route)
