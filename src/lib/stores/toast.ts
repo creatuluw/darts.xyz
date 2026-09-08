@@ -13,9 +13,9 @@ function createToastStore() {
   const { subscribe, update } = writable<Toast[]>([]);
   let nextId = 0;
 
-  function addToast(message: string, type: ToastType = 'info') {
+  function addToast(message: string, type: ToastType = 'info', duration = 3000) {
     const id = nextId++;
-    const timeout = setTimeout(() => removeToast(id), 3000);
+    const timeout = setTimeout(() => removeToast(id), duration);
 
     update((toasts) => [...toasts, { id, message, type, timeout }]);
   }

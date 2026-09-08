@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import { page as pageStore } from "$app/stores";
     import { IconCast, IconLink } from "@tabler/icons-svelte";
+    import TvCommentary from "$lib/components/tv/TvCommentary.svelte";
     import { getCheckoutSuggestions } from "$lib/game/checkout-suggestions";
     import { addToast } from "$lib/stores/toast";
 
@@ -85,6 +86,17 @@
         const opt = getCheckoutSuggestions(remaining, 3)[0];
         return opt ? { name: names[seat.playerId] ?? "?", remaining, text: opt.description } : null;
     });
+
+    // commentary inputs
+    const turnLines = $derived(
+        turns.map(
+            (t) =>
+                `${names[t.playerId] ?? "?"}: ${turnDarts(t)
+                    .map(([s, m]) => dartLabel(s, m))
+                    .join(" ")} = ${t.totalScore} (${t.remainingScore} resterend)`
+        )
+    );
+    const playerNames = $derived(Object.values(names));
 
     const winner = $derived.by(() => {
         if (!match || match.status !== "completed" || !match.winnerId) return null;
@@ -221,6 +233,17 @@
                 <p class="font-display font-black text-6xl md:text-8xl mb-4">{winner.name}</p>
                 <p class="text-zinc-400 text-2xl">wint met {seats.find(s => s.playerId === match!.winnerId)?.setsWon ?? 0}–{seats.filter(s => s.playerId !== match!.winnerId).map(s => s.setsWon).join("/") ?? 0} sets</p>
             </div>
+        {/if}
+
+        {#if match}
+            <TvCommentary
+                matchRef={`classic:${match.id}`}
+                kind="classic"
+                turnCount={turns.length}
+                {turnLines}
+                players={playerNames}
+                done={finished}
+            />
         {/if}
     {/if}
 </div>

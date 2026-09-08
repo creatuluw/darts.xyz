@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import { page as pageStore } from "$app/stores";
     import { IconLink } from "@tabler/icons-svelte";
+    import TvCommentary from "$lib/components/tv/TvCommentary.svelte";
     import ConquestBoard from "$lib/components/conquest/ConquestBoard.svelte";
     import ConquestScoreboard from "$lib/components/conquest/ConquestScoreboard.svelte";
     import { curatedOptions } from "$lib/game/conquest-options";
@@ -66,6 +67,22 @@
     const clockMode = $derived(game?.mode === "clock");
     const options = $derived(game && game.phase !== "finished" ? curatedOptions(game) : []);
 
+    // rolling turn summaries for the commentary LLM (built from poll diffs)
+    let turnLog = $state<string[]>([]);
+    let seenTurn = -1;
+    function logTurn(s: ConquestState) {
+        if (s.turnCount === seenTurn || s.turnCount === 0) return;
+        seenTurn = s.turnCount;
+        const actor = s.players[s.activeSeat]?.name ?? "?";
+        const darts = s.turnDarts
+            .map((d) => (d.segment === 0 ? "Miss" : `${d.multiplier === 3 ? "T" : d.multiplier === 2 ? "D" : ""}${d.segment}`))
+            .join(" ") || "—";
+        const counts = s.players
+            .map((p) => `${p.name}: ${Object.values(s.territories).filter((t) => t.owner === p.id).length} gebieden`)
+            .join(", ");
+        turnLog = [...turnLog.slice(-40), `beurt ${s.turnCount} — ${actor}: ${darts} (${counts})`];
+    }
+
     async function poll() {
         if (frozen || missing || document.hidden) return;
         try {
@@ -73,7 +90,9 @@
             if (res.status === 404) { missing = true; return; }
             if (!res.ok) return;
             const data = await res.json();
-            game = data.state as ConquestState;
+            const next = data.state as ConquestState;
+            logTurn(next);
+            game = next;
             if (game.phase === "finished") frozen = true;
         } catch { /* transient */ }
     }
@@ -195,5 +214,14 @@
                 {/if}
             </div>
         {/if}
+
+        <TvCommentary
+            matchRef={`conquest:${gameId}`}
+            kind="conquest"
+            turnCount={game.turnCount}
+            turnLines={turnLog}
+            players={players.map((p) => p.name)}
+            done={frozen}
+        />
     {/if}
 </div>
