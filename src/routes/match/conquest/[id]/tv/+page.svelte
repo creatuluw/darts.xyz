@@ -19,13 +19,13 @@
         "#BB3E03",
     ];
 
-    let state = $state<ConquestState | null>(null);
+    let game = $state(null as ConquestState | null);
     let missing = $state(false);
     let frozen = $state(false);
 
     const players = $derived(
-        state
-            ? state.players.map((p, i) => ({
+        game
+            ? game.players.map((p, i) => ({
                   id: p.id,
                   name: p.name,
                   initials: p.name
@@ -43,28 +43,28 @@
         players.find((p) => p.id === id)?.name ?? "?";
 
     const phaseText = $derived.by(() => {
-        if (!state) return "";
-        const active = nameOf(state.players[state.activeSeat]?.id ?? null);
-        switch (state.phase) {
+        if (!game) return "";
+        const active = nameOf(game.players[game.activeSeat]?.id ?? null);
+        switch (game.phase) {
             case "turn": return `${active} gooiet`;
             case "resurrect_pick": return `${active} kiest een blanke wig — herleving`;
             case "duel_pick": return `${active} kiest een doelwit om te roven`;
-            case "duel_save": return `${nameOf(state.pendingDuel?.defender ?? null)} verdedigt — raak de bull`;
+            case "duel_save": return `${nameOf(game.pendingDuel?.defender ?? null)} verdedigt — raak de bull`;
             case "tiebreak": return "Tiebreak!";
             case "finished": return "Afgelopen";
         }
     });
 
     const visitLabels = $derived(
-        state
-            ? state.turnDarts.map((d) =>
+        game
+            ? game.turnDarts.map((d) =>
                   d.segment === 0 ? "Miss" : `${d.multiplier === 3 ? "T" : d.multiplier === 2 ? "D" : ""}${d.segment}`
               )
             : []
     );
 
-    const clockMode = $derived(state?.mode === "clock");
-    const options = $derived(state && state.phase !== "finished" ? curatedOptions(state) : []);
+    const clockMode = $derived(game?.mode === "clock");
+    const options = $derived(game && game.phase !== "finished" ? curatedOptions(game) : []);
 
     async function poll() {
         if (frozen || missing || document.hidden) return;
@@ -73,8 +73,8 @@
             if (res.status === 404) { missing = true; return; }
             if (!res.ok) return;
             const data = await res.json();
-            state = data.state as ConquestState;
-            if (state.phase === "finished") frozen = true;
+            game = data.state as ConquestState;
+            if (game.phase === "finished") frozen = true;
         } catch { /* transient */ }
     }
 
@@ -99,7 +99,7 @@
         <div class="flex-1 flex items-center justify-center">
             <p class="text-zinc-400 text-2xl">Spel niet gevonden.</p>
         </div>
-    {:else if !state}
+    {:else if !game}
         <div class="flex-1 flex items-center justify-center">
             <p class="text-zinc-500 text-2xl animate-pulse">Laden…</p>
         </div>
@@ -109,7 +109,7 @@
                 <span class="font-display font-black text-2xl md:text-3xl tracking-tight">TREBLES &amp; TERRITORIES</span>
                 {#if clockMode}
                     <span class="text-zinc-500 text-lg md:text-xl">
-                        {state.preset} darten per speler
+                        {game.preset} darten per speler
                     </span>
                 {/if}
             </div>
@@ -130,7 +130,7 @@
 
         <!-- phase banner -->
         <div class="rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-2 md:py-3 mb-4 md:mb-6 flex items-center justify-between gap-4">
-            <p class="text-xl md:text-2xl font-bold {state.phase === 'finished' ? 'text-zinc-500' : 'text-emerald-300'}">
+            <p class="text-xl md:text-2xl font-bold {game.phase === 'finished' ? 'text-zinc-500' : 'text-emerald-300'}">
                 {phaseText}
             </p>
             {#if visitLabels.length}
@@ -141,21 +141,21 @@
         </div>
 
         <div class="flex-1 grid lg:grid-cols-[1fr_auto] gap-4 md:gap-6 items-center justify-items-center">
-            <ConquestBoard {state} {players} onHit={() => {}} disabled={true} />
+            <ConquestBoard state={game} {players} onHit={() => {}} disabled={true} />
             <div class="w-full lg:w-[26rem] space-y-4">
-                <ConquestScoreboard {state} {players} />
+                <ConquestScoreboard state={game} {players} />
                 {#if clockMode}
                     <div class="rounded-xl bg-zinc-900/60 border border-zinc-800 p-3 space-y-2">
-                        {#each state.players as p (p.id)}
+                        {#each game.players as p (p.id)}
                             <div class="flex items-center gap-3">
                                 <span class="text-zinc-300 w-24 truncate">{p.name}</span>
                                 <div class="flex-1 h-2.5 bg-zinc-800 rounded-full overflow-hidden">
                                     <div
                                         class="h-full rounded-full transition-all"
-                                        style="width: {Math.min(100, (p.dartsThrown / state.preset) * 100)}%; background: {players.find(q => q.id === p.id)?.color ?? '#52525b'}"
+                                        style="width: {Math.min(100, (p.dartsThrown / game.preset) * 100)}%; background: {players.find(q => q.id === p.id)?.color ?? '#52525b'}"
                                     ></div>
                                 </div>
-                                <span class="text-zinc-500 text-sm tabular-nums">{p.dartsThrown}/{state.preset}</span>
+                                <span class="text-zinc-500 text-sm tabular-nums">{p.dartsThrown}/{game.preset}</span>
                             </div>
                         {/each}
                     </div>
@@ -182,13 +182,13 @@
         {/if}
 
         <!-- winner card -->
-        {#if frozen && state.winner}
+        {#if frozen && game.winner}
             <div class="fixed inset-0 z-10 bg-zinc-950/95 flex flex-col items-center justify-center text-center">
                 <p class="text-emerald-400 text-2xl mb-2">Kampioen</p>
-                <p class="font-display font-black text-6xl md:text-8xl mb-6">{nameOf(state.winner)}</p>
-                {#if state.standings}
+                <p class="font-display font-black text-6xl md:text-8xl mb-6">{nameOf(game.winner)}</p>
+                {#if game.standings}
                     <div class="space-y-1 text-xl text-zinc-400">
-                        {#each state.standings.slice(0, 3) as st, i (st.playerId)}
+                        {#each game.standings.slice(0, 3) as st, i (st.playerId)}
                             <p>{i + 1}. {nameOf(st.playerId)} — {st.score} pt · {st.territories} 🏰</p>
                         {/each}
                     </div>
