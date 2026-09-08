@@ -37,6 +37,42 @@ function removeKey(key: string) {
   } catch {
     // ignore storage errors
   }
+  try {
+    sessionStorage.removeItem(key);
+  } catch {
+    // ignore storage errors
+  }
+}
+
+/** Read a raw (non-JSON) string from local or session storage; "" on any error */
+function readRaw(storage: "local" | "session", key: string): string {
+  if (!isBrowser()) return "";
+  try {
+    const s = storage === "local" ? localStorage : sessionStorage;
+    return s.getItem(key) || "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Persist the active email. Remembered logins go to localStorage (and the
+ * accounts list); session-only logins ("remember me" unchecked) go to
+ * sessionStorage only and vanish when the browser session ends.
+ */
+function persistActive(email: string, remember: boolean) {
+  if (!isBrowser()) return;
+  try {
+    if (remember) {
+      localStorage.setItem(ACTIVE_KEY, email);
+      // A stale session-only login must not shadow the remembered one.
+      sessionStorage.removeItem(ACTIVE_KEY);
+    } else {
+      sessionStorage.setItem(ACTIVE_KEY, email);
+    }
+  } catch {
+    // ignore storage errors
+  }
 }
 
 // --- Accounts list store ---
@@ -92,27 +128,26 @@ export const accountsStore = createAccountsStore();
 
 // --- Active email store ---
 function createEmailStore() {
-  const initial = isBrowser() ? localStorage.getItem(ACTIVE_KEY) || "" : "";
+  const remembered = readRaw("local", ACTIVE_KEY);
+  const session = readRaw("session", ACTIVE_KEY);
+  // The tab's session login wins over the remembered one while it lives.
+  const initial = session || remembered;
   const store = writable<string>(initial);
 
-  // Ensure the active email is in the accounts list
-  if (initial) {
-    accountsStore.add(initial);
+  // Ensure the remembered email is in the accounts list (session-only is not)
+  if (remembered) {
+    accountsStore.add(remembered);
   }
 
   return {
     subscribe: store.subscribe,
-    /** Set the active email and add it to accounts list */
-    setEmail: (newEmail: string) => {
-      if (isBrowser()) {
-        try {
-          localStorage.setItem(ACTIVE_KEY, newEmail);
-        } catch {
-          // ignore
-        }
-      }
+    /** Set the active email; `remember` persists it and adds it to the accounts list */
+    setEmail: (newEmail: string, remember = true) => {
+      persistActive(newEmail, remember);
       store.set(newEmail);
-      accountsStore.add(newEmail);
+      if (remember) {
+        accountsStore.add(newEmail);
+      }
     },
     /** Clear only the active email (returns to email gate) */
     clearEmail: () => {
@@ -121,13 +156,7 @@ function createEmailStore() {
     },
     /** Switch to a different existing account */
     switchTo: (email: string) => {
-      if (isBrowser()) {
-        try {
-          localStorage.setItem(ACTIVE_KEY, email);
-        } catch {
-          // ignore
-        }
-      }
+      persistActive(email, true);
       store.set(email);
     },
     /** Sign out: remove this account from the instance and switch away */
@@ -137,13 +166,7 @@ function createEmailStore() {
       if (remaining.length > 0) {
         // Switch to the first remaining account
         const next = remaining[0];
-        if (isBrowser()) {
-          try {
-            localStorage.setItem(ACTIVE_KEY, next);
-          } catch {
-            // ignore
-          }
-        }
+        persistActive(next, true);
         store.set(next);
       } else {
         removeKey(ACTIVE_KEY);
