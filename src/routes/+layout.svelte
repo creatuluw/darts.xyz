@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { page as pageStore } from "$app/stores";
     import "../app.css";
     import { FloatingNav, Toast, LoadingOverlay } from "$lib/components/ui";
     import FullscreenButton from "$lib/components/ui/FullscreenButton.svelte";
@@ -13,6 +14,9 @@
     let hasEmail = $state(false);
     let mounted = $state(false);
     let isFullscreen = $state(false);
+
+    // 2nd-screen TV views are public-by-link: no email gate, no nav chrome
+    const isTv = $derived($pageStore.url.pathname.endsWith("/tv"));
 
     onMount(() => {
         hasEmail = emailStore.getEmail().length > 0;
@@ -50,13 +54,13 @@
             </p>
         </div>
     </div>
-{:else if !hasEmail}
+{:else if !hasEmail && !isTv}
     <EmailGate />
 {:else}
     <div
         class="min-h-dvh bg-page dark:bg-page-deep text-zinc-900 dark:text-white font-sans"
     >
-        <FloatingNav />
+        {#if !isTv}<FloatingNav />{/if}
         <main
             class="{isFullscreen
                 ? 'pt-2 pb-2 px-3 md:px-4'
