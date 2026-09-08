@@ -1,0 +1,261 @@
+{
+  "source": "derived by docs/risk/fit-map.cjs (proximity fit, bull = Black Sea); locked by design session",
+  "territories": [
+    {
+      "name": "Northern Europe",
+      "continent": "EU",
+      "number": "20",
+      "ring": "inner"
+    },
+    {
+      "name": "Scandinavia",
+      "continent": "EU",
+      "number": "20",
+      "ring": "outer"
+    },
+    {
+      "name": "Ukraine",
+      "continent": "EU",
+      "number": "1",
+      "ring": "inner"
+    },
+    {
+      "name": "Siberia",
+      "continent": "AS",
+      "number": "1",
+      "ring": "outer"
+    },
+    {
+      "name": "Ural",
+      "continent": "AS",
+      "number": "18",
+      "ring": "inner"
+    },
+    {
+      "name": "Yakutsk",
+      "continent": "AS",
+      "number": "18",
+      "ring": "outer"
+    },
+    {
+      "name": "Afghanistan",
+      "continent": "AS",
+      "number": "4",
+      "ring": "inner"
+    },
+    {
+      "name": "Irkutsk",
+      "continent": "AS",
+      "number": "4",
+      "ring": "outer"
+    },
+    {
+      "name": "Mongolia",
+      "continent": "AS",
+      "number": "13",
+      "ring": "inner"
+    },
+    {
+      "name": "Kamchatka",
+      "continent": "AS",
+      "number": "13",
+      "ring": "outer"
+    },
+    {
+      "name": "Siam",
+      "continent": "AS",
+      "number": "6",
+      "ring": "inner"
+    },
+    {
+      "name": "China",
+      "continent": "AS",
+      "number": "6",
+      "ring": "outer"
+    },
+    {
+      "name": "India",
+      "continent": "AS",
+      "number": "10",
+      "ring": "inner"
+    },
+    {
+      "name": "New Guinea",
+      "continent": "OC",
+      "number": "10",
+      "ring": "outer"
+    },
+    {
+      "name": "Indonesia",
+      "continent": "OC",
+      "number": "15",
+      "ring": "inner"
+    },
+    {
+      "name": "Eastern Australia",
+      "continent": "OC",
+      "number": "15",
+      "ring": "outer"
+    },
+    {
+      "name": "Middle East",
+      "continent": "AS",
+      "number": "2",
+      "ring": "inner"
+    },
+    {
+      "name": "Western Australia",
+      "continent": "OC",
+      "number": "2",
+      "ring": "outer"
+    },
+    {
+      "name": "Congo",
+      "continent": "AF",
+      "number": "17",
+      "ring": "inner"
+    },
+    {
+      "name": "East Africa",
+      "continent": "AF",
+      "number": "17",
+      "ring": "outer"
+    },
+    {
+      "name": "Egypt",
+      "continent": "AF",
+      "number": "3",
+      "ring": "inner"
+    },
+    {
+      "name": "South Africa",
+      "continent": "AF",
+      "number": "3",
+      "ring": "outer"
+    },
+    {
+      "name": "North Africa",
+      "continent": "AF",
+      "number": "19",
+      "ring": "inner"
+    },
+    {
+      "name": "Argentina",
+      "continent": "SA",
+      "number": "19",
+      "ring": "outer"
+    },
+    {
+      "name": "Southern Europe",
+      "continent": "EU",
+      "number": "7",
+      "ring": "inner"
+    },
+    {
+      "name": "Brazil",
+      "continent": "SA",
+      "number": "7",
+      "ring": "outer"
+    },
+    {
+      "name": "Venezuela",
+      "continent": "SA",
+      "number": "16",
+      "ring": "inner"
+    },
+    {
+      "name": "Peru",
+      "continent": "SA",
+      "number": "16",
+      "ring": "outer"
+    },
+    {
+      "name": "Western Europe",
+      "continent": "EU",
+      "number": "8",
+      "ring": "inner"
+    },
+    {
+      "name": "Central America",
+      "continent": "NA",
+      "number": "8",
+      "ring": "outer"
+    },
+    {
+      "name": "Eastern United States",
+      "continent": "NA",
+      "number": "11",
+      "ring": "inner"
+    },
+    {
+      "name": "Western United States",
+      "continent": "NA",
+      "number": "11",
+      "ring": "outer"
+    },
+    {
+      "name": "Ontario",
+      "continent": "NA",
+      "number": "14",
+      "ring": "inner"
+    },
+    {
+      "name": "Alberta",
+      "continent": "NA",
+      "number": "14",
+      "ring": "outer"
+    },
+    {
+      "name": "Quebec",
+      "continent": "NA",
+      "number": "9",
+      "ring": "inner"
+    },
+    {
+      "name": "Alaska",
+      "continent": "NA",
+      "number": "9",
+      "ring": "outer"
+    },
+    {
+      "name": "Great Britain",
+      "continent": "EU",
+      "number": "12",
+      "ring": "inner"
+    },
+    {
+      "name": "Northwest Territory",
+      "continent": "NA",
+      "number": "12",
+      "ring": "outer"
+    },
+    {
+      "name": "Greenland",
+      "continent": "NA",
+      "number": "5",
+      "ring": "inner"
+    },
+    {
+      "name": "Iceland",
+      "continent": "EU",
+      "number": "5",
+      "ring": "outer"
+    }
+  ],
+  "deposits": {
+    "single": {
+      "armies": 1,
+      "target": "the hit box (inner or outer of that number)"
+    },
+    "double": {
+      "armies": 2,
+      "target": "outer box of that number"
+    },
+    "treble": {
+      "armies": 2,
+      "target": "inner box of that number"
+    },
+    "bull25": null,
+    "bull50": null
+  }
+}

@@ -22,3 +22,8 @@
 - [Interview questions: per-player 1–2 curated options, randomly surfaced](./interview-questions-per-player-curated.md) - Interview questions: per-player 1–2 curated options, randomly surfaced
 - [Interviews on ElevenLabs live TTS: fixed commentator voice, random Dutch spectators](./interviews-elevenlabs-live-tts.md) - Context
 - [Commentary gated on open 2nd screen + pause button; all match types; every-N-turns cadence](./commentary-gated-on-2nd-screen.md) - Context
+- [Risk 42 base mechanic: two-feeder army deposits (any-dart claims, treble feeds inner +2, double feeds outer +2)](./risk-42-base-mechanic-two-feeder-deposits.md) - Context
+- [Risk 42 attack rule locked: mirror damage — deposit down on enemy land, reduce-to-zero capture](./risk-42-attack-rule-mirror-damage.md) - Context
+- [Real Risk world map on the board — 40 territories via inner/outer boxes, Japan & Madagascar cut](./real-risk-world-map-draft.md) - Context
+- [World map → dartboard mapping via azimuthal projection + Hungarian assignment (bull = Black Sea)](./board-mapping-azimuthal-hungarian.md) - Azimuthal + Hungarian fit replaces the hand-drawn draft; inner = Old World core, outer = frontier
+- [Territory labels go horizontal: centered in each box, no rotation](./territory-labels-go-horizontal-centered-in-each-box-no-rotat.md) - Context

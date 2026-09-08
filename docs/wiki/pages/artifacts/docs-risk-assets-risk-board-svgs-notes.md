@@ -8,7 +8,7 @@ timestamp: "2026-09-08T21:59:27.232Z"
 
 # docs/risk/ assets (Risk board SVGs + notes)
 
-Reference assets for the Risk-style conquest mode ([risk-darts-proposed-game-mode](../concepts/risk-darts-proposed-game-mode.md) / Trebles & Territories): two classic Risk board SVGs (`Risk_board.svg` ~507 KB, `Riskgameboard.svg` ~38 KB) and `notes.md` — Perplexity-sourced research on the classic board's 42 territories / 6 continents and reinforcement math. Input material for mapping the dartboard-conquest design onto real Risk geography.
+Reference assets for the Risk-style conquest mode ([risk-darts-proposed-game-mode](../concepts/risk-darts-proposed-game-mode.md) / Trebles & Territories): two classic Risk board SVGs (`risk-board.svg` (was `Risk_board.svg`, renamed) ~507 KB, `Riskgameboard.svg` ~38 KB) and `notes.md` — Perplexity-sourced research on the classic board's 42 territories / 6 continents and reinforcement math. Input material for mapping the dartboard-conquest design onto real Risk geography.
 
 ## What it documents
 
