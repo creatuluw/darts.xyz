@@ -43,7 +43,7 @@ test.describe('TV view — conquest', () => {
 		];
 		await request.patch(`/api/conquest/${id}`, { data: { state } });
 		await expect(page.getByText('Kampioen')).toBeVisible({ timeout: 5_000 });
-		await expect(page.getByText('LIVE')).toBeHidden();
+		await expect(page.getByText('LIVE', { exact: true })).toBeHidden();
 
 		let polled = 0;
 		page.on('request', (r) => {

@@ -56,7 +56,7 @@ test.describe('TV view — classic match', () => {
 			data: { status: 'completed', winnerId: aliceId }
 		});
 		await expect(page.getByText('Wedstrijd afgelopen')).toBeVisible({ timeout: 5_000 });
-		await expect(page.getByText('LIVE')).toBeHidden();
+		await expect(page.getByText('LIVE', { exact: true })).toBeHidden();
 
 		// no further match polling after the freeze
 		let polled = 0;
