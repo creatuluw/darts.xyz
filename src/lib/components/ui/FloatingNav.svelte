@@ -38,6 +38,7 @@
     let showAddAccountModal = $state(false);
     let newAccountEmail = $state("");
     let newAccountError = $state("");
+    let newAccountRememberMe = $state(true);
     let isFullscreen = $state(false);
     let showMenu = $state(false);
 
@@ -63,6 +64,12 @@
         userEmail ? userEmail.split("@")[0].slice(0, 2).toUpperCase() : "??",
     );
 
+    // Every account registered on this device except the active one —
+    // a session-only login isn't in the list, so it must still see the rest.
+    let otherAccounts = $derived(
+        accounts.filter((account) => account !== userEmail),
+    );
+
     function toggleAccountMenu() {
         showAccountMenu = !showAccountMenu;
     }
@@ -75,6 +82,7 @@
         showAccountMenu = false;
         newAccountEmail = "";
         newAccountError = "";
+        newAccountRememberMe = true;
         showAddAccountModal = true;
     }
 
@@ -82,6 +90,7 @@
         showAddAccountModal = false;
         newAccountEmail = "";
         newAccountError = "";
+        newAccountRememberMe = true;
     }
 
     function handleAddAccount() {
@@ -105,7 +114,7 @@
             return;
         }
 
-        emailStore.setEmail(trimmed);
+        emailStore.setEmail(trimmed, newAccountRememberMe);
         closeAddAccountModal();
         addToast(`Account added: ${trimmed}`, "success");
     }
@@ -253,7 +262,7 @@
                             />
                         </div>
 
-                        {#if accounts.length > 1}
+                        {#if otherAccounts.length > 0}
                             <div
                                 class="border-t border-zinc-100 dark:border-white/5 my-1"
                             ></div>
@@ -262,30 +271,28 @@
                             >
                                 Other accounts
                             </p>
-                            {#each accounts as account}
-                                {#if account !== userEmail}
-                                    <button
-                                        onclick={() => handleSwitchAccount(account)}
-                                        class="w-full px-3 py-2 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-white/5 cursor-pointer"
+                            {#each otherAccounts as account}
+                                <button
+                                    onclick={() => handleSwitchAccount(account)}
+                                    class="w-full px-3 py-2 flex items-center gap-3 rounded-xl text-sm text-left transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-white/5 cursor-pointer"
+                                >
+                                    <div
+                                        class="w-7 h-7 rounded-full bg-zinc-200 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 flex items-center justify-center text-xs font-bold flex-shrink-0"
                                     >
-                                        <div
-                                            class="w-7 h-7 rounded-full bg-zinc-200 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 flex items-center justify-center text-xs font-bold flex-shrink-0"
-                                        >
-                                            {account
-                                                .split("@")[0]
-                                                .slice(0, 2)
-                                                .toUpperCase()}
-                                        </div>
-                                        <span
-                                            class="truncate text-zinc-700 dark:text-zinc-300"
-                                            >{account}</span
-                                        >
-                                        <IconArrowRight
-                                            size={14}
-                                            class="text-zinc-400 ml-auto flex-shrink-0"
-                                        />
-                                    </button>
-                                {/if}
+                                        {account
+                                            .split("@")[0]
+                                            .slice(0, 2)
+                                            .toUpperCase()}
+                                    </div>
+                                    <span
+                                        class="truncate text-zinc-700 dark:text-zinc-300"
+                                        >{account}</span
+                                    >
+                                    <IconArrowRight
+                                        size={14}
+                                        class="text-zinc-400 ml-auto flex-shrink-0"
+                                    />
+                                </button>
                             {/each}
                         {/if}
 
@@ -375,6 +382,17 @@
                             </p>
                         {/if}
                     </div>
+
+                    <label
+                        class="mt-4 flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 cursor-pointer select-none"
+                    >
+                        <input
+                            type="checkbox"
+                            bind:checked={newAccountRememberMe}
+                            class="size-4 rounded accent-emerald-500 cursor-pointer"
+                        />
+                        Remember me on this device
+                    </label>
 
                     <div class="mt-6 flex gap-3">
                         <button
