@@ -18,3 +18,7 @@
 - [Trebles & Territories board palette locked (Coolors 10-color band)](./trebles-territories-board-palette-coolors.md) - Decision
 - [Remember-me: session-only login shadows remembered login](./remember-me-session-only-login.md) - Context
 - [TV spectator mode: URL + tab-cast, 1s polling, public-by-link, room-first](./tv-mode-url-tab-cast-polling.md) - Context
+- [Conquest state persists server-side: write-through per dart, own table + uuid](./conquest-state-server-persisted.md) - Context
+- [Interview questions: per-player 1–2 curated options, randomly surfaced](./interview-questions-per-player-curated.md) - Interview questions: per-player 1–2 curated options, randomly surfaced
+- [Interviews on ElevenLabs live TTS: fixed commentator voice, random Dutch spectators](./interviews-elevenlabs-live-tts.md) - Context
+- [Commentary gated on open 2nd screen + pause button; all match types; every-N-turns cadence](./commentary-gated-on-2nd-screen.md) - Context

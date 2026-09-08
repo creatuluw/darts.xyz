@@ -1,7 +1,7 @@
 ---
 type: Learning
 title: Vitest/Playwright suite is uncommitted — master branches have no test runner
-description: "The 67 Vitest + 14 Playwright tests documented in [[test-suite]] live **uncommitted in the main working tree** — they are NOT committed to master. Any branch cu"
+description: "UPDATE 2026-09-08: the suite is committed on feature/trebles-territories (PR #2, 112 unit tests) — master branches still have no test runner until the PR merges"
 tags: [testing, vitest, playwright, master, smoke, gotcha]
 timestamp: "2026-09-08T11:06:38.428Z"
 ---
@@ -16,3 +16,5 @@ How to verify work on a master branch instead:
 - `npm run check` shows **4 pre-existing errors in `Dartboard.svelte` on master** — confirm errors are yours before fixing.
 - Reconciles with [[logic-todos-must-use-tdd-skill]]: TDD applies in the main tree where the runner exists; on a master branch the smoke script is the one runnable check left behind.
 - Fold branch smoke scripts into the Vitest suite once it lands on master.
+
+**Update 2026-09-08** — the suite landed on `feature/trebles-territories` (commit `fa83191`, PR #2), now grown to **112 unit tests**. The smoke-script guidance above still applies to any branch cut from master until PR #2 merges.
