@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trebles and Territories — Implementation Spec</title>
+<style>
+  :root {
+    --ivory:    #FAF9F5;
+    --slate:    #141413;
+    --clay:     #D97757;
+    --oat:      #E3DACC;
+    --olive:    #788C5D;
+    --gray-150: #F0EEE6;
+    --gray-300: #D1CFC5;
+    --gray-500: #87867F;
+    --gray-700: #3D3D3A;
+    --white:    #FFFFFF;
+    --serif: ui-serif, Georgia, 'Times New Roman', serif;
+    --sans:  system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --mono:  ui-monospace, 'SF Mono', Menlo, Monaco, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ivory:#171613; --slate:#F3EFE6; --oat:#3B372F; --gray-150:#232220;
+      --gray-300:#3A3833; --gray-500:#9C9A91; --gray-700:#D6D3C9; --white:#201F1C;
+    }
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:var(--sans); background:var(--ivory); color:var(--gray-700); line-height:1.55; padding:56px 32px 120px; -webkit-font-smoothing:antialiased; }
+  .page { max-width:1120px; margin:0 auto; }
+
+  header.page-head { margin-bottom:32px; max-width:860px; }
+  .eyebrow { font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--gray-500); margin-bottom:12px; }
+  h1 { font-family:var(--serif); font-weight:500; font-size:38px; line-height:1.15; color:var(--slate); margin-bottom:18px; letter-spacing:-.01em; }
+  .prompt-box { background:var(--gray-150); border:1.5px solid var(--gray-300); border-radius:12px; padding:16px 20px; font-size:14.5px; }
+  .prompt-box .label { font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-500); display:block; margin-bottom:6px; }
+
+  .topnav { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 40px; }
+  .topnav a { font-size:12.5px; font-family:var(--mono); color:var(--gray-700); text-decoration:none; border:1.5px solid var(--gray-300); background:var(--white); padding:5px 12px; border-radius:99px; }
+  .topnav a:hover { border-color:var(--clay); color:var(--clay); }
+  .printbtn { margin-left:auto; cursor:pointer; }
+
+  .summary { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:56px; }
+  @media (max-width:900px){ .summary{grid-template-columns:repeat(2,1fr);} }
+  .summary .cell { background:var(--white); border:1.5px solid var(--gray-300); border-radius:12px; padding:14px 16px; }
+  .summary .k { font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-500); margin-bottom:4px; }
+  .summary .v { font-family:var(--serif); font-size:17px; color:var(--slate); }
+  .summary .v.accent { color:var(--clay); }
+
+  section { margin-bottom:64px; }
+  .sec-head { display:flex; align-items:baseline; gap:14px; margin-bottom:8px; }
+  .sec-head .num { font-family:var(--mono); font-size:12px; background:var(--oat); color:var(--slate); padding:3px 9px; border-radius:8px; }
+  .sec-head h2 { font-family:var(--serif); font-weight:500; font-size:26px; color:var(--slate); letter-spacing:-.01em; }
+  .sec-intro { font-size:14.5px; color:var(--gray-500); max-width:760px; margin-bottom:26px; }
+  h3.sub { font-family:var(--serif); font-weight:600; font-size:18px; color:var(--slate); margin:28px 0 10px; }
+  p { max-width:820px; margin-bottom:12px; }
+  ul.bul { max-width:820px; margin:0 0 14px 20px; } ul.bul li { margin-bottom:6px; }
+  ol.num-list { max-width:820px; margin:0 0 14px 22px; } ol.num-list li { margin-bottom:6px; }
+  code { font-family:var(--mono); font-size:.88em; background:var(--gray-150); border:1px solid var(--gray-300); border-radius:5px; padding:1px 5px; }
+  strong { color:var(--slate); }
+
+  table.t { width:100%; border-collapse:collapse; font-size:13.5px; margin:12px 0 20px; }
+  table.t th { text-align:left; font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--gray-500); border-bottom:2px solid var(--gray-300); padding:8px 10px; }
+  table.t td { border-bottom:1px solid var(--gray-300); padding:8px 10px; vertical-align:top; }
+  table.t tr.hl td { background:var(--gray-150); font-weight:600; color:var(--slate); }
+  .pill { display:inline-block; font-family:var(--mono); font-size:11px; padding:2px 9px; border-radius:99px; border:1px solid var(--gray-300); background:var(--white); }
+
+  .callout { background:var(--white); border:1.5px solid var(--gray-300); border-left:4px solid var(--clay); border-radius:10px; padding:14px 18px; margin:16px 0; max-width:820px; font-size:14px; }
+  .callout.olive { border-left-color:var(--olive); }
+  .callout .ct { font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-500); display:block; margin-bottom:4px; }
+
+  pre.code { background:var(--slate); color:#E8E4DA; font-family:var(--mono); font-size:12.5px; line-height:1.6; border-radius:10px; padding:16px 18px; overflow-x:auto; margin:12px 0 20px; max-width:900px; }
+  pre.code .c { color:#8B968A; }
+
+  .preset-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 36px; }
+  @media (max-width:840px){ .preset-grid{grid-template-columns:1fr;} }
+  table.t.compact th, table.t.compact td { padding:5px 8px; font-size:12.5px; }
+
+  /* ---------- boards ---------- */
+  .board-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(460px,1fr)); gap:24px; margin:20px 0 8px; }
+  .board-card { background:var(--white); border:1.5px solid var(--gray-300); border-radius:14px; padding:18px; }
+  .board-card .bt { font-family:var(--serif); font-size:17px; color:var(--slate); margin-bottom:2px; }
+  .board-card .bs { font-size:12.5px; color:var(--gray-500); margin-bottom:12px; }
+  .board-svg svg { width:100%; height:auto; display:block; }
+  .wedge { cursor:default; transition:filter .15s; }
+  .wedge:hover { filter:brightness(1.09); }
+  .opt-list { margin:12px 0 0; font-size:13px; }
+  .opt-list li { margin-bottom:7px; list-style:none; display:flex; gap:9px; align-items:baseline; }
+  .opt-badge { flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--clay); color:#fff; font-family:var(--mono); font-size:11px; font-weight:700; }
+  .sit-note { font-size:12.5px; color:var(--gray-500); margin-top:10px; border-top:1px dashed var(--gray-300); padding-top:10px; }
+  .legend { display:flex; flex-wrap:wrap; gap:10px 18px; margin:14px 0 4px; font-size:12.5px; }
+  .legend .li { display:inline-flex; align-items:center; gap:7px; }
+  .sw { width:14px; height:14px; border-radius:4px; border:1px solid var(--gray-300); display:inline-block; }
+  .pc { width:14px; height:14px; border-radius:50%; display:inline-block; }
+  @keyframes altarPulse { 0%,100%{opacity:.9; r:13;} 50%{opacity:.3; r:16;} }
+  .altar-ring { animation:altarPulse 1.6s ease-in-out infinite; }
+
+  /* ---------- commentary feed ---------- */
+  .feed { max-width:760px; margin:14px 0 8px; }
+  .fcard { background:var(--white); border:1.5px solid var(--gray-300); border-radius:12px; padding:14px 16px; margin-bottom:12px; }
+  .fmeta { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .fav { width:24px; height:24px; border-radius:50%; color:#fff; font-family:var(--mono); font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; }
+  .fwho { font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--gray-500); }
+  .ftext { font-size:14.5px; color:var(--slate); font-style:italic; }
+  .snd { font-family:var(--mono); font-size:10.5px; background:var(--gray-150); border:1px solid var(--gray-300); border-radius:99px; padding:2px 8px; margin-left:auto; color:var(--gray-500); white-space:nowrap; }
+
+  /* ---------- milestones & risks ---------- */
+  .milestones { margin:18px 0 8px; }
+  .milestone { display:flex; gap:16px; padding:0 0 22px; position:relative; }
+  .mwhen { flex:0 0 118px; font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--gray-500); padding-top:2px; }
+  .mdotcol { flex:0 0 14px; display:flex; flex-direction:column; align-items:center; }
+  .mdot { width:12px; height:12px; border-radius:50%; border:2.5px solid var(--clay); background:var(--white); }
+  .mline { flex:1; width:2px; background:var(--gray-300); margin-top:4px; }
+  .mbody h3 { font-family:var(--serif); font-weight:600; font-size:16px; color:var(--slate); margin-bottom:4px; }
+  .mbody p { font-size:13.5px; margin-bottom:6px; }
+  .tags { display:flex; flex-wrap:wrap; gap:6px; }
+  .tag { font-family:var(--mono); font-size:10.5px; background:var(--gray-150); border:1px solid var(--gray-300); border-radius:6px; padding:2px 8px; color:var(--gray-500); }
+
+  .risk-impact { font-family:var(--mono); font-size:10.5px; padding:2px 8px; border-radius:99px; color:#fff; white-space:nowrap; }
+  .ri-lo { background:var(--olive); } .ri-md { background:#C2913C; } .ri-hi { background:var(--clay); }
+
+  footer.pagefoot { border-top:1.5px solid var(--gray-300); padding-top:18px; font-size:13px; color:var(--gray-500); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+
+  @media print {
+    .topnav, .printbtn { display:none; }
+    body { padding:0; background:#fff; }
+    .board-card, .fcard, .callout, .summary .cell { break-inside:avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="page-head">
+    <div class="eyebrow">Implementation spec · darts.xyz · New game mode</div>
+    <h1>Trebles and Territories</h1>
+    <div class="prompt-box">
+      <span class="label">Origin</span>
+      A Risk-style conquest darts game for mixed-skill crowds, designed in interview. The board is the map: 20 wedge territories in 6 fixed continents, trebles found nations, singles lay siege, the bull is an altar where the dead duel for resurrection. Timed wars (201–5001 darts each), an LLM war-commentator every 2 turns, and a state-aware dartboard UI.
+    </div>
+  </header>
+
+  <nav class="topnav" id="topnav">
+    <a href="#s1">01 · The Game</a>
+    <a href="#s2">02 · Rules</a>
+    <a href="#s3">03 · Match Lengths</a>
+    <a href="#s4">04 · The State Board</a>
+    <a href="#s5">05 · Commentary</a>
+    <a href="#s6">06 · Implementation</a>
+    <a href="#s7">07 · Recap Videos</a>
+    <button class="printbtn" onclick="window.print()" style="font-family:var(--mono);font-size:12.5px;color:var(--gray-700);border:1.5px solid var(--gray-300);background:var(--white);padding:5px 12px;border-radius:99px;cursor:pointer;">Print</button>
+  </nav>
+
+  <div class="summary">
+    <div class="cell"><div class="k">Mode</div><div class="v accent">Conquest · 2–6 players</div></div>
+    <div class="cell"><div class="k">Default match</div><div class="v">301 darts each · ~3 h @ 4 players</div></div>
+    <div class="cell"><div class="k">Map</div><div class="v">20 territories · 6 continents</div></div>
+    <div class="cell"><div class="k">Commentary</div><div class="v">GLM-5.3-Flash · every 2 turns</div></div>
+  </div>
+
+  <!-- ======================= 01 THE GAME ======================= -->
+  <section id="s1">
+    <div class="sec-head"><span class="num">01</span><h2>The Game</h2></div>
+    <p class="sec-intro">Risk on a dartboard. Multiple players fight for the 20 wedge-territories; the dartboard's own number ring becomes a fixed world map of six continents.</p>
+
+    <h3 class="sub">Design pillars — locked in interview</h3>
+    <ul class="bul">
+      <li><strong>Mixed crowd by design.</strong> One shark, three casuals, everyone matters until the buzzer. Settling is hard (trebles), stealing is cheap (singles) — sharks become settlers, casuals become raiders.</li>
+      <li><strong>The leader gets ganged up on.</strong> Balancing is social, not mechanical — the table aims at whoever is winning.</li>
+      <li><strong>Zero dead throws (almost).</strong> Every dart attacks, claims or reinforces. The one exception is deliberate: singles into blank land do nothing, because the frontier is treble-only.</li>
+      <li><strong>Death is drama, not exile.</strong> Landless players hunt the bull altar; resurrection can trigger a one-dart duel against their neighbour.</li>
+      <li><strong>Momentum has a name: Shanghai.</strong> Single + double + treble of one number in a turn = one extra dart next turn. Rare, loud, precious.</li>
+    </ul>
+
+    <div class="callout olive">
+      <span class="ct">Decision log</span>
+      Claim-based ownership and a heat/streak economy were explored and rejected — this spec is the treble-frontier + siege model, finalized with the bull altar, fixed continents, timed wars and Shanghai bonus.
+    </div>
+  </section>
+
+  <!-- ======================= 02 RULES ======================= -->
+  <section id="s2">
+    <div class="sec-head"><span class="num">02</span><h2>Rules of Play</h2></div>
+    <p class="sec-intro">The complete ruleset as locked. Everything below is implemented in a deterministic game engine (see §06) — no referee judgment calls anywhere.</p>
+
+    <h3 class="sub">The map</h3>
+    <ul class="bul">
+      <li><strong>20 territories</strong> — the wedges 1–20. Each has an owner (or blank) and 0–3 HP.</li>
+      <li><strong>The bull is not a territory.</strong> It is the <strong>Altar</strong> — only landless players throw at it (see Death &amp; Resurrection).</li>
+      <li><strong>6 fixed continents, always the same, always the same colour:</strong></li>
+    </ul>
+    <table class="t">
+      <tr><th>Continent</th><th>Territories</th><th>Character</th></tr>
+      <tr><td><span class="sw" style="background:#FFB703"></span> <strong>Gold Coast</strong></td><td>20 · 18 · 12</td><td>Premium — two giants, heavily contested</td></tr>
+      <tr><td><span class="sw" style="background:#8ECAE6"></span> <strong>Highgate</strong></td><td>16 · 11 · 9</td><td>Balanced middleweight</td></tr>
+      <tr><td><span class="sw" style="background:#BB3E03"></span> <strong>Iron Ridge</strong></td><td>19 · 13 · 5</td><td>Premium anchor + cheap tail</td></tr>
+      <tr><td><span class="sw" style="background:#219EBC"></span> <strong>The Pass</strong></td><td>17 · 6 · 2</td><td>One big, two slums</td></tr>
+      <tr><td><span class="sw" style="background:#126782"></span> <strong>Mercia</strong></td><td>15 · 10 · 8 · 7</td><td>Four-wide — slow to complete, hard to break</td></tr>
+      <tr><td><span class="sw" style="background:#3A6787"></span> <strong>Fourlands</strong> <span class="pill">navy shade</span></td><td>14 · 4 · 3 · 1</td><td>The quiet slums — nobody aims there, sneaky completes</td></tr>
+    </table>
+
+    <h3 class="sub">A turn</h3>
+    <ul class="bul">
+      <li>3 darts, fixed seat rotation. Shanghai bonus darts are added on top (see below).</li>
+      <li>Whatever the dart hits, resolves immediately — mid-turn ownership changes are legal and matter.</li>
+    </ul>
+    <table class="t">
+      <tr><th>Dart lands on…</th><th>Segment</th><th>Effect</th></tr>
+      <tr><td>Blank wedge</td><td>Single / Double</td><td><strong>Nothing.</strong> The frontier is treble-only — wild land is civilized by treble or not at all.</td></tr>
+      <tr class="hl"><td>Blank wedge</td><td>Treble</td><td><strong>Found it.</strong> Territory is yours at full 3 HP.</td></tr>
+      <tr><td>Enemy wedge</td><td>Single / Double / Treble</td><td>1 / 2 / 3 damage. At 0 HP → <strong>captured</strong>, arrives at 1 HP (fresh conquests are fragile).</td></tr>
+      <tr><td>Own wedge</td><td>Any</td><td><strong>Reinforce</strong> +1 HP (cap 3).</td></tr>
+      <tr><td>Bull — you own land</td><td>25 / 50</td><td>Nothing. The altar ignores the living.</td></tr>
+      <tr><td>Bull — you are dead</td><td>25 / 50</td><td>Resurrection flow — see Death &amp; Resurrection.</td></tr>
+    </table>
+
+    <h3 class="sub">Shanghai</h3>
+    <ul class="bul">
+      <li>Single + double + treble of the <strong>same number, same turn, any order</strong> → <strong>+1 dart next turn</strong> (4 total).</li>
+      <li>The feat counts regardless of what the land does: on enemy ground S+D+T = 6 damage = guaranteed capture (with a mid-turn flip, later darts reinforce your new land); on your own full-HP land it is pure form — extra dart earned anyway.</li>
+      <li>Stacks in theory, not in practice (~1-in-100-turns event even when hunted deliberately). No anti-stacking rules needed.</li>
+      <li>Dead players on the altar cannot Shanghai (the bull has no segments).</li>
+    </ul>
+
+    <h3 class="sub">Death &amp; Resurrection — the Bull Altar</h3>
+    <p>A player with <strong>0 territories is dead</strong>. Their whole turn is thrown at the bull (all 3 darts). One hit (outer 25 or inner 50) triggers:</p>
+    <ol class="num-list">
+      <li><strong>Blank territories exist</strong> → the dead player <em>must</em> claim one blank of their choice (strategy: complete your continent, block the leader's). It arrives at 1 HP. Remaining darts continue as normal attacks.</li>
+      <li><strong>No blanks</strong> → the dead player robs <strong>the next living player in seat order</strong> (skipping other dead players; the victim must own ≥1 territory). Attacker picks which territory. <strong>The duel:</strong> the victim immediately throws <strong>one save dart at the bull</strong> —
+        <ul class="bul" style="margin-top:6px">
+          <li>Victim hits → <strong>DENIED.</strong> Territory kept (HP unchanged), attacker stays dead and restarts the bull hunt next turn.</li>
+          <li>Victim misses → <strong>theft succeeds</strong> at 1 HP. Remaining attacker darts continue as normal attacks — you're back <em>and angry</em>.</li>
+        </ul>
+      </li>
+      <li>Miss all three bulls → still dead, try again next turn. No penalty, just tension.</li>
+    </ol>
+    <div class="callout">
+      <span class="ct">Design note · graveyard politics</span>
+      Resurrection targets are fixed by seating: your resurrection victim is whoever throws after you. Whoever sits after the weakest player gets farmed. Accepted for v1 (matches are long enough to forgive); lazy fix if it stings: re-seat between matches.
+    </div>
+
+    <h3 class="sub">Clock mode (default) — scoring</h3>
+    <ul class="bul">
+      <li>Each player throws a fixed budget of darts (presets in §03, default 301). The app truncates the final turn if the budget isn't a multiple of 3 — e.g. the 301st dart can literally be the last dart of the match.</li>
+      <li>When the last dart falls: <strong>1 point per territory, +2 per complete continent.</strong> Full ranking 1st/2nd/3rd/…</li>
+      <li><strong>Tiebreak:</strong> one sudden-death dart each, nearest bull wins (inner beats outer; a miss is out; repeat if still level).</li>
+      <li>Dead ≠ out. A landless player at the buzzer simply scores what they hold (possibly 0) — but they were never benched.</li>
+    </ul>
+
+    <h3 class="sub">Domination mode (selectable alternative)</h3>
+    <ul class="bul">
+      <li>First player to hold <strong>7 territories</strong> or <strong>any one complete continent</strong> wins instantly. A 5–15 minute sprint; same combat, altar and Shanghai rules, no clock.</li>
+    </ul>
+
+    <h3 class="sub">Edge rules (engine must implement)</h3>
+    <ul class="bul">
+      <li>Capture mid-turn: the remaining darts of that turn apply to the new owner (your attack became a reinforce).</li>
+      <li>The duel save dart is free — it never counts against the defender's dart budget.</li>
+      <li>Multiple dead players resolve their altar turns independently; duels never chain (a dead victim can't be robbed — they own nothing).</li>
+      <li>Domination instant-win is checked after every dart resolves.</li>
+    </ul>
+  </section>
+
+  <!-- ======================= 03 MATCH LENGTHS ======================= -->
+  <section id="s3">
+    <div class="sec-head"><span class="num">03</span><h2>Match Lengths — Presets</h2></div>
+    <p class="sec-intro">A match is a fixed dart budget <strong>per player</strong>. Ten presets, named like the classic x01 games. Durations assume ~30 s per 3-dart turn (app-scored); halve the pace assumption for drunken nights, and remember every preset persists — a long war can be resumed any night.</p>
+    <p class="sec-intro">A match is a fixed dart budget <strong>per player</strong>. Thirty presets — 51 to 1501 in steps of 50, every one a classic x01 number. Durations assume ~30 s per 3-dart turn (app-scored); halve the pace assumption for drunken nights, and remember every preset persists — a long war can be resumed any night.</p>
+    <p style="font-size:13px;color:var(--gray-500);max-width:820px">Range guide: <strong>51–151</strong> skirmish · <strong>201–451</strong> the war (<strong>301 ★ default</strong>) · <strong>501–951</strong> campaign · <strong>1001–1501</strong> multi-session wars you resume across nights.</p>
+    <div class="preset-grid">
+    <table class="t compact">
+      <tr><th>Preset</th><th>Turns each</th><th>2p</th><th>3p</th><th>4p</th><th>6p</th></tr>
+      <tr><td><strong>51</strong></td><td>17</td><td>0.3 h</td><td>0.4 h</td><td>0.6 h</td><td>0.9 h</td></tr>
+      <tr><td><strong>101</strong></td><td>34</td><td>0.6 h</td><td>0.9 h</td><td>1.1 h</td><td>1.7 h</td></tr>
+      <tr><td><strong>151</strong></td><td>51</td><td>0.9 h</td><td>1.3 h</td><td>1.7 h</td><td>2.6 h</td></tr>
+      <tr><td><strong>201</strong></td><td>67</td><td>1.1 h</td><td>1.7 h</td><td>2.2 h</td><td>3.4 h</td></tr>
+      <tr><td><strong>251</strong></td><td>84</td><td>1.4 h</td><td>2.1 h</td><td>2.8 h</td><td>4.2 h</td></tr>
+      <tr class="hl"><td><strong>301 ★</strong></td><td>100</td><td>1.7 h</td><td>2.5 h</td><td>3.3 h</td><td>5.0 h</td></tr>
+      <tr><td><strong>351</strong></td><td>117</td><td>2.0 h</td><td>2.9 h</td><td>3.9 h</td><td>5.9 h</td></tr>
+      <tr><td><strong>401</strong></td><td>134</td><td>2.2 h</td><td>3.4 h</td><td>4.5 h</td><td>6.7 h</td></tr>
+      <tr><td><strong>451</strong></td><td>151</td><td>2.5 h</td><td>3.8 h</td><td>5.0 h</td><td>7.6 h</td></tr>
+      <tr><td><strong>501</strong></td><td>167</td><td>2.8 h</td><td>4.2 h</td><td>5.6 h</td><td>8.4 h</td></tr>
+      <tr><td><strong>551</strong></td><td>184</td><td>3.1 h</td><td>4.6 h</td><td>6.1 h</td><td>9.2 h</td></tr>
+      <tr><td><strong>601</strong></td><td>201</td><td>3.4 h</td><td>5.0 h</td><td>6.7 h</td><td>10.1 h</td></tr>
+      <tr><td><strong>651</strong></td><td>217</td><td>3.6 h</td><td>5.4 h</td><td>7.2 h</td><td>10.9 h</td></tr>
+      <tr><td><strong>701</strong></td><td>234</td><td>3.9 h</td><td>5.9 h</td><td>7.8 h</td><td>11.7 h</td></tr>
+      <tr><td><strong>751</strong></td><td>251</td><td>4.2 h</td><td>6.3 h</td><td>8.4 h</td><td>12.6 h</td></tr>
+    </table>
+    <table class="t compact">
+      <tr><th>Preset</th><th>Turns each</th><th>2p</th><th>3p</th><th>4p</th><th>6p</th></tr>
+      <tr><td><strong>801</strong></td><td>267</td><td>4.5 h</td><td>6.7 h</td><td>8.9 h</td><td>13.4 h</td></tr>
+      <tr><td><strong>851</strong></td><td>284</td><td>4.7 h</td><td>7.1 h</td><td>9.5 h</td><td>14.2 h</td></tr>
+      <tr><td><strong>901</strong></td><td>301</td><td>5.0 h</td><td>7.5 h</td><td>10.0 h</td><td>15.1 h</td></tr>
+      <tr><td><strong>951</strong></td><td>317</td><td>5.3 h</td><td>7.9 h</td><td>10.6 h</td><td>15.9 h</td></tr>
+      <tr><td><strong>1001</strong></td><td>334</td><td>5.6 h</td><td>8.4 h</td><td>11.1 h</td><td>16.7 h</td></tr>
+      <tr><td><strong>1051</strong></td><td>351</td><td>5.9 h</td><td>8.8 h</td><td>11.7 h</td><td>17.6 h</td></tr>
+      <tr><td><strong>1101</strong></td><td>367</td><td>6.1 h</td><td>9.2 h</td><td>12.2 h</td><td>18.4 h</td></tr>
+      <tr><td><strong>1151</strong></td><td>384</td><td>6.4 h</td><td>9.6 h</td><td>12.8 h</td><td>19.2 h</td></tr>
+      <tr><td><strong>1201</strong></td><td>401</td><td>6.7 h</td><td>10.0 h</td><td>13.4 h</td><td>20.1 h</td></tr>
+      <tr><td><strong>1251</strong></td><td>417</td><td>7.0 h</td><td>10.4 h</td><td>13.9 h</td><td>20.9 h</td></tr>
+      <tr><td><strong>1301</strong></td><td>434</td><td>7.2 h</td><td>10.9 h</td><td>14.5 h</td><td>21.7 h</td></tr>
+      <tr><td><strong>1351</strong></td><td>451</td><td>7.5 h</td><td>11.3 h</td><td>15.0 h</td><td>22.6 h</td></tr>
+      <tr><td><strong>1401</strong></td><td>467</td><td>7.8 h</td><td>11.7 h</td><td>15.6 h</td><td>23.4 h</td></tr>
+      <tr><td><strong>1451</strong></td><td>484</td><td>8.1 h</td><td>12.1 h</td><td>16.1 h</td><td>24.2 h</td></tr>
+      <tr><td><strong>1501</strong></td><td>500</td><td>8.3 h</td><td>12.5 h</td><td>16.7 h</td><td>25.0 h</td></tr>
+    </table>
+    </div>
+    <div class="callout">
+      <span class="ct">Honest read</span>
+      At the default 301 with 4 players you are signing up for a ~3 h evening — that is the design intent (a full war). The 51–151 band is the weeknight skirmish zone (51 @ 4p ≈ 35 min); 1001+ are campaigns you resume across nights, which is why match state persistence (§06) is a hard requirement, not a nice-to-have.
+    </div>
+  </section>
+
+  <!-- ======================= 04 THE STATE BOARD ======================= -->
+  <section id="s4">
+    <div class="sec-head"><span class="num">04</span><h2>The State Board — Visual Language &amp; Situations</h2></div>
+    <p class="sec-intro">The dartboard <em>is</em> the entire game HUD. Continent base colours are the silent legend; player initials ride the wedges they own with HP pips; the bull is visibly an altar. Option callouts (clay badges A/B/C) show what the active player can do. Hover any wedge for details.</p>
+
+    <div class="legend">
+      <span class="li"><span class="sw" style="background:#FFB703"></span>Gold Coast 20·18·12</span>
+      <span class="li"><span class="sw" style="background:#8ECAE6"></span>Highgate 16·11·9</span>
+      <span class="li"><span class="sw" style="background:#BB3E03"></span>Iron Ridge 19·13·5</span>
+      <span class="li"><span class="sw" style="background:#219EBC"></span>The Pass 17·6·2</span>
+      <span class="li"><span class="sw" style="background:#126782"></span>Mercia 15·10·8·7</span>
+      <span class="li"><span class="sw" style="background:#3A6787"></span>Fourlands 14·4·3·1</span>
+    </div>
+    <div class="legend" style="margin-top:6px">
+      <span class="li"><span class="pc" style="background:#9B2226"></span><strong>KS</strong> Ken</span>
+      <span class="li"><span class="pc" style="background:#023047"></span><strong>MB</strong> Mel</span>
+      <span class="li"><span class="pc" style="background:#FB8500"></span><strong>JD</strong> Jo</span>
+      <span class="li"><span class="pc" style="background:#AE2012"></span><strong>TB</strong> Tash</span>
+      <span class="li"><span style="font-family:var(--mono);font-size:11px;color:var(--gray-500)">●●○ = 2/3 HP · dashed wedge + badge = active option · palette: coolors 8ecae6→9b2226</span></span>
+    </div>
+
+    <div class="board-grid" id="boards">
+      <!-- boards injected by JS -->
+    </div>
+  </section>
+
+  <!-- ======================= 05 COMMENTARY ======================= -->
+  <section id="s5">
+    <div class="sec-head"><span class="num">05</span><h2>The Commentator</h2></div>
+    <p class="sec-intro">An LLM war-commentator writes a line <strong>every 2 turns</strong> into the Commentary tab. Voice: PDC darts-announcer urgency crossed with dry British pub wit, seasoned with TV-chef quotes — and Muppet Show sound stingers where it makes sense.</p>
+
+    <h3 class="sub">Persona spec (system prompt draft)</h3>
+    <pre class="code">You are the live commentator for "Trebles and Territories", a Risk-style
+darts conquest game. Voice: PDC darts commentator urgency (Sid Waddell
+school) crossed with dry British pub wit, seasoned liberally with TV-chef
+quotes (Gordon Ramsay, Jamie Oliver, the Swedish Chef).
+
+Rules of your booth:
+- 2 to 4 punchy sentences. No markdown. At most one emoji.
+- React ONLY to the actual game state you are given: captures, sieges,
+  altar duels, deaths, Shanghais, standings, darts remaining.
+- When a territory is founded, captured or defended: one chef quote or
+  cooking metaphor. Bork bork bork is always in season.
+- End with at most ONE sound cue tag, only where it makes sense:
+  [sound:swedish-chef] [sound:animal] [sound:statler-waldorf]
+  [sound:piggy] [sound:kermit] [sound:trumpet]  — or no tag at all.
+- Never invent throws that are not in the state.</pre>
+
+    <h3 class="sub">Sound stingers — where it makes sense</h3>
+    <table class="t">
+      <tr><th>Event</th><th>Stinger</th><th>Why</th></tr>
+      <tr><td>Founding / capture / chef quote lands</td><td><span class="pill">swedish-chef</span></td><td>"Bork bork bork" — territory cooking</td></tr>
+      <tr><td>Shanghai</td><td><span class="pill">animal</span></td><td>Animal drum mayhem — three segments, one wedge, chaos</td></tr>
+      <tr><td>Miss / weak turn / leader stumbles</td><td><span class="pill">statler-waldorf</span></td><td>Balcony heckling the players</td></tr>
+      <tr><td>Duel DENIED / successful theft</td><td><span class="pill">piggy</span></td><td>"HII-YA" — the karate-chop of the altar</td></tr>
+      <tr><td>Resurrection / comeback moment</td><td><span class="pill">kermit</span></td><td>Arm-wave "yaaay" for the returned</td></tr>
+      <tr><td>Match end</td><td><span class="pill">trumpet</span></td><td>Muppet Show closing horn — goodnight crowd</td></tr>
+    </table>
+    <p>Clips are generated into the existing ElevenLabs soundboard pipeline (<code>static/audio/conquest/</code>) and the commentator's trailing tag triggers playback. Optional toggle: Kokoro in-browser TTS <em>speaks</em> the commentary line (same pipeline as dynamic player names).</p>
+
+    <h3 class="sub">Integration — verified</h3>
+    <pre class="code">// POST https://opencode.ai/zen/go/v1/chat/completions        ✅ tested 200
+Headers:
+  Authorization:   Bearer ${OPENCODE_API}          <span class="c">// from .env, never client-side</span>
+  x-opencode-session: conquest-&lt;matchId&gt;            <span class="c">// stable per match → routing + prompt caching</span>
+  User-Agent:      darts-xyz-conquest/1.0           <span class="c">// required, identify the app</span>
+Body:  { model: "glm-5.3-flash", temperature: 0.9, max_tokens: 400,
+         messages: [ system(persona), user(compact game state JSON) ] }</pre>
+    <ul class="bul">
+      <li><strong>Trigger:</strong> server-side after every 2nd completed turn (<code>turnCount % 2 === 0</code>) — roughly once a minute at 30 s turns. Well inside GLM-5.3-Flash limits (1,580 requests / 5 h).</li>
+      <li><strong>Reasoning model:</strong> GLM-5.3-Flash emits <code>reasoning_content</code> before <code>content</code> — parse <code>choices[0].message.content</code>, ignore the reasoning field, give it headroom (<code>max_tokens ≥ 400</code>).</li>
+      <li><strong>State payload:</strong> players + standings, 20-territory map with owners/HP, last 6 events, mode, darts remaining. ~400 tokens.</li>
+      <li><strong>Failure policy:</strong> never block play — 8 s timeout, silent skip, log. The feed survives without the model.</li>
+    </ul>
+
+    <h3 class="sub">Sample feed — the voice, calibrated</h3>
+    <div class="feed">
+      <div class="fcard">
+        <div class="fmeta"><span class="fav" style="background:#9B2226">KS</span><span class="fwho">Turn 2 · Ken founds 20</span><span class="snd">🐔 swedish-chef</span></div>
+        <div class="ftext">"Ken slams the treble twenty and stakes his claim on the Gold Coast — territory served rare, seared outside, screaming inside! That, ladies and gentlemen, is a proper Beef Wellington of a founding. Bork bork bork — the board is his kitchen tonight!"</div>
+      </div>
+      <div class="fcard">
+        <div class="fmeta"><span class="fav" style="background:#FB8500">JD</span><span class="fwho">Turn 14 · Jo's Shanghai on 12</span><span class="snd">🥁 animal</span></div>
+        <div class="ftext">"SHANGHAI on twelve — single, double, treble, three ways cooked and Ken's territory plated with a side of extra dart! Jo chopped that wedge finer than a Michelin julienne and there's an extra arrow in the quiver next turn. ANIMAL! DRUMS! NOW!"</div>
+      </div>
+      <div class="fcard">
+        <div class="fmeta"><span class="fav" style="background:#AE2012">TB</span><span class="fwho">Turn 27 · altar duel DENIED</span><span class="snd">🎭 statler-waldorf</span></div>
+        <div class="ftext">"Tash reaches for the bull and Ken answers with cold steel — DENIED at the altar, keep your kingdom, sire! From the balcony: 'That's the first thing Ken's defended all night — and we've seen the soufflés he sends out!' Even the hecklers are seasoning the soup."</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= 06 IMPLEMENTATION ======================= -->
+  <section id="s6">
+    <div class="sec-head"><span class="num">06</span><h2>Implementation</h2></div>
+    <p class="sec-intro">Fits the existing stack untouched: SvelteKit 2 + Svelte 5 runes + TypeScript, Drizzle/PostgreSQL (<code>darts</code> schema), REST under <code>/api</code>, ElevenLabs soundboard + Kokoro TTS. New game mode beside — never inside — the x01 engine.</p>
+
+    <h3 class="sub">Game engine — pure &amp; deterministic</h3>
+    <p><code>src/lib/game/conquest-engine.ts</code>, modelled on the existing <code>match-engine.ts</code>: a pure reducer, no I/O, fully unit-testable.</p>
+    <pre class="code">// shape (summary)
+type Phase = 'turn' | 'duel_save' | 'tiebreak' | 'finished';
+interface ConquestState {
+  mode: 'clock' | 'domination';
+  preset: 51|101|151|201|251|301|…|1501;          <span class="c">// step 50, always an x01 number, 301 = default</span>
+  players: { id: string; seat: number; dartsThrown: number; bonusDarts: number }[];
+  seatOrder: string[];                 // graveyard politics live here
+  territories: Record&lt;1..20, { owner: string|null; hp: 0|1|2|3 }&gt;;
+  turnCount: number; activeSeat: number; dartsLeftInTurn: number;
+  phase: Phase;
+  pendingDuel?: { attacker: string; defender: string; target: number } | null;
+}
+applyDart(state, segment): { state, events }   // segment: 'T20' | 'D5' | 'S12' | 'BULL' | 'DBULL' | 'MISS'
+applyDuelSave(state, segment): { state, events }
+applyResurrectPick(state, territory): { state, events }
+// events: FOUNDED · DAMAGED · CAPTURED · REINFORCED · DIED · BULL_HIT ·
+//         RESURRECT · DUEL_CHALLENGE · DUEL_SAVED · DUEL_STOLEN · SHANGHAI · GAME_END</pre>
+    <ul class="bul">
+      <li>Every edge rule in §02 is a unit test: treble-only founding, siege damage, capture-at-0 → 1 HP, reinforce cap, mid-turn flip, Shanghai detection (any order), death detection, blank-first resurrection, duel save (free dart), clock truncation (301st dart), domination instant-win, tiebreak ladder.</li>
+    </ul>
+
+    <h3 class="sub">Data model — Drizzle, schema <code>darts</code></h3>
+    <table class="t">
+      <tr><th>Table</th><th>Columns</th><th>Purpose</th></tr>
+      <tr><td><code>conquest_matches</code></td><td>id · mode · preset · status · state (jsonb) · winner_player_id · created_at · ended_at</td><td>Full live state — resume any campaign</td></tr>
+      <tr><td><code>conquest_turns</code></td><td>match_id · turn_no · player_id · darts (jsonb) · events (jsonb)</td><td>Replay, stats, commentator context</td></tr>
+      <tr><td><code>conquest_commentary</code></td><td>match_id · turn_no · text · sound_tag · created_at</td><td>The commentary feed</td></tr>
+    </table>
+
+    <h3 class="sub">API surface</h3>
+    <table class="t">
+      <tr><th>Route</th><th>Method</th><th>Notes</th></tr>
+      <tr><td><code>/api/conquest</code></td><td>POST</td><td>Create match: players, seats, mode, preset</td></tr>
+      <tr><td><code>/api/conquest/[id]</code></td><td>GET</td><td>Full state (board, standings, phase)</td></tr>
+      <tr><td><code>/api/conquest/[id]/dart</code></td><td>POST</td><td>Segment → updated state + events (+ commentary when turnCount%2==0)</td></tr>
+      <tr><td><code>/api/conquest/[id]/duel-save</code></td><td>POST</td><td>Defender's free save dart</td></tr>
+      <tr><td><code>/api/conquest/[id]/resurrect-pick</code></td><td>POST</td><td>Blank claim or duel target choice</td></tr>
+      <tr><td><code>/api/conquest/[id]/commentary</code></td><td>GET</td><td>Paginated feed</td></tr>
+    </table>
+
+    <h3 class="sub">UI — the board is the HUD</h3>
+    <ul class="bul">
+      <li><code>/conquest</code> — setup: players + seat order (random or manual), mode, preset picker <strong>with the §03 time table inline</strong> so nobody signs up for 5001 by accident.</li>
+      <li><code>/conquest/[id]</code> — live table: <code>ConquestBoard.svelte</code> (this spec's §04 rendering — continent colours, initial badges, HP pips, option callouts, altar ring), <code>TurnBanner</code> (whose throw, darts left, Shanghai flame), <code>CommentaryFeed</code> (tab), <code>Scoreboard</code> (territories, continent progress, points projection). Input reuses the segment-tap pattern of the existing <code>Dartboard.svelte</code>.</li>
+      <li>End screen: final map + scoring breakdown + podium + tiebreak flow.</li>
+    </ul>
+
+    <h3 class="sub">Audio</h3>
+    <ul class="bul">
+      <li>New caller clips via <code>scripts/generate-soundboard.ts</code>: <code>FOUNDED · CAPTURED · DENIED · SHANGHAI · RESURRECTED · DUEL_CHALLENGE · GAME_OVER</code> + the six Muppet-style stingers (§05).</li>
+      <li>Commentary TTS toggle via in-browser Kokoro (existing pipeline).</li>
+    </ul>
+
+    <h3 class="sub">Milestones</h3>
+    <div class="milestones">
+      <div class="milestone"><div class="mwhen">M1 · ~2 days</div><div class="mdotcol"><span class="mdot"></span><span class="mline"></span></div><div class="mbody"><h3>Engine + full test suite</h3><p>Pure reducer, every §02 edge rule green before any UI exists.</p><div class="tags"><span class="tag">conquest-engine.ts</span><span class="tag">vitest</span></div></div></div>
+      <div class="milestone"><div class="mwhen">M2 · ~2 days</div><div class="mdotcol"><span class="mdot"></span><span class="mline"></span></div><div class="mbody"><h3>State board + local play</h3><p>ConquestBoard.svelte rendering, turn flow, duel overlays — playable hot-seat without persistence.</p><div class="tags"><span class="tag">svelte 5 runes</span><span class="tag">tailwind v4</span></div></div></div>
+      <div class="milestone"><div class="mwhen">M3 · ~1 day</div><div class="mdotcol"><span class="mdot"></span><span class="mline"></span></div><div class="mbody"><h3>Persistence + API</h3><p>Drizzle tables, migration, routes, resume-a-campaign flow.</p><div class="tags"><span class="tag">drizzle</span><span class="tag">postgres</span></div></div></div>
+      <div class="milestone"><div class="mwhen">M4 · ~1 day</div><div class="mdotcol"><span class="mdot"></span><span class="mline"></span></div><div class="mbody"><h3>Commentator service + feed</h3><p>Server-side trigger every 2 turns, GLM-5.3-Flash call, sound-tag parsing, graceful failure.</p><div class="tags"><span class="tag">opencode zen api</span><span class="tag">glm-5.3-flash</span></div></div></div>
+      <div class="milestone"><div class="mwhen">M5 · ~2 days</div><div class="mdotcol"><span class="mdot"></span><span class="mline"></span></div><div class="mbody"><h3>Audio + E2E + polish</h3><p>Caller clips + stingers, Kokoro toggle, simulated full-match E2E (à la existing gameplay sims), end screen.</p><div class="tags"><span class="tag">elevenlabs</span><span class="tag">kokoro</span><span class="tag">e2e</span></div></div></div>
+      <div class="milestone"><div class="mwhen">M6 · ~3 days</div><div class="mdotcol"><span class="mdot"></span></div><div class="mbody"><h3>Recap pipeline (§07)</h3><p>Recap template composition + script pass + render + email delivery.</p><div class="tags"><span class="tag">hyperframes</span><span class="tag">glm-5.3-flash</span><span class="tag">email</span></div></div></div>
+    </div>
+
+    <h3 class="sub">Risks &amp; open flags</h3>
+    <table class="t">
+      <tr><th>Risk</th><th>Impact</th><th>Mitigation</th></tr>
+      <tr><td>Commentator latency / format drift (reasoning model)</td><td><span class="risk-impact ri-md">MED</span></td><td>8 s timeout, silent skip, tag-parser tolerates missing/extra tags; max_tokens 400</td></tr>
+      <tr><td>Dead darts on blank land frustrate casuals early game</td><td><span class="risk-impact ri-md">MED</span></td><td>Playtest flag from design interview — ship strict; fallback idea: double on blank = "stakes a flag" (v2, only if needed)</td></tr>
+      <tr><td>Long presets abandoned mid-match</td><td><span class="risk-impact ri-lo">LOW</span></td><td>Full jsonb state persistence + resume; time table shown at setup</td></tr>
+      <tr><td>Muppet-style stingers (voice likeness)</td><td><span class="risk-impact ri-lo">LOW</span></td><td>Private app, generated soundalikes, not distributed assets</td></tr>
+      <tr><td>Seat-order farming (graveyard politics)</td><td><span class="risk-impact ri-lo">LOW</span></td><td>Accepted v1; re-seat between matches; revisit only if it sours nights</td></tr>
+      <tr><td>Recap render weight on Railway (headless chromium + ffmpeg)</td><td><span class="risk-impact ri-md">MED</span></td><td>Render on HeyGen cloud first; local worker only as fallback; renders are async day-after, never on the hot path</td></tr>
+      <tr><td>LLM-authored video quality variance</td><td><span class="risk-impact ri-md">MED</span></td><td>Fixed recap template + variables as the floor; agent-authored pass only upgrades when it passes lint/check/snapshot gates</td></tr>
+      <tr><td>Email deliverability / privacy</td><td><span class="risk-impact ri-lo">LOW</span></td><td>Link-only emails (no attachments), tokenized unlisted URLs, per-player opt-out flag</td></tr>
+    </table>
+  </section>
+
+  <!-- ======================= 07 RECAP VIDEOS ======================= -->
+  <section id="s7">
+    <div class="sec-head"><span class="num">07</span><h2>The Morning After — Recap Videos</h2></div>
+    <p class="sec-intro">A separate feature: every finished match becomes a ~60-second recap film the next day, authored by an LLM agent using <strong>HyperFrames</strong> (HTML-based video composition — <a href="https://hyperframes.heygen.com/showcase" style="color:var(--clay)">showcase</a> · <a href="https://www.skills.sh/heygen-com/hyperframes/hyperframes" style="color:var(--clay)">skills</a>). Players who have an email address on file receive a link. Nobody has to do anything — the war comes back to you at breakfast.</p>
+
+    <h3 class="sub">Pipeline — daily, fully async</h3>
+    <ol class="num-list">
+      <li><strong>Trigger (cron ~10:00):</strong> find <code>conquest_matches</code> ended ≥ 1 day ago with no recap row → queue one.</li>
+      <li><strong>Script pass — GLM-5.3-Flash</strong> (same verified endpoint as §05, persona continuity): select 5–8 beats from the turn/event log + commentary highlights, write captions and narration lines, place stinger tags.</li>
+      <li><strong>Author pass — agent with HyperFrames skills</strong> (hyperframes-core, keyframes, audio): builds the composition from the <em>recap template</em> — the §04 state board as hero visual, map-timeline animation, kinetic-type captions. Seek-safe GSAP only; per-match content injected via <strong>HyperFrames variables</strong> (names, colours, scores, beats) — the same source renders every match.</li>
+      <li><strong>Audio:</strong> ElevenLabs narrator voiceover (existing pipeline), music bed carved under the VO (<code>data-fx-carve</code>), Muppet stingers where the script says so.</li>
+      <li><strong>Render:</strong> HeyGen cloud render (preferred) or <code>hyperframes</code> CLI local fallback → MP4 1080p. Quality gates before render: <code>lint · check · keyframes · snapshot</code>.</li>
+      <li><strong>Deliver:</strong> store under a tokenized unlisted URL; email the link to every player with an email on file; per-player opt-out. Link-only — never attachments.</li>
+    </ol>
+
+    <h3 class="sub">The film — fixed spine, variable flesh</h3>
+    <table class="t">
+      <tr><th>Beat</th><th>~Time</th><th>Content</th></tr>
+      <tr><td>Cold open</td><td>0:00–0:06</td><td>The single biggest moment — the SHANGHAI, the DENIED, the treble steal that decided it</td></tr>
+      <tr><td>Title card</td><td>0:06–0:10</td><td>Match name, date, preset, player initials in their colours</td></tr>
+      <tr><td>The war</td><td>0:10–0:35</td><td>Map timeline: territory changes animate in order — foundings, sieges, captures, the board painting itself in continent colours</td></tr>
+      <tr><td>The drama</td><td>0:35–0:45</td><td>Altar duel beat card — attacker vs defender, bull save, DENIED or resurrection</td></tr>
+      <tr><td>The count</td><td>0:45–0:55</td><td>Final map + podium: territories, continent bonuses, points</td></tr>
+      <tr><td>Outro</td><td>0:55–1:00</td><td>Trumpet stinger, final commentary line, “same time next week?”</td></tr>
+    </table>
+
+    <h3 class="sub">Data &amp; API additions</h3>
+    <ul class="bul">
+      <li><code>players.email</code> — nullable, opt-in (setup screen or profile). Recap links go only where this exists.</li>
+      <li><code>conquest_recaps</code> — match_id (unique) · status (<code>queued|scripted|rendered|emailed|failed</code>) · script (jsonb) · composition_html (text) · video_url · emailed_at · created/updated.</li>
+      <li><code>GET /api/conquest/[id]/recap</code> — status + link. <code>POST /api/conquest/[id]/recap/regenerate</code> — manual retry.</li>
+      <li>Email transport env-configured (Resend or plain SMTP). Cron job lives in the app service (existing Railway deployment).</li>
+    </ul>
+
+    <div class="callout">
+      <span class="ct">Reliability ladder</span>
+      Agent-authored bespoke film (best) → fixed template + variables (always works) → no video, no email (never blocks anything). The recap is a day-after courtesy — a failed render costs a shrug, not a feature. Render gates from the HyperFrames skill contract (lint, check, snapshots at proof times) run before any render is accepted.
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Trebles and Territories · implementation spec v1 · designed in interview, 2026</span>
+    <span>Status: <strong style="color:var(--clay)">awaiting next steps</strong></span>
+  </footer>
+</div>
+
+<script>
+/* ================= board renderer ================= */
+const ORDER = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
+const CONTINENTS = {
+  gold:  { name:'Gold Coast', nums:[20,18,12],   base:'#FFB703', dark:'#D19602' },
+  high:  { name:'Highgate',   nums:[16,11,9],    base:'#8ECAE6', dark:'#63A9C6' },
+  iron:  { name:'Iron Ridge', nums:[19,13,5],    base:'#BB3E03', dark:'#933002' },
+  pass:  { name:'The Pass',   nums:[17,6,2],     base:'#219EBC', dark:'#1A7F98' },
+  mercia:{ name:'Mercia',     nums:[15,10,8,7],  base:'#126782', dark:'#0E5164' },
+  four:  { name:'Fourlands',  nums:[14,4,3,1],   base:'#3A6787', dark:'#274A63' }
+};
+const NUM2C = {};
+Object.entries(CONTINENTS).forEach(([k,c]) => c.nums.forEach(n => NUM2C[n] = k));
+const PLAYERS = {
+  KS:{name:'Ken',  color:'#9B2226'},
+  MB:{name:'Mel',  color:'#023047'},
+  JD:{name:'Jo',   color:'#FB8500'},
+  TB:{name:'Tash', color:'#AE2012'}
+};
+const C = 110, R = { bull:9, ibull:4, tIn:55, tOut:60, dIn:89, dOut:95 };
+function pol(r, deg){ const a = (deg-90)*Math.PI/180; return [C + r*Math.cos(a), C + r*Math.sin(a)]; }
+function wedgePath(r0, r1, ang){
+  const a0 = ang-9, a1 = ang+9;
+  const [x1,y1] = pol(r1,a0), [x2,y2] = pol(r1,a1), [x3,y3] = pol(r0,a1), [x4,y4] = pol(r0,a0);
+  return `M ${x1} ${y1} A ${r1} ${r1} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${r0} ${r0} 0 0 0 ${x4} ${y4} Z`;
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function territoryTitle(n, st){
+  const c = CONTINENTS[NUM2C[n]].name;
+  const t = st.territories[n];
+  const own = t && t.owner ? `${PLAYERS[t.owner].name} (${t.owner}) · ${t.hp}/3 HP` : 'unclaimed wilderness';
+  return `${n} — ${c} — ${own}`;
+}
+function renderBoard(el, st){
+  const S = [];
+  S.push(`<svg viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg" role="img">`);
+  // surround
+  S.push(`<circle cx="${C}" cy="${C}" r="104" fill="none" class="boardbg"/>`);
+  ORDER.forEach((n,k) => {
+    const ang = k*18, c = CONTINENTS[NUM2C[n]], t = st.territories[n];
+    const owned = t && t.owner;
+    const g = [`<g class="wedge"><title>${esc(territoryTitle(n, st))}</title>`];
+    g.push(`<path d="${wedgePath(R.bull, R.tIn, ang)}" fill="${c.base}"/>`);
+    g.push(`<path d="${wedgePath(R.tOut, R.dIn, ang)}" fill="${c.base}" opacity="${owned?0.75:1}"/>`);
+    g.push(`<path d="${wedgePath(R.tIn, R.tOut, ang)}" fill="${c.dark}"/>`);
+    g.push(`<path d="${wedgePath(R.dIn, R.dOut, ang)}" fill="${c.dark}"/>`);
+    if(owned){
+      const p = PLAYERS[t.owner];
+      g.push(`<path d="${wedgePath(R.dOut-2.2, R.dOut, ang)}" fill="${p.color}"/>`);
+      const [bx,by] = pol(73, ang);
+      g.push(`<circle cx="${bx}" cy="${by}" r="8.4" fill="${p.color}" stroke="#fff" stroke-width="1.1"/>`);
+      g.push(`<text x="${bx}" y="${by+2.9}" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="8" font-weight="700" fill="#fff">${t.owner}</text>`);
+      const px0 = pol(61, ang);
+      for(let i=0;i<3;i++){
+        const off = (i-1)*4.6, a = (ang-90)*Math.PI/180;
+        const dx = px0[0] + off*Math.cos(a), dy = px0[1] + off*Math.sin(a);
+        g.push(`<circle cx="${dx}" cy="${dy}" r="1.7" fill="${i < t.hp ? p.color : 'none'}" stroke="#ffffffcc" stroke-width="0.7"/>`);
+      }
+    }
+    g.push(`</g>`);
+    // number
+    const [nx,ny] = pol(103.5, ang);
+    S.push(g.join('') + `<text x="${nx}" y="${ny+3}" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="8.6" class="numtxt" fill="#87867F">${n}</text>`);
+  });
+  // wires
+  [R.bull,R.tIn,R.tOut,R.dIn,R.dOut].forEach(r => S.push(`<circle cx="${C}" cy="${C}" r="${r}" fill="none" stroke="#00000022" stroke-width="0.5"/>`));
+  // bull altar
+  S.push(`<g><title>The Bull Altar — landless players throw here to resurrect</title>
+    <circle cx="${C}" cy="${C}" r="${R.bull}" fill="#023047" stroke="#00000022" stroke-width="0.5"/>
+    <circle cx="${C}" cy="${C}" r="${R.ibull}" fill="#FFB703"/>
+    <text x="${C}" y="${C+2.4}" text-anchor="middle" font-size="5.4" font-family="ui-monospace,Menlo,monospace" fill="#023047" font-weight="700">†</text></g>`);
+  if(st.altarActive){
+    S.push(`<circle class="altar-ring" cx="${C}" cy="${C}" r="13" fill="none" stroke="#AE2012" stroke-width="1.6" stroke-dasharray="3 3"/>`);
+    S.push(`<text x="${C}" y="${C+30}" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="7" font-weight="700" fill="#AE2012">DUEL AT THE ALTAR</text>`);
+  }
+  // darts thrown markers
+  (st.darts||[]).forEach(d => {
+    const k = ORDER.indexOf(d.num), ang = k*18;
+    const r = d.seg==='T' ? 57.5 : d.seg==='D' ? 91.5 : 74;
+    const [x,y] = pol(r + (d.dr||0), ang + (d.da||0));
+    S.push(`<circle cx="${x}" cy="${y}" r="2.2" fill="#FFFFFF" stroke="#023047" stroke-width="1"/>`);
+  });
+  // option callouts
+  (st.options||[]).forEach((o,i) => {
+    const k = ORDER.indexOf(o.num), ang = k*18;
+    S.push(`<path d="${wedgePath(R.bull, R.dOut, ang)}" fill="none" stroke="#AE2012" stroke-width="1.7" stroke-dasharray="4 3"/>`);
+    const [x,y] = pol(112, ang);
+    S.push(`<circle cx="${x}" cy="${y}" r="7" fill="#AE2012"/><text x="${x}" y="${y+2.8}" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="8" font-weight="700" fill="#fff">${o.label}</text>`);
+  });
+  S.push(`</svg>`);
+  el.innerHTML = S.join('');
+}
+
+/* ================= situations ================= */
+const blanks = () => Object.fromEntries(ORDER.map(n => [n, null]));
+const SITUATIONS = [
+  {
+    id:'b1', title:'S1 · Opening — the Treble Rush', sub:'Round 1. Ken founded 20 with a treble. Mel to throw — 3 darts.',
+    state:{ territories:{...blanks(), 20:{owner:'KS',hp:3}}, darts:[{num:20,seg:'T'}],
+      options:[
+        {num:18,label:'A'},{num:19,label:'B'},{num:20,label:'C'}
+      ]},
+    opts:[
+      ['A','<strong>T18 — contest the Gold Coast.</strong> Treble founds it at 3 HP; Ken\u2019s continent is suddenly shared ground.'],
+      ['B','<strong>T19 — open the frontier.</strong> Found Iron Ridge instead; leave Ken building alone.'],
+      ['C','<strong>T20 — steal it outright.</strong> Treble = 3 damage vs 3 HP: the founding is undone in one dart. Brutal — and the table is watching.']
+    ],
+    note:'Rule in play: blank wedges answer only to trebles. Singles and doubles into wild land do nothing — the frontier is treble-only.'
+  },
+  {
+    id:'b2', title:'S2 · The Siege', sub:'Mid-war. Jo to throw. Mel\u2019s 19 sits at 2 HP — her Iron Ridge is complete and exposed.',
+    state:{ territories:{...blanks(),
+      20:{owner:'KS',hp:3}, 18:{owner:'KS',hp:3}, 12:{owner:'KS',hp:1},
+      19:{owner:'MB',hp:2}, 13:{owner:'MB',hp:3}, 5:{owner:'MB',hp:1},
+      16:{owner:'JD',hp:3}, 11:{owner:'JD',hp:3}
+    }, darts:[], options:[{num:19,label:'A'},{num:5,label:'B'},{num:15,label:'C'}]},
+    opts:[
+      ['A','<strong>Hit 19 — double or treble captures.</strong> 19 has 2 HP: D19 (2 dmg) or T19 (3 dmg) drops it to 0 → yours at 1 HP. A single chips to 1 HP, setting up next turn.'],
+      ['B','<strong>T5 or even S5 — break Iron Ridge cheaply.</strong> 5 sits at 1 HP: any hit captures. Mel loses her +2 continent bonus instantly.'],
+      ['<strong>','<strong>T15 — found Mercia.</strong> Ignore the fight, plant your own flag on the four-wide continent.']
+    ],
+    note:'Rule in play: damage 1/2/3 by segment, capture at 0 HP arrives fragile (1 HP), complete continents are targets as much as assets.'
+  },
+  {
+    id:'b3', title:'S3 · Shanghai Night', sub:'Jo\u2019s turn, all three darts into Ken\u2019s 12 — single, then double, then treble.',
+    state:{ territories:{...blanks(),
+      20:{owner:'KS',hp:3}, 18:{owner:'KS',hp:3}, 12:{owner:'JD',hp:2},
+      19:{owner:'MB',hp:3}, 13:{owner:'MB',hp:3}, 5:{owner:'MB',hp:1},
+      16:{owner:'JD',hp:3}, 11:{owner:'JD',hp:3}
+    }, darts:[{num:12,seg:'S',dr:-6},{num:12,seg:'D',da:-5},{num:12,seg:'T',da:5}], options:[]},
+    opts:[
+      ['★','<strong>SHANGHAI!</strong> S12 (1 dmg) + D12 (2 dmg → capture at 1 HP) + T12 (now Jo\u2019s own land → reinforce to 2 HP). Six damage in one turn, the wedge cooked three ways.'],
+      ['+1','<strong>Extra dart next turn.</strong> The feat is the feat — order never matters, even mid-turn ownership flips.']
+    ],
+    note:'Rule in play: single + double + treble of one number in one turn, any order = +1 dart next turn. On enemy land it is a guaranteed capture (6 dmg vs 3 HP).'
+  },
+  {
+    id:'b4', title:'S4 · Death &amp; the Altar Duel', sub:'Late war, no blanks left. Tash is dead and just hit the bull — she must rob Ken, her next living neighbour. Ken throws one save dart.',
+    state:{ territories:{...blanks(),
+      20:{owner:'KS',hp:3}, 18:{owner:'KS',hp:3}, 12:{owner:'KS',hp:3},
+      15:{owner:'KS',hp:3}, 10:{owner:'KS',hp:2}, 8:{owner:'KS',hp:3},
+      7:{owner:'KS',hp:1}, 17:{owner:'KS',hp:1}, 3:{owner:'KS',hp:1},
+      19:{owner:'MB',hp:3}, 13:{owner:'MB',hp:3}, 5:{owner:'MB',hp:2},
+      16:{owner:'MB',hp:3}, 14:{owner:'MB',hp:1}, 4:{owner:'MB',hp:2},
+      11:{owner:'JD',hp:3}, 9:{owner:'JD',hp:3}, 2:{owner:'JD',hp:2}, 6:{owner:'JD',hp:3}
+    }, darts:[{num:0,seg:'BULL'}], altarActive:true, options:[{num:10,label:'A'},{num:7,label:'B'}]},
+    opts:[
+      ['A','<strong>Steal 10 — break Mercia.</strong> Ken\u2019s continent {15,10,8,7} collapses; his endgame +2 dies with it.'],
+      ['B','<strong>Steal 7 — the soft tile.</strong> 1 HP, cheap. But Ken keeps Mercia.'],
+      ['⚔','<strong>Ken\u2019s save dart decides.</strong> Bull hit → DENIED, Tash stays dead, restart next turn. Miss → theft at 1 HP and Tash\u2019s remaining darts attack as normal — back, and angry.']
+    ],
+    note:'Rule in play: bull hit with blanks available forces a blank claim (1 HP); with no blanks, the attacker robs the next living player, who defends with ONE free dart at the altar.'
+  },
+  {
+    id:'b5', title:'S5 · Endgame — the Count', sub:'The 301st dart has fallen (Tash\u2019s duel steal of 10 decided the season). Final count: 1 pt per territory, +2 per continent.',
+    state:{ territories:{...blanks(),
+      20:{owner:'KS',hp:3}, 18:{owner:'KS',hp:3}, 12:{owner:'KS',hp:3},
+      15:{owner:'KS',hp:3}, 8:{owner:'KS',hp:3}, 7:{owner:'KS',hp:1},
+      17:{owner:'KS',hp:1}, 3:{owner:'KS',hp:1},
+      19:{owner:'MB',hp:3}, 13:{owner:'MB',hp:3}, 5:{owner:'MB',hp:2},
+      16:{owner:'MB',hp:3}, 14:{owner:'MB',hp:1}, 4:{owner:'MB',hp:2},
+      11:{owner:'JD',hp:3}, 9:{owner:'JD',hp:3}, 2:{owner:'JD',hp:2}, 6:{owner:'JD',hp:3},
+      10:{owner:'TB',hp:1}, 1:{owner:'TB',hp:1}
+    }, darts:[], options:[]},
+    opts:[
+      ['🥇','<strong>Ken — 8 territories + Gold Coast +2 = 10.</strong> Mercia broken by Tash\u2019s duel steal; still the warlord.'],
+      ['🥈','<strong>Mel — 6 + Iron Ridge +2 = 8.</strong>'],
+      ['🥉','<strong>Jo — 5.</strong> &nbsp;·&nbsp; <strong>Tash — 1</strong> (but she died, resurrected, and decided the title fight — 0 points, all the stories).']
+    ],
+    note:'Rule in play: ties are settled by one sudden-death dart each, nearest bull. Dead ≠ disqualified — landless at the buzzer just scores what you hold.'
+  }
+];
+
+const grid = document.getElementById('boards');
+SITUATIONS.forEach(s => {
+  const card = document.createElement('div');
+  card.className = 'board-card';
+  const optHtml = s.opts.map(o => `<li>${o[0]==='★'||o[0]==='⚔'||o[0].length>1?'<span class="opt-badge" style="background:var(--olive)">'+esc(o[0]).slice(0,1)+'</span><span class="opt-badge" style="background:var(--olive);margin-left:-14px;opacity:.0"></span>':'<span class="opt-badge">'+esc(o[0])+'</span>'}<span>${o[1]}</span></li>`).join('');
+  card.innerHTML = `<div class="bt">${s.title}</div><div class="bs">${s.sub}</div>
+    <div class="board-svg" id="${s.id}"></div>
+    <ul class="opt-list">${optHtml}</ul>
+    <div class="sit-note">${s.note}</div>`;
+  grid.appendChild(card);
+  renderBoard(document.getElementById(s.id), s.state);
+});
+</script>
+</body>
+</html>

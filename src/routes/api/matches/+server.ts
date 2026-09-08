@@ -38,6 +38,13 @@ export const POST: RequestHandler = async ({ request }) => {
 
   const accountId = email?.toLowerCase() || null;
 
+  if (!Array.isArray(players) || players.length < 1 || players.length > 6) {
+    return json(
+      { error: "A match needs between 1 and 6 players" },
+      { status: 400 },
+    );
+  }
+
   // If accountId provided, ensure players exist for this account
   let processedPlayers = players;
   if (accountId) {

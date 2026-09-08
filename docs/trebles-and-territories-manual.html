@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trebles and Territories — Spelregels</title>
+<style>
+  :root {
+    --bg:#FAF9F5; --ink:#141413; --soft:#5c5b54; --line:#d9d6cb; --card:#fff;
+    --clay:#D97757; --clayink:#a84f33; --oat:#F0EEE6; --olive:#788C5D;
+    --serif: ui-serif, Georgia, 'Times New Roman', serif;
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --mono: ui-monospace, 'SF Mono', Menlo, Monaco, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#171613; --ink:#F3EFE6; --soft:#b3b0a6; --line:#3A3833; --card:#201F1C; --clay:#E28B6B; --clayink:#EFA98E; --oat:#232220; --olive:#9db383; }
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:var(--sans); background:var(--bg); color:var(--soft); line-height:1.6; padding:0 20px 80px; }
+  .wrap { max-width:680px; margin:0 auto; }
+
+  header { text-align:center; padding:48px 0 4px; }
+  h1 { font-family:var(--serif); font-weight:500; font-size:36px; color:var(--ink); margin-bottom:10px; }
+  .pitch { font-size:17px; max-width:440px; margin:0 auto; }
+  .pitch strong { color:var(--clayink); }
+
+  section { padding-top:36px; }
+  .sechead { display:flex; align-items:baseline; gap:10px; margin-bottom:8px; }
+  .num { font-family:var(--mono); font-size:12px; background:var(--oat); color:var(--ink); padding:2px 9px; border-radius:8px; }
+  h2 { font-family:var(--serif); font-weight:600; font-size:24px; color:var(--ink); }
+  p { margin-bottom:10px; }
+  strong { color:var(--ink); }
+
+  table { width:100%; border-collapse:collapse; font-size:15px; margin:10px 0; }
+  th { text-align:left; font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--soft); border-bottom:2px solid var(--line); padding:7px 10px; }
+  td { border-bottom:1px solid var(--line); padding:9px 10px; vertical-align:top; }
+  tr.star td { background:var(--oat); font-weight:600; color:var(--ink); }
+
+  .sw { display:inline-block; width:13px; height:13px; border-radius:4px; border:1px solid var(--line); vertical-align:-2px; margin-right:7px; }
+
+  ul.bul { margin:0 0 6px 20px; }
+  ul.bul li { margin-bottom:6px; }
+  ol.steps { margin:0 0 6px 20px; }
+  ol.steps li { margin-bottom:6px; }
+
+  .box { background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:14px 18px; margin:12px 0; }
+  .box.hero { border-left:4px solid var(--clay); }
+  .box .big { font-size:17px; color:var(--ink); }
+
+  footer { margin-top:48px; padding-top:16px; border-top:1.5px solid var(--line); font-size:13px; text-align:center; }
+
+  @media print { body { padding:0; background:#fff; } .box, section { break-inside:avoid; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Trebles and Territories</h1>
+  <p class="pitch"><strong>Risk op een dartbord.</strong> Pak land met trebles, steel met singles.</p>
+</header>
+
+<section id="g1">
+  <div class="sechead"><span class="num">1</span><h2>Het bord is de kaart</h2></div>
+  <ul class="bul">
+    <li>Elk vak (1–20) = gebied, max <strong>3 HP</strong>.</li>
+    <li>20 vakken = 6 continenten. Compleet continent = <strong>+2 punten</strong>.</li>
+    <li>De bull = <strong>altaar</strong> (zie 4). 3 pijlen per beurt, app telt mee.</li>
+  </ul>
+  <table>
+    <tr><th>Continent</th><th>Vakken</th></tr>
+    <tr><td><span class="sw" style="background:#FFB703"></span>Gold Coast</td><td>20 · 18 · 12</td></tr>
+    <tr><td><span class="sw" style="background:#8ECAE6"></span>Highgate</td><td>16 · 11 · 9</td></tr>
+    <tr><td><span class="sw" style="background:#BB3E03"></span>Iron Ridge</td><td>19 · 13 · 5</td></tr>
+    <tr><td><span class="sw" style="background:#219EBC"></span>The Pass</td><td>17 · 6 · 2</td></tr>
+    <tr><td><span class="sw" style="background:#126782"></span>Mercia</td><td>15 · 10 · 8 · 7</td></tr>
+    <tr><td><span class="sw" style="background:#3A6787"></span>Fourlands</td><td>14 · 4 · 3 · 1</td></tr>
+  </table>
+</section>
+
+<section id="g2">
+  <div class="sechead"><span class="num">2</span><h2>Wat je pijl doet</h2></div>
+  <table>
+    <tr><th>Pijl op…</th><th>Segment</th><th>Effect</th></tr>
+    <tr><td>Leeg vak</td><td>Single / Double</td><td>Niets.</td></tr>
+    <tr class="star"><td>Leeg vak</td><td>Treble</td><td>Van jou, 3 HP.</td></tr>
+    <tr><td>Vijand</td><td>S / D / T</td><td>1 / 2 / 3 schade. Op 0 HP: van jou (1 HP).</td></tr>
+    <tr><td>Eigen vak</td><td>Iets</td><td>+1 HP (max 3).</td></tr>
+    <tr><td>Bull</td><td>25 / 50</td><td>Alleen voor doden (zie 4).</td></tr>
+  </table>
+  <div class="box hero">
+    <p class="big"><strong>Shanghai</strong>: single + double + treble van één getal in één beurt → <strong>+1 pijl volgende beurt</strong>.</p>
+  </div>
+</section>
+
+<section id="g3">
+  <div class="sechead"><span class="num">3</span><h2>Dood? Op naar de bull</h2></div>
+  <p><strong>Geen land = dood.</strong> Je beurt gaat op de bull. Raak (25 of 50):</p>
+  <ol class="steps">
+    <li><strong>Lege vakken?</strong> Kies er één → van jou, 1 HP.</li>
+    <li><strong>Niks leeg?</strong> Steel van de volgende speler. Die gooit één gratis bull-pijl: raak = <strong>DENIED</strong>, mis = jij hebt het land.</li>
+    <li>Alle drie missen? Volgende beurt weer.</li>
+  </ol>
+</section>
+
+<section id="g4">
+  <div class="sechead"><span class="num">4</span><h2>Winnen</h2></div>
+  <div class="box">
+    <p class="big"><strong>Klok (standaard)</strong> — vast aantal pijlen (301). Einde: <strong>1 punt per gebied +2 per continent</strong>. Gelijk? Dichtst bij de bull wint.</p>
+  </div>
+  <div class="box">
+    <p class="big"><strong>Dominatie (sprint)</strong> — <strong>7 gebieden</strong> of 1 compleet continent = direct winst.</p>
+  </div>
+</section>
+
+<section id="g5">
+  <div class="sechead"><span class="num">5</span><h2>Lengte</h2></div>
+  <table>
+    <tr><th>Preset</th><th>4 spelers ≈</th></tr>
+    <tr><td>51–151 · skirmish</td><td>&lt; 2 uur</td></tr>
+    <tr class="star"><td>201–451 · oorlog (301 ★)</td><td>2–5 uur</td></tr>
+    <tr><td>501+ · campagne</td><td>hervat een andere avond</td></tr>
+  </table>
+</section>
+
+<section id="g6">
+  <div class="sechead"><span class="num">6</span><h2>Tips</h2></div>
+  <ul class="bul">
+    <li>Alleen trebles nemen leeg land.</li>
+    <li>Stelen (1 single op 1-HP-land) is goedkoper dan stichten.</li>
+    <li>Breek continenten: één vak weg = bonus weg.</li>
+    <li>Mik op de koploper.</li>
+    <li>Niemand bewaakt Fourlands.</li>
+  </ul>
+</section>
+
+<footer>
+  darts.xyz — dat is het hele spel. Pak de Gold Coast.
+</footer>
+
+</div>
+</body>
+</html>

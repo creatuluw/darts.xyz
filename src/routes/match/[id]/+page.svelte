@@ -18,6 +18,8 @@
         AnimatedNumber,
         StatBadge,
         Dartboard,
+        Tooltip,
+        PlayerPanel,
     } from "$lib/components/ui";
     import {
         createMatchState,
@@ -51,6 +53,56 @@
     let playerStats = $state<Record<string, any>>({});
     let loading = $state(true);
     let isSoloGame = $derived(matchState?.players.length === 1);
+
+    // 3+ players: side scoreboards switch to condensed single-card mode
+    let isMultiGame = $derived((matchState?.players.length ?? 0) > 2);
+    // Throw-order rotation starting from the current thrower
+    let rotation = $derived.by(() => {
+        const ms = matchState;
+        if (!ms) return [];
+        return ms.players.map(
+            (_, i) =>
+                (ms.currentLeg.currentPlayerIndex + i) % ms.players.length,
+        );
+    });
+    // 1–2 players: halves around the board. 3+: current + next on the left,
+    // everyone else on the right (in throw order)
+    let leftPlayers = $derived.by(() => {
+        const ms = matchState;
+        if (!ms) return [];
+        if (isMultiGame)
+            return rotation.slice(0, 2).map((i) => ms.players[i]);
+        return ms.players.slice(0, Math.ceil(ms.players.length / 2));
+    });
+    let rightPlayers = $derived.by(() => {
+        const ms = matchState;
+        if (!ms) return [];
+        if (isMultiGame) return rotation.slice(2).map((i) => ms.players[i]);
+        return ms.players.slice(Math.ceil(ms.players.length / 2));
+    });
+    // Standings rank per player: sets won, then legs won, then current-leg
+    // remaining score (closer to the checkout ranks higher; ties share a rank)
+    let playerRanks = $derived.by(() => {
+        const ms = matchState;
+        const ranks = new Map<string, number>();
+        if (!ms || ms.players.length < 2) return ranks;
+        const sorted = [...ms.players].sort(
+            (a, b) =>
+                b.setsWon - a.setsWon ||
+                b.legsWon - a.legsWon ||
+                a.remainingScore - b.remainingScore,
+        );
+        let lastKey = "";
+        let lastRank = 0;
+        sorted.forEach((p, idx) => {
+            const key = `${p.setsWon}-${p.legsWon}-${p.remainingScore}`;
+            const rank = key === lastKey ? lastRank : idx + 1;
+            ranks.set(p.id, rank);
+            lastKey = key;
+            lastRank = rank;
+        });
+        return ranks;
+    });
 
     // Dart input state - 3 fixed slots with active slot tracking
     type DartSlot = DartData | null;
@@ -163,6 +215,14 @@
             (sum, t) => sum + t.dartsThrown,
             0,
         );
+    }
+
+    // 3-dart average from the current leg's turns only
+    function getLegAvg(playerId: string): number {
+        if (!matchState) return 0;
+        return computeMatchStats(
+            matchState.currentLeg.turns.filter((t) => t.playerId === playerId),
+        ).threeDartAvg;
     }
 
     function computeAvgFromTurns(turns: TurnRecord[]): number {
@@ -460,6 +520,21 @@
                 }
             }
 
+            // The leg's actual first thrower — keeps leg-start alternation in
+            // sync with the DB after a refresh (NOT the current player)
+            let firstThrowerIndex = 0;
+            if (currentLegData.firstThrowerId) {
+                const firstThrowerMp = data.matchPlayers.find(
+                    (mp: any) => mp.id === currentLegData.firstThrowerId,
+                );
+                if (firstThrowerMp) {
+                    const idx = players.findIndex(
+                        (p: any) => p.id === firstThrowerMp.playerId,
+                    );
+                    if (idx >= 0) firstThrowerIndex = idx;
+                }
+            }
+
             // Convert API turns to TurnRecord format for current leg
             const turnRecords: TurnRecord[] = currentLegTurns.map((t: any) => ({
                 id: t.id,
@@ -549,7 +624,7 @@
                     setNumber: currentSetNum,
                     legNumber: currentLegNum,
                     currentPlayerIndex,
-                    firstThrowerIndex: currentPlayerIndex,
+                    firstThrowerIndex,
                     turns: turnRecords,
                     isComplete: false,
                     winnerId: null,
@@ -880,6 +955,17 @@
     <title>Match — dart.monster</title>
 </svelte:head>
 
+<svelte:window
+    onkeydown={(e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+            e.preventDefault();
+            if (currentDarts.length > 0 && !matchState?.currentLeg.isComplete) {
+                submitCurrentTurn();
+            }
+        }
+    }}
+/>
+
 {#if loading}
     <div></div>
 {:else if matchState}
@@ -967,126 +1053,62 @@
 
         <!-- 3-Column Bento Grid -->
         <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+
             <!-- ============================================ -->
-            <!-- LEFT: Player 1 Scoreboard + Stats            -->
+            <!-- LEFT: Player scoreboards (first half)        -->
             <!-- ============================================ -->
-            {#if matchState.players[0]}
-                {@const p1 = matchState.players[0]}
-                {@const p1Active =
-                    matchState.currentLeg.currentPlayerIndex === 0}
-                {@const p1Turns = getPlayerTurns(p1.id)}
-                {@const p1Stats = computeMatchStats(p1Turns)}
-                {@const p1Darts = getDartsThrown(p1.id)}
-                {@const p1LifetimeAvg = playerStats[p1.id]?.threeDartAvg
-                    ? Number(playerStats[p1.id].threeDartAvg).toFixed(1)
-                    : "—"}
+            {#if leftPlayers.length > 0}
                 <div class="md:col-span-3 order-1 md:order-none space-y-3">
-                    <!-- Player 1 Scoreboard -->
-                    <DoubleBezel>
-                        <div class="text-center">
-                            <div
-                                class="font-display font-black text-8xl tracking-tight leading-none {p1Active
-                                    ? 'text-emerald-600 dark:text-emerald-400'
-                                    : ''}"
-                            >
-                                <AnimatedNumber value={p1.remainingScore} />
-                            </div>
-                            <div
-                                class="mt-2 font-medium text-sm {p1Active
-                                    ? 'text-emerald-700 dark:text-emerald-400'
-                                    : ''}"
-                            >
-                                {#if p1Active}
-                                    <IconPlayerPlay
-                                        size={14}
-                                        class="inline -mt-0.5 text-emerald-500 mr-0.5"
-                                    />
+                    {#each leftPlayers as p, i (p.id)}
+                        {@const legDarts = matchState.currentLeg.turns
+                            .filter((t) => t.playerId === p.id)
+                            .reduce((sum, t) => sum + t.dartsThrown, 0)}
+                    {#if i === 1 && currentPlayer}
+                        {@const cs = computeMatchStats(
+                            getPlayerTurns(currentPlayer.id),
+                        )}
+                        <!-- Current thrower: live stats + throw-out options -->
+                        <DoubleBezel>
+                            <div class="space-y-1.5">
+                                <div
+                                    class="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold"
+                                >
+                                    {currentPlayer.name} — live
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-zinc-400"
+                                        >Match Avg</span
+                                    >
+                                    <span
+                                        class="text-sm font-mono font-medium"
+                                        >{cs.threeDartAvg.toFixed(1)}</span
+                                    >
+                                </div>
+                                {#if matchState.currentLeg.setNumber > 1 ||
+                                    matchState.currentLeg.legNumber > 1}
+                                    <div
+                                        class="flex justify-between items-center"
+                                    >
+                                        <span class="text-xs text-zinc-400"
+                                            >Leg Avg</span
+                                        >
+                                        <span
+                                            class="text-sm font-mono font-medium"
+                                            >{getLegAvg(currentPlayer.id).toFixed(1)}</span
+                                        >
+                                    </div>
                                 {/if}
-                                {p1.name}
-                            </div>
-                            <div
-                                class="mt-2 flex justify-center gap-4 text-xs font-mono text-zinc-400"
-                            >
-                                <span
-                                    >Sets
-                                    <span
-                                        class="font-bold text-sm text-zinc-700 dark:text-zinc-300"
-                                        >{p1.setsWon}</span
-                                    ></span
+                                <div
+                                    class="grid grid-cols-4 gap-1 text-center"
                                 >
-                                <span
-                                    >Legs
-                                    <span
-                                        class="font-bold text-sm text-zinc-700 dark:text-zinc-300"
-                                        >{p1.legsWon}</span
-                                    ></span
-                                >
-                            </div>
-                            <div
-                                class="mt-1.5 flex justify-center gap-3 text-[10px] text-zinc-400"
-                            >
-                                <span
-                                    >Darts
-                                    <span class="font-mono font-medium"
-                                        >{p1Darts}</span
-                                    ></span
-                                >
-                                <span
-                                    >Avg
-                                    <span class="font-mono font-medium"
-                                        >{p1Stats.threeDartAvg.toFixed(1)}</span
-                                    ></span
-                                >
-                            </div>
-                        </div>
-                    </DoubleBezel>
-
-                    <!-- Player 1 Stats -->
-                    <DoubleBezel>
-                        <div class="space-y-1.5 mt-2">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs text-zinc-400"
-                                    >3-Dart Avg</span
-                                >
-                                <span class="text-sm font-mono font-medium"
-                                    >{p1Stats.threeDartAvg.toFixed(1)}</span
-                                >
-                            </div>
-                            <a
-                                href="/players/{p1.id}/checkout"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="flex justify-between items-center group -mx-2 px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
-                                title="View checkout breakdown"
-                            >
-                                <span
-                                    class="text-xs text-zinc-400 flex items-center gap-1"
-                                    >Double Conv.
-                                    <IconExternalLink
-                                        size={10}
-                                        class="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500"
-                                    />
-                                </span>
-                                <span
-                                    class="text-sm font-mono font-medium group-hover:text-blue-400 transition-colors"
-                                >
-                                    {p1Stats.doubleConversion.toFixed(0)}%
-                                </span>
-                            </a>
-
-                            <div
-                                class="pt-2 mt-1 border-t border-zinc-100 dark:border-white/5"
-                            >
-                                <div class="grid grid-cols-3 gap-1 text-center">
                                     <div>
                                         <div class="text-[10px] text-zinc-400">
                                             60+
                                         </div>
                                         <div
                                             class="font-mono font-medium text-sm"
+                                            >{cs.count60Plus}</div
                                         >
-                                            {p1Stats.count60Plus}
-                                        </div>
                                     </div>
                                     <div>
                                         <div class="text-[10px] text-zinc-400">
@@ -1094,9 +1116,8 @@
                                         </div>
                                         <div
                                             class="font-mono font-medium text-sm"
+                                            >{cs.count100Plus}</div
                                         >
-                                            {p1Stats.count100Plus}
-                                        </div>
                                     </div>
                                     <div>
                                         <div class="text-[10px] text-zinc-400">
@@ -1104,26 +1125,8 @@
                                         </div>
                                         <div
                                             class="font-mono font-medium text-sm"
+                                            >{cs.count140Plus}</div
                                         >
-                                            {p1Stats.count140Plus}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div
-                                class="pt-2 mt-1 border-t border-zinc-100 dark:border-white/5"
-                            >
-                                <div class="grid grid-cols-3 gap-1 text-center">
-                                    <div>
-                                        <div class="text-[10px] text-zinc-400">
-                                            &lt;20
-                                        </div>
-                                        <div
-                                            class="font-mono font-medium text-sm text-zinc-500"
-                                        >
-                                            {p1Stats.countUnder20}
-                                        </div>
                                     </div>
                                     <div>
                                         <div class="text-[10px] text-zinc-400">
@@ -1131,162 +1134,52 @@
                                         </div>
                                         <div
                                             class="font-mono font-bold text-sm text-amber-600 dark:text-amber-400"
+                                            >{cs.count180}</div
                                         >
-                                            {p1Stats.count180}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="text-[10px] text-zinc-400">
-                                            60+ Fin
-                                        </div>
-                                        <div
-                                            class="font-mono font-medium text-sm text-emerald-600 dark:text-emerald-400"
-                                        >
-                                            {p1Stats.count60PlusFinishes}
-                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Avg Trend: Last 3 vs Prior -->
-                            <div
-                                class="pt-2 mt-1 border-t border-zinc-100 dark:border-white/5"
-                            >
-                                <div
-                                    class="text-[10px] uppercase tracking-wider text-zinc-400 mb-1.5"
-                                >
-                                    Avg Trend
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-xs text-zinc-500"
-                                        >Last 3</span
-                                    >
-                                    <div class="flex items-center gap-1">
-                                        <span
-                                            class="text-sm font-mono font-medium"
-                                            >{p1Stats.last3Avg.toFixed(1)}</span
-                                        >
-                                        {#if p1Stats.prior15Avg > 0}
-                                            {#if p1Stats.last3Avg > p1Stats.prior15Avg}
-                                                <IconArrowUp
-                                                    size={14}
-                                                    class="text-emerald-500"
-                                                />
-                                            {:else if p1Stats.last3Avg < p1Stats.prior15Avg}
-                                                <IconArrowDown
-                                                    size={14}
-                                                    class="text-red-500"
-                                                />
-                                            {/if}
-                                        {/if}
-                                    </div>
-                                </div>
-                                <div
-                                    class="flex justify-between items-center mt-0.5"
-                                >
-                                    <span class="text-xs text-zinc-500"
-                                        >Prior turns</span
-                                    >
-                                    <span
-                                        class="text-sm font-mono text-zinc-400"
-                                        >{p1Stats.prior15Avg > 0
-                                            ? p1Stats.prior15Avg.toFixed(1)
-                                            : "—"}</span
-                                    >
-                                </div>
-                            </div>
-                        </div>
-                    </DoubleBezel>
-
-                    <!-- Player 1 Last 3 Turns -->
-                    <DoubleBezel>
-                        <div class="mt-2 space-y-1.5">
-                            {#each [...allMatchTurns]
-                                .filter((t) => t.playerId === p1.id)
-                                .slice(-3)
-                                .reverse() as turn, ri}
-                                <div
-                                    class="flex items-center justify-between gap-1.5 text-xs"
-                                >
+                                {#if checkoutOptions.length > 0}
                                     <div
-                                        class="flex items-center gap-1 font-mono"
+                                        class="pt-2 mt-1 border-t border-zinc-100 dark:border-white/5"
                                     >
-                                        {#each turn.darts as dart}
-                                            <span
-                                                class="rounded px-1.5 py-0.5 bg-zinc-100 dark:bg-white/10 {turn.isBust
-                                                    ? 'opacity-50'
-                                                    : ''}"
-                                            >
-                                                {dart.multiplier === 3
-                                                    ? "T"
-                                                    : dart.multiplier === 2
-                                                      ? "D"
-                                                      : ""}{dart.segment === 25
-                                                    ? dart.multiplier === 2
-                                                        ? "Bull"
-                                                        : "25"
-                                                    : dart.segment}
-                                            </span>
-                                        {/each}
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <span
-                                            class="font-mono font-medium {turn.isBust
-                                                ? 'text-red-500'
-                                                : ''}"
+                                        <div
+                                            class="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold mb-1.5"
                                         >
-                                            {#if turn.isBust}<span
-                                                    class="text-[9px] font-bold"
-                                                    >BUST</span
-                                                >
-                                            {/if}{turn.totalScore}
-                                        </span>
-                                        <span class="text-zinc-400"
-                                            >→ {turn.remainingScore}</span
-                                        >
-                                        {#if ri === 0}
-                                            {#if showDeleteConfirm}
+                                            Throw out — {currentPlayer.remainingScore}
+                                        </div>
+                                        <div class="space-y-1">
+                                            {#each checkoutOptions.slice(0, 3) as opt}
                                                 <div
-                                                    class="flex items-center gap-1"
+                                                    class="text-sm font-mono text-emerald-600 dark:text-emerald-400"
                                                 >
-                                                    <button
-                                                        onclick={() => {
-                                                            deleteLastTurn();
-                                                            showDeleteConfirm = false;
-                                                        }}
-                                                        class="text-[10px] font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer"
-                                                        >Delete</button
-                                                    >
-                                                    <button
-                                                        onclick={() =>
-                                                            (showDeleteConfirm = false)}
-                                                        class="text-[10px] text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer"
-                                                        >Cancel</button
-                                                    >
+                                                    {opt.description}
                                                 </div>
-                                            {:else}
-                                                <button
-                                                    onclick={() =>
-                                                        (showDeleteConfirm = true)}
-                                                    class="flex items-center justify-center w-6 h-6 rounded text-zinc-300 hover:text-red-500 transition-colors cursor-pointer"
-                                                    title="Delete last turn"
-                                                >
-                                                    <IconTrash size={12} />
-                                                </button>
-                                            {/if}
-                                        {/if}
+                                            {/each}
+                                        </div>
                                     </div>
-                                </div>
-                            {/each}
-                            {#if allMatchTurns.filter((t) => t.playerId === p1.id).length === 0}
-                                <div
-                                    class="text-zinc-400 text-center py-1 text-xs"
-                                >
-                                    No turns yet
-                                </div>
-                            {/if}
-                        </div>
-                    </DoubleBezel>
+                                {/if}
+                            </div>
+                        </DoubleBezel>
+                    {/if}
+                        <PlayerPanel
+                            player={p}
+                            isActive={p.id === currentPlayer?.id}
+                            allMatchTurns={allMatchTurns}
+                            stats={computeMatchStats(getPlayerTurns(p.id))}
+                            dartsThrown={getDartsThrown(p.id)}
+                            condensed={isMultiGame}
+                            large={matchState.players.length <= 4}
+                            rank={playerRanks.get(p.id) ?? 0}
+                            legDarts={legDarts}
+                            legAvg={getLegAvg(p.id)}
+                            next={isMultiGame
+                                ? i === 1
+                                : p.id !== currentPlayer?.id}
+                            bind:showDeleteConfirm
+                            onDeleteLastTurn={deleteLastTurn}
+                        />
+                    {/each}
+
                 </div>
             {/if}
 
@@ -1442,8 +1335,8 @@
                         </div>
                     </DoubleBezel>
 
-                    <!-- Checkout Suggestions -->
-                    {#if checkoutOptions.length > 0}
+                    <!-- Checkout Suggestions (shown in the left stats card for 3+ players) -->
+                    {#if !isMultiGame && checkoutOptions.length > 0}
                         <DoubleBezel>
                             <div class="space-y-1 mt-2">
                                 {#each checkoutOptions as opt}
@@ -1605,10 +1498,203 @@
                         </div>
                     </DoubleBezel>
                 {:else if activeTab === "stats"}
+                    <!-- All stats for all players -->
                     <DoubleBezel>
-                        <div class="text-center text-zinc-400 py-8">
-                            <p class="text-lg font-medium mb-2">Stats</p>
-                            <p class="text-sm">Stats component coming soon</p>
+                        <div class="mt-2">
+                            <div
+                                class="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold mb-2"
+                            >
+                                Match Stats
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr
+                                            class="text-[10px] uppercase tracking-wider text-zinc-400 border-b border-zinc-100 dark:border-white/5"
+                                        >
+                                            <th class="text-left pb-2 pr-2"
+                                                ><Tooltip
+                                                    position="bottom"
+                                                    delay={100}
+                                                    content="Player (leading number = standings rank)"
+                                                    >Player</Tooltip
+                                                ></th
+                                            >
+                                            <th class="text-right pb-2 px-1"
+                                                ><Tooltip
+                                                    position="bottom"
+                                                    delay={100}
+                                                    content="Total darts thrown in the match"
+                                                    >Darts</Tooltip
+                                                ></th
+                                            >
+                                            <th class="text-right pb-2 px-1"
+                                                ><Tooltip
+                                                    position="bottom"
+                                                    delay={100}
+                                                    content="3-dart average — points scored per 3 darts"
+                                                    >Avg</Tooltip
+                                                ></th
+                                            >
+                                            <th class="text-right pb-2 px-1"
+                                                ><Tooltip
+                                                    position="bottom"
+                                                    delay={100}
+                                                    content="Checkout % — legs won vs. checkout attempts"
+                                                    >CO%</Tooltip
+                                                ></th
+                                            >
+                                            <th class="text-right pb-2 px-1"
+                                                ><Tooltip
+                                                    position="bottom"
+                                                    delay={100}
+                                                    content="Double conversion % — checkouts vs. darts thrown at a double"
+                                                    >Dbl</Tooltip
+                                                ></th
+                                            >
+                                            <th class="text-right pb-2 px-1"
+                                                ><Tooltip
+                                                    position="bottom"
+                                                    delay={100}
+                                                    content="Turns scoring 60 or more (busts excluded)"
+                                                    >60+</Tooltip
+                                                ></th
+                                            >
+                                            <th class="text-right pb-2 px-1"
+                                                ><Tooltip
+                                                    position="bottom"
+                                                    delay={100}
+                                                    content="Turns scoring 100 or more (busts excluded)"
+                                                    >100+</Tooltip
+                                                ></th
+                                            >
+                                            <th class="text-right pb-2 px-1"
+                                                ><Tooltip
+                                                    position="bottom"
+                                                    delay={100}
+                                                    content="Turns scoring 140 or more (busts excluded)"
+                                                    >140+</Tooltip
+                                                ></th
+                                            >
+                                            <th class="text-right pb-2 px-1"
+                                                ><Tooltip
+                                                    position="bottom"
+                                                    delay={100}
+                                                    content="Perfect 180 turns"
+                                                    >180</Tooltip
+                                                ></th
+                                            >
+                                            <th class="text-right pb-2 px-1"
+                                                ><Tooltip
+                                                    position="bottom"
+                                                    delay={100}
+                                                    content="Turns scoring under 20 (busts excluded)"
+                                                    >&lt;20</Tooltip
+                                                ></th
+                                            >
+                                            <th class="text-right pb-2 px-1"
+                                                ><Tooltip
+                                                    position="bottom"
+                                                    delay={100}
+                                                    content="Leg-winning checkouts of 60+"
+                                                    >60+F</Tooltip
+                                                ></th
+                                            >
+                                            <th class="text-right pb-2 px-1"
+                                                ><Tooltip
+                                                    position="bottom"
+                                                    delay={100}
+                                                    content="3-dart average over the last 3 turns"
+                                                    >Last 3</Tooltip
+                                                ></th
+                                            >
+                                            <th class="text-right pb-2 pl-2"
+                                                ><Tooltip
+                                                    position="bottom"
+                                                    delay={100}
+                                                    content="3-dart average over the previous turns (up to 15)"
+                                                    >Prior</Tooltip
+                                                ></th
+                                            >
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {#each matchState.players as p (p.id)}
+                                            {@const s = computeMatchStats(
+                                                getPlayerTurns(p.id),
+                                            )}
+                                            {@const rank = playerRanks.get(p.id) ?? 0}
+                                            <tr
+                                                class="border-b border-zinc-50 dark:border-white/5 last:border-0"
+                                            >
+                                                <td class="py-2 pr-2">
+                                                    <span
+                                                        class="font-medium text-xs flex items-center gap-1.5"
+                                                    >
+                                                        {#if rank}
+                                                            <span
+                                                                class="text-zinc-400 font-mono text-[10px]"
+                                                                >{rank}</span
+                                                            >
+                                                        {/if}
+                                                        {p.name}
+                                                    </span>
+                                                </td>
+                                                <td
+                                                    class="py-2 px-1 text-right font-mono text-xs"
+                                                    >{getDartsThrown(p.id)}</td
+                                                >
+                                                <td
+                                                    class="py-2 px-1 text-right font-mono text-xs font-medium"
+                                                    >{s.threeDartAvg.toFixed(1)}</td
+                                                >
+                                                <td
+                                                    class="py-2 px-1 text-right font-mono text-xs"
+                                                    >{s.checkoutPct.toFixed(0)}%</td
+                                                >
+                                                <td
+                                                    class="py-2 px-1 text-right font-mono text-xs"
+                                                    >{s.doubleConversion.toFixed(0)}%</td
+                                                >
+                                                <td
+                                                    class="py-2 px-1 text-right font-mono text-xs"
+                                                    >{s.count60Plus}</td
+                                                >
+                                                <td
+                                                    class="py-2 px-1 text-right font-mono text-xs"
+                                                    >{s.count100Plus}</td
+                                                >
+                                                <td
+                                                    class="py-2 px-1 text-right font-mono text-xs"
+                                                    >{s.count140Plus}</td
+                                                >
+                                                <td
+                                                    class="py-2 px-1 text-right font-mono text-xs font-bold text-amber-600 dark:text-amber-400"
+                                                    >{s.count180}</td
+                                                >
+                                                <td
+                                                    class="py-2 px-1 text-right font-mono text-xs text-zinc-500"
+                                                    >{s.countUnder20}</td
+                                                >
+                                                <td
+                                                    class="py-2 px-1 text-right font-mono text-xs text-emerald-600 dark:text-emerald-400"
+                                                    >{s.count60PlusFinishes}</td
+                                                >
+                                                <td
+                                                    class="py-2 px-1 text-right font-mono text-xs"
+                                                    >{s.last3Avg.toFixed(1)}</td
+                                                >
+                                                <td
+                                                    class="py-2 pl-2 text-right font-mono text-xs text-zinc-500"
+                                                    >{s.prior15Avg > 0
+                                                        ? s.prior15Avg.toFixed(1)
+                                                        : "—"}</td
+                                                >
+                                            </tr>
+                                        {/each}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </DoubleBezel>
                 {:else if activeTab === "settings"}
@@ -1681,325 +1767,30 @@
             </div>
 
             <!-- ============================================ -->
-            <!-- RIGHT: Player 2 Scoreboard + Stats           -->
+            <!-- RIGHT: Player scoreboards (second half)      -->
             <!-- ============================================ -->
-            {#if matchState.players[1]}
-                {@const p2 = matchState.players[1]}
-                {@const p2Active =
-                    matchState.currentLeg.currentPlayerIndex === 1}
-                {@const p2Turns = getPlayerTurns(p2.id)}
-                {@const p2Stats = computeMatchStats(p2Turns)}
-                {@const p2Darts = getDartsThrown(p2.id)}
-                {@const p2LifetimeAvg = playerStats[p2.id]?.threeDartAvg
-                    ? Number(playerStats[p2.id].threeDartAvg).toFixed(1)
-                    : "—"}
+            {#if rightPlayers.length > 0}
                 <div class="md:col-span-3 order-2 md:order-none space-y-3">
-                    <!-- Player 2 Scoreboard -->
-                    <DoubleBezel>
-                        <div class="text-center">
-                            <div
-                                class="font-display font-black text-8xl tracking-tight leading-none {p2Active
-                                    ? 'text-emerald-600 dark:text-emerald-400'
-                                    : ''}"
-                            >
-                                <AnimatedNumber value={p2.remainingScore} />
-                            </div>
-                            <div
-                                class="mt-2 font-medium text-sm {p2Active
-                                    ? 'text-emerald-700 dark:text-emerald-400'
-                                    : ''}"
-                            >
-                                {#if p2Active}
-                                    <IconPlayerPlay
-                                        size={14}
-                                        class="inline -mt-0.5 text-emerald-500 mr-0.5"
-                                    />
-                                {/if}
-                                {p2.name}
-                            </div>
-                            <div
-                                class="mt-2 flex justify-center gap-4 text-xs font-mono text-zinc-400"
-                            >
-                                <span
-                                    >Sets
-                                    <span
-                                        class="font-bold text-sm text-zinc-700 dark:text-zinc-300"
-                                        >{p2.setsWon}</span
-                                    ></span
-                                >
-                                <span
-                                    >Legs
-                                    <span
-                                        class="font-bold text-sm text-zinc-700 dark:text-zinc-300"
-                                        >{p2.legsWon}</span
-                                    ></span
-                                >
-                            </div>
-                            <div
-                                class="mt-1.5 flex justify-center gap-3 text-[10px] text-zinc-400"
-                            >
-                                <span
-                                    >Darts
-                                    <span class="font-mono font-medium"
-                                        >{p2Darts}</span
-                                    ></span
-                                >
-                                <span
-                                    >Avg
-                                    <span class="font-mono font-medium"
-                                        >{p2Stats.threeDartAvg.toFixed(1)}</span
-                                    ></span
-                                >
-                            </div>
-                        </div>
-                    </DoubleBezel>
-
-                    <!-- Player 2 Stats -->
-                    <DoubleBezel>
-                        <div class="space-y-1.5 mt-2">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs text-zinc-400"
-                                    >3-Dart Avg</span
-                                >
-                                <span class="text-sm font-mono font-medium"
-                                    >{p2Stats.threeDartAvg.toFixed(1)}</span
-                                >
-                            </div>
-                            <a
-                                href="/players/{p2.id}/checkout"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="flex justify-between items-center group -mx-2 px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
-                                title="View checkout breakdown"
-                            >
-                                <span
-                                    class="text-xs text-zinc-400 flex items-center gap-1"
-                                    >Double Conv.
-                                    <IconExternalLink
-                                        size={10}
-                                        class="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500"
-                                    />
-                                </span>
-                                <span
-                                    class="text-sm font-mono font-medium group-hover:text-blue-400 transition-colors"
-                                >
-                                    {p2Stats.doubleConversion.toFixed(0)}%
-                                </span>
-                            </a>
-
-                            <div
-                                class="pt-2 mt-1 border-t border-zinc-100 dark:border-white/5"
-                            >
-                                <div class="grid grid-cols-3 gap-1 text-center">
-                                    <div>
-                                        <div class="text-[10px] text-zinc-400">
-                                            60+
-                                        </div>
-                                        <div
-                                            class="font-mono font-medium text-sm"
-                                        >
-                                            {p2Stats.count60Plus}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="text-[10px] text-zinc-400">
-                                            100+
-                                        </div>
-                                        <div
-                                            class="font-mono font-medium text-sm"
-                                        >
-                                            {p2Stats.count100Plus}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="text-[10px] text-zinc-400">
-                                            140+
-                                        </div>
-                                        <div
-                                            class="font-mono font-medium text-sm"
-                                        >
-                                            {p2Stats.count140Plus}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div
-                                class="pt-2 mt-1 border-t border-zinc-100 dark:border-white/5"
-                            >
-                                <div class="grid grid-cols-3 gap-1 text-center">
-                                    <div>
-                                        <div class="text-[10px] text-zinc-400">
-                                            &lt;20
-                                        </div>
-                                        <div
-                                            class="font-mono font-medium text-sm text-zinc-500"
-                                        >
-                                            {p2Stats.countUnder20}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="text-[10px] text-zinc-400">
-                                            180
-                                        </div>
-                                        <div
-                                            class="font-mono font-bold text-sm text-amber-600 dark:text-amber-400"
-                                        >
-                                            {p2Stats.count180}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="text-[10px] text-zinc-400">
-                                            60+ Fin
-                                        </div>
-                                        <div
-                                            class="font-mono font-medium text-sm text-emerald-600 dark:text-emerald-400"
-                                        >
-                                            {p2Stats.count60PlusFinishes}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Avg Trend: Last 3 vs Prior -->
-                            <div
-                                class="pt-2 mt-1 border-t border-zinc-100 dark:border-white/5"
-                            >
-                                <div
-                                    class="text-[10px] uppercase tracking-wider text-zinc-400 mb-1.5"
-                                >
-                                    Avg Trend
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-xs text-zinc-500"
-                                        >Last 3</span
-                                    >
-                                    <div class="flex items-center gap-1">
-                                        <span
-                                            class="text-sm font-mono font-medium"
-                                            >{p2Stats.last3Avg.toFixed(1)}</span
-                                        >
-                                        {#if p2Stats.prior15Avg > 0}
-                                            {#if p2Stats.last3Avg > p2Stats.prior15Avg}
-                                                <IconArrowUp
-                                                    size={14}
-                                                    class="text-emerald-500"
-                                                />
-                                            {:else if p2Stats.last3Avg < p2Stats.prior15Avg}
-                                                <IconArrowDown
-                                                    size={14}
-                                                    class="text-red-500"
-                                                />
-                                            {/if}
-                                        {/if}
-                                    </div>
-                                </div>
-                                <div
-                                    class="flex justify-between items-center mt-0.5"
-                                >
-                                    <span class="text-xs text-zinc-500"
-                                        >Prior turns</span
-                                    >
-                                    <span
-                                        class="text-sm font-mono text-zinc-400"
-                                        >{p2Stats.prior15Avg > 0
-                                            ? p2Stats.prior15Avg.toFixed(1)
-                                            : "—"}</span
-                                    >
-                                </div>
-                            </div>
-                        </div>
-                    </DoubleBezel>
-
-                    <!-- Player 2 Last 3 Turns -->
-                    <DoubleBezel>
-                        <div class="mt-2 space-y-1.5">
-                            {#each [...allMatchTurns]
-                                .filter((t) => t.playerId === p2.id)
-                                .slice(-3)
-                                .reverse() as turn, ri}
-                                <div
-                                    class="flex items-center justify-between gap-1.5 text-xs"
-                                >
-                                    <div
-                                        class="flex items-center gap-1 font-mono"
-                                    >
-                                        {#each turn.darts as dart}
-                                            <span
-                                                class="rounded px-1.5 py-0.5 bg-zinc-100 dark:bg-white/10 {turn.isBust
-                                                    ? 'opacity-50'
-                                                    : ''}"
-                                            >
-                                                {dart.multiplier === 3
-                                                    ? "T"
-                                                    : dart.multiplier === 2
-                                                      ? "D"
-                                                      : ""}{dart.segment === 25
-                                                    ? dart.multiplier === 2
-                                                        ? "Bull"
-                                                        : "25"
-                                                    : dart.segment}
-                                            </span>
-                                        {/each}
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <span
-                                            class="font-mono font-medium {turn.isBust
-                                                ? 'text-red-500'
-                                                : ''}"
-                                        >
-                                            {#if turn.isBust}<span
-                                                    class="text-[9px] font-bold"
-                                                    >BUST</span
-                                                >
-                                            {/if}{turn.totalScore}
-                                        </span>
-                                        <span class="text-zinc-400"
-                                            >→ {turn.remainingScore}</span
-                                        >
-                                        {#if ri === 0}
-                                            {#if showDeleteConfirm}
-                                                <div
-                                                    class="flex items-center gap-1"
-                                                >
-                                                    <button
-                                                        onclick={() => {
-                                                            deleteLastTurn();
-                                                            showDeleteConfirm = false;
-                                                        }}
-                                                        class="text-[10px] font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer"
-                                                        >Delete</button
-                                                    >
-                                                    <button
-                                                        onclick={() =>
-                                                            (showDeleteConfirm = false)}
-                                                        class="text-[10px] text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer"
-                                                        >Cancel</button
-                                                    >
-                                                </div>
-                                            {:else}
-                                                <button
-                                                    onclick={() =>
-                                                        (showDeleteConfirm = true)}
-                                                    class="flex items-center justify-center w-6 h-6 rounded text-zinc-300 hover:text-red-500 transition-colors cursor-pointer"
-                                                    title="Delete last turn"
-                                                >
-                                                    <IconTrash size={12} />
-                                                </button>
-                                            {/if}
-                                        {/if}
-                                    </div>
-                                </div>
-                            {/each}
-                            {#if allMatchTurns.filter((t) => t.playerId === p2.id).length === 0}
-                                <div
-                                    class="text-zinc-400 text-center py-1 text-xs"
-                                >
-                                    No turns yet
-                                </div>
-                            {/if}
-                        </div>
-                    </DoubleBezel>
+                    {#each rightPlayers as p, i (p.id)}
+                        {@const legDarts = matchState.currentLeg.turns
+                            .filter((t) => t.playerId === p.id)
+                            .reduce((sum, t) => sum + t.dartsThrown, 0)}
+                        <PlayerPanel
+                            player={p}
+                            isActive={p.id === currentPlayer?.id}
+                            allMatchTurns={allMatchTurns}
+                            stats={computeMatchStats(getPlayerTurns(p.id))}
+                            dartsThrown={getDartsThrown(p.id)}
+                            condensed={isMultiGame}
+                            large={matchState.players.length <= 4}
+                            rank={playerRanks.get(p.id) ?? 0}
+                            legDarts={legDarts}
+                            legAvg={getLegAvg(p.id)}
+                            next={!isMultiGame && p.id !== currentPlayer?.id}
+                            bind:showDeleteConfirm
+                            onDeleteLastTurn={deleteLastTurn}
+                        />
+                    {/each}
                 </div>
             {/if}
 
