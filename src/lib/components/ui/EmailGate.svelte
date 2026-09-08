@@ -15,6 +15,7 @@
     let error = $state("");
     let accounts = $state<string[]>([]);
     let showNewAccount = $state(false);
+    let rememberMe = $state(true);
 
     $effect(() => {
         const unsub = accountsStore.subscribe((list) => {
@@ -48,7 +49,7 @@
         loading = true;
 
         try {
-            emailStore.setEmail(trimmed);
+            emailStore.setEmail(trimmed, rememberMe);
             addToast(`Welcome, ${trimmed}!`, "success");
         } catch (e) {
             error = "Something went wrong. Please try again.";
@@ -142,6 +143,17 @@
                         />
                     </div>
 
+                    <label
+                        class="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 cursor-pointer select-none"
+                    >
+                        <input
+                            type="checkbox"
+                            bind:checked={rememberMe}
+                            class="size-4 rounded accent-emerald-500 cursor-pointer"
+                        />
+                        Remember me on this device
+                    </label>
+
                     {#if error}
                         <p class="text-red-500 text-sm">{error}</p>
                     {/if}
@@ -185,6 +197,17 @@
                         class="w-full bg-zinc-50 dark:bg-white/5 rounded-full pl-12 pr-4 py-3.5 text-base ring-1 ring-black/6 dark:ring-white/10 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
                     />
                 </div>
+
+                <label
+                    class="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 cursor-pointer select-none"
+                >
+                    <input
+                        type="checkbox"
+                        bind:checked={rememberMe}
+                        class="size-4 rounded accent-emerald-500 cursor-pointer"
+                    />
+                    Remember me on this device
+                </label>
 
                 {#if error}
                     <p class="text-red-500 text-sm">{error}</p>
