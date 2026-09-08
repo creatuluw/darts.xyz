@@ -18,6 +18,7 @@ export default defineConfig({
 	projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 	webServer: {
 		command: `npm run dev -- --port ${PORT} --strictPort`,
+		env: { COMMENTARY_FAKE: '1' },
 		url: baseURL,
 		reuseExistingServer: !process.env.CI,
 		timeout: 120_000

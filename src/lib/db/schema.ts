@@ -7,6 +7,8 @@ import {
   timestamp,
   smallint,
   numeric,
+  jsonb,
+  text,
   index,
   uniqueIndex,
   check,
@@ -258,4 +260,46 @@ export const playerStats = darts.table(
   (table) => ({
     playerIdx: index("idx_player_stats_player").on(table.playerId),
   }),
+);
+
+// === CONQUEST (Trebles & Territories) ===
+/** Live conquest game state — opaque jsonb, written through on every dart.
+ *  The unguessable uuid is the access key (public-by-link model). */
+export const conquestGames = darts.table("conquest_games", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  state: jsonb("state").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// === COMMENTARY ===
+/** Dutch commentator/spectator interviews, cached per N-turn boundary. */
+export const commentary = darts.table(
+  "commentary",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    matchRef: varchar("match_ref", { length: 255 }).notNull(),
+    boundaryKey: varchar("boundary_key", { length: 320 }).notNull(),
+    question: text("question").notNull(),
+    answer: text("answer").notNull(),
+    persona: jsonb("persona").notNull(),
+    commentatorVoice: varchar("commentator_voice", { length: 64 }).notNull(),
+    spectatorVoice: varchar("spectator_voice", { length: 64 }).notNull(),
+    spectatorName: varchar("spectator_name", { length: 100 }).notNull(),
+    audioQuestion: text("audio_question"), // base64 mp3
+    audioAnswer: text("audio_answer"), // base64 mp3
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    uniqBoundary: uniqueIndex("uniq_commentary_boundary").on(
+      table.boundaryKey
+    ),
+    matchRefIdx: index("idx_commentary_match").on(table.matchRef),
+  })
 );
