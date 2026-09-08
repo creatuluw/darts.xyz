@@ -1,0 +1,7 @@
+# Rules
+
+- [Never hardcode player slots in match UI](./never-hardcode-player-slots-in-match-ui.md) - Guideline
+- [Use the Tooltip component, not native title attributes](./use-tooltip-not-native-title.md) - Guideline
+- [All code/logic todos must use the TDD skill (red→green→refactor)](./logic-todos-must-use-tdd-skill.md) - The rule
+- [Use $app/stores $page for page state — house style](./use-app-stores-page-for-page-state-house-style.md) - Rule
+- [Worktree feature loop: PR-only master, worktrees in .worktrees/, user merges](./worktree-feature-loop.md) - The rule

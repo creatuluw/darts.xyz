@@ -1,0 +1,30 @@
+---
+type: Learning
+title: Trebles & Territories code is uncommitted working-tree state — master has no fun games
+description: The state split
+tags: [true, conquest-mode, git, worktree, trebles-and-territories]
+timestamp: "2026-09-08T19:51:57.453Z"
+---
+
+# Trebles & Territories code is uncommitted working-tree state — master has no fun games
+
+## The state split
+
+On **master** (verified 2026-09-08: last commits are the remember-me PR and theme toggle) there are **no fun games**: no game-mode field in `src/lib/db/schema.ts`, no Fun tab in setup, no `/match/conquest` route. `git ls-files src/lib/game/conquest-engine.ts` returns nothing — it is not tracked.
+
+The **entire Trebles & Territories implementation exists only as uncommitted working-tree state**:
+
+- `src/lib/game/conquest-engine.ts` + `conquest-setup.ts` (+ tests) — untracked
+- `src/lib/components/conquest/` — untracked
+- `src/routes/match/conquest/` — untracked
+- ~10 modified files (setup page with the `match | fun` tab, `database-service.ts`, `Dartboard.svelte`, match pages, matches API) — modified, uncommitted
+- `.specs/trebles-and-territories/` — untracked
+
+## Why it bites
+
+1. **Wiki pages say "shipped"** — [[conquest-engine-and-live-game]], [[conquest-setup-fun-tab-conquest-setup-ts]], and the [[risk-darts-proposed-game-mode]] baseline ("milestones M1–M2 are shipped") describe the *uncommitted working-tree* state, not master. A session scoping a new feature against master (e.g. the TV second-screen PRD, where the user assumed "we have the fun games") will be misled.
+2. **Uncommitted files look like debris** — a session seeing ~10 modified files + untracked conquest dirs might assume "another session's in-flight work" and avoid or discard them. They are the whole conquest implementation; treat them as the canonical fun-games code until committed or deliberately rolled back.
+
+## How to check
+
+`git ls-files src/lib/game/conquest-engine.ts` — empty means not on master. `git status --short` shows the modified/untracked set.
