@@ -8,6 +8,7 @@ import {
   smallint,
   numeric,
   jsonb,
+  text,
   index,
   uniqueIndex,
   check,
@@ -274,3 +275,31 @@ export const conquestGames = darts.table("conquest_games", {
     .defaultNow()
     .notNull(),
 });
+
+// === COMMENTARY ===
+/** Dutch commentator/spectator interviews, cached per N-turn boundary. */
+export const commentary = darts.table(
+  "commentary",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    matchRef: varchar("match_ref", { length: 255 }).notNull(),
+    boundaryKey: varchar("boundary_key", { length: 320 }).notNull(),
+    question: text("question").notNull(),
+    answer: text("answer").notNull(),
+    persona: jsonb("persona").notNull(),
+    commentatorVoice: varchar("commentator_voice", { length: 64 }).notNull(),
+    spectatorVoice: varchar("spectator_voice", { length: 64 }).notNull(),
+    spectatorName: varchar("spectator_name", { length: 100 }).notNull(),
+    audioQuestion: text("audio_question"), // base64 mp3
+    audioAnswer: text("audio_answer"), // base64 mp3
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    uniqBoundary: uniqueIndex("uniq_commentary_boundary").on(
+      table.boundaryKey
+    ),
+    matchRefIdx: index("idx_commentary_match").on(table.matchRef),
+  })
+);

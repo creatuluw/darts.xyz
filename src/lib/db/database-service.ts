@@ -213,6 +213,49 @@ export class DatabaseService {
     return result[0] || null;
   }
 
+  // ── commentary ───────────────────────────────────────────────────
+
+  async getCommentary(boundaryKey: string) {
+    const result = await getDb()
+      .select()
+      .from(schema.commentary)
+      .where(eq(schema.commentary.boundaryKey, boundaryKey))
+      .limit(1);
+    return result[0] || null;
+  }
+
+  async getLatestCommentary(matchRef: string) {
+    const result = await getDb()
+      .select()
+      .from(schema.commentary)
+      .where(eq(schema.commentary.matchRef, matchRef))
+      .orderBy(desc(schema.commentary.createdAt))
+      .limit(1);
+    return result[0] || null;
+  }
+
+  async createCommentary(row: {
+    matchRef: string;
+    boundaryKey: string;
+    question: string;
+    answer: string;
+    persona: unknown;
+    commentatorVoice: string;
+    spectatorVoice: string;
+    spectatorName: string;
+    audioQuestion: string | null;
+    audioAnswer: string | null;
+  }) {
+    const result = await getDb()
+      .insert(schema.commentary)
+      .values({ ...row, persona: row.persona as object })
+      .onConflictDoNothing({ target: schema.commentary.boundaryKey })
+      .returning();
+    if (result[0]) return result[0];
+    // concurrent insert — return the winner's row (idempotent)
+    return this.getCommentary(row.boundaryKey);
+  }
+
   async deleteMatch(id: string) {
     const matchLegs = await getDb()
       .select({ id: schema.legs.id })
