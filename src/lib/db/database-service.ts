@@ -366,7 +366,8 @@ export class DatabaseService {
       .select()
       .from(schema.turns)
       .where(inArray(schema.turns.legId, legIds))
-      .orderBy(desc(schema.turns.createdAt));
+      // chronological — callers rely on the last element being the latest turn
+      .orderBy(schema.turns.createdAt, schema.turns.turnNumber);
   }
 
   // === STATS ===

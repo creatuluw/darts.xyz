@@ -11,11 +11,13 @@
         options = [],
         selected = $bindable<Option[]>([]),
         placeholder = "Search players...",
+        maxSelected = Infinity,
         class: className = "",
     }: {
         options: Option[];
         selected?: Option[];
         placeholder?: string;
+        maxSelected?: number;
         class?: string;
     } = $props();
 
@@ -26,6 +28,7 @@
     let dragOverIndex = $state<number | null>(null);
 
     let isSelected = $derived(new Set(selected.map((s) => s.id)));
+    let atMax = $derived(selected.length >= maxSelected);
 
     let filteredOptions = $derived(
         search.trim()
@@ -38,7 +41,7 @@
     function toggleOption(option: Option) {
         if (isSelected.has(option.id)) {
             selected = selected.filter((s) => s.id !== option.id);
-        } else {
+        } else if (!atMax) {
             selected = [...selected, option];
         }
     }
@@ -192,9 +195,12 @@
             <button
                 type="button"
                 onclick={() => toggleOption(option)}
+                disabled={!active && atMax}
                 class="rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-200 cursor-pointer {active
                     ? 'bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 ring-1 ring-emerald-500/30'
-                    : 'bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 ring-1 ring-black/6 dark:ring-white/10 hover:bg-zinc-200 dark:hover:bg-white/10'}"
+                    : 'bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 ring-1 ring-black/6 dark:ring-white/10 hover:bg-zinc-200 dark:hover:bg-white/10'} {!active && atMax
+                    ? 'opacity-40 cursor-not-allowed hover:bg-zinc-100 dark:hover:bg-white/5'
+                    : ''}"
             >
                 {option.name}
             </button>

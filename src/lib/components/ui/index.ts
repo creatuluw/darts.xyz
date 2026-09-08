@@ -10,6 +10,7 @@ export { default as StyledSelect } from "./StyledSelect.svelte";
 export { default as Toast } from "./Toast.svelte";
 export { default as EmailGate } from "./EmailGate.svelte";
 export { default as SearchSelect } from "./SearchSelect.svelte";
+export { default as PlayerPanel } from "./PlayerPanel.svelte";
 export { default as FullscreenButton } from "./FullscreenButton.svelte";
 export { default as ThemeSwitcher } from "./ThemeSwitcher.svelte";
 export { default as LoadingOverlay } from "./LoadingOverlay.svelte";
