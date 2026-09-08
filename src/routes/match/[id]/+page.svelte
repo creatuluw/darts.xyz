@@ -11,6 +11,7 @@
         IconArrowDown,
         IconTrash,
         IconExternalLink,
+        IconCast,
     } from "@tabler/icons-svelte";
     import {
         DoubleBezel,
@@ -1041,7 +1042,15 @@
                     Settings
                 </button>
             </div>
-            <div class="flex justify-end">
+            <div class="flex justify-end items-center gap-3">
+                <button
+                    onclick={() => window.open(`/match/${matchId}/tv`, "_blank")}
+                    aria-label="Open TV-weergave in nieuw tabblad"
+                    class="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-emerald-500 transition-colors"
+                >
+                    <IconCast size={18} />
+                    TV
+                </button>
                 <button
                     onclick={handleAbandon}
                     class="text-xs text-zinc-400 hover:text-red-500 transition-colors"

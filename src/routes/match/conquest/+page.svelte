@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
+    import { IconCast } from "@tabler/icons-svelte";
     import ConquestBoard from "$lib/components/conquest/ConquestBoard.svelte";
     import ConquestScoreboard from "$lib/components/conquest/ConquestScoreboard.svelte";
     import { PillButton } from "$lib/components/ui";
@@ -308,6 +309,16 @@
                 Trebles &amp; Territories
             </h1>
             <div class="flex items-center gap-2 text-xs">
+                {#if gameId}
+                    <button
+                        onclick={() => window.open(`/match/conquest/${gameId}/tv`, "_blank")}
+                        aria-label="Open TV-weergave in nieuw tabblad"
+                        class="flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                    >
+                        <IconCast size={16} />
+                        TV
+                    </button>
+                {/if}
                 <span
                     class="rounded-full px-2.5 py-1 font-semibold bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300"
                     >{game.mode === "clock" ? "Clock" : "Domination"} · {game.preset}

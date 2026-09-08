@@ -112,4 +112,17 @@ test.describe('match scorer UI', () => {
 		const matchId = page.url().split('/').pop()!;
 		await request.patch(`/api/matches/${matchId}`, { data: { status: 'abandoned' } });
 	});
+
+	test('cast button opens the TV view in a new tab', async ({ page, context, request }) => {
+		const { match } = await createMatch(request, email, [aliceId, bobId], { startingScore: 301 });
+		await openMatch(page, match.id);
+
+		const popupPromise = context.waitForEvent('page');
+		await page.getByRole('button', { name: 'Open TV-weergave in nieuw tabblad' }).click();
+		const tv = await popupPromise;
+		await tv.waitForLoadState();
+		await expect(tv).toHaveURL(new RegExp(`/match/${match.id}/tv$`));
+		// TV renders without its own email gate
+		await expect(tv.getByText('E2E Ui Alice').first()).toBeVisible({ timeout: 10_000 });
+	});
 });
