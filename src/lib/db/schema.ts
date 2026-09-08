@@ -7,6 +7,7 @@ import {
   timestamp,
   smallint,
   numeric,
+  jsonb,
   index,
   uniqueIndex,
   check,
@@ -259,3 +260,17 @@ export const playerStats = darts.table(
     playerIdx: index("idx_player_stats_player").on(table.playerId),
   }),
 );
+
+// === CONQUEST (Trebles & Territories) ===
+/** Live conquest game state — opaque jsonb, written through on every dart.
+ *  The unguessable uuid is the access key (public-by-link model). */
+export const conquestGames = darts.table("conquest_games", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  state: jsonb("state").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});

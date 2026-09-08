@@ -23,7 +23,7 @@
     import type { Multiplier } from "$lib/game/types";
 
     const SETUP_KEY = "conquest_setup";
-    const STATE_KEY = "conquest_state";
+    const GAME_ID_KEY = "conquest_game_id";
 
     const PLAYER_COLORS = [
         "#9B2226",
@@ -53,27 +53,45 @@
         return ((parts[0]?.[0] ?? "?") + (parts[1]?.[0] ?? "")).toUpperCase();
     }
 
+    let gameId: string | null = null;
+
+    /** Server write-through on every action — fire-and-forget, never blocks scoring. */
     function persist() {
-        if (game) sessionStorage.setItem(STATE_KEY, JSON.stringify(game));
+        if (game && gameId) {
+            fetch(`/api/conquest/${gameId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ state: game }),
+            }).catch(() => {});
+        }
     }
 
-    onMount(() => {
-        const savedState = sessionStorage.getItem(STATE_KEY);
-        const setup = sessionStorage.getItem(SETUP_KEY);
-        if (savedState) {
-            const s = JSON.parse(savedState) as ConquestState;
-            if (s.phase !== "finished") {
-                game = s;
-                players = s.players.map((p, i) => ({
-                    id: p.id,
-                    name: p.name,
-                    initials: initialsOf(p.name),
-                    color: PLAYER_COLORS[i % PLAYER_COLORS.length],
-                }));
-                notice = "Resumed campaign";
-                return;
+    onMount(async () => {
+        // server is the source of truth — resume by game id if the server knows it
+        const savedId = sessionStorage.getItem(GAME_ID_KEY);
+        if (savedId) {
+            try {
+                const res = await fetch(`/api/conquest/${savedId}`);
+                if (res.ok) {
+                    const { state } = await res.json();
+                    if (state.phase !== "finished") {
+                        gameId = savedId;
+                        game = state;
+                        players = state.players.map((p: { id: string; name: string }, i: number) => ({
+                            id: p.id,
+                            name: p.name,
+                            initials: initialsOf(p.name),
+                            color: PLAYER_COLORS[i % PLAYER_COLORS.length],
+                        }));
+                        notice = "Resumed campaign";
+                        return;
+                    }
+                }
+            } catch {
+                /* offline — fall through to setup flow */
             }
         }
+        const setup = sessionStorage.getItem(SETUP_KEY);
         if (!setup) {
             goto("/match/setup?tab=fun");
             return;
@@ -90,6 +108,20 @@
             initials: initialsOf(p.name),
             color: PLAYER_COLORS[i % PLAYER_COLORS.length],
         }));
+        try {
+            const res = await fetch("/api/conquest", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ state: game }),
+            });
+            if (res.ok) {
+                const { id } = await res.json();
+                gameId = id;
+                sessionStorage.setItem(GAME_ID_KEY, id);
+            }
+        } catch {
+            /* server unreachable — game still playable this visit */
+        }
         persist();
     });
 
@@ -259,7 +291,7 @@
     });
 
     function newGame() {
-        sessionStorage.removeItem(STATE_KEY);
+        sessionStorage.removeItem(GAME_ID_KEY);
         goto("/match/setup?tab=fun");
     }
 </script>

@@ -185,6 +185,34 @@ export class DatabaseService {
       .where(eq(schema.matches.id, id));
   }
 
+  // ── conquest (Trebles & Territories) ─────────────────────────────
+
+  async createConquestGame(state: unknown) {
+    const result = await getDb()
+      .insert(schema.conquestGames)
+      .values({ state: state as object })
+      .returning();
+    return result[0];
+  }
+
+  async getConquestGame(id: string) {
+    const result = await getDb()
+      .select()
+      .from(schema.conquestGames)
+      .where(eq(schema.conquestGames.id, id))
+      .limit(1);
+    return result[0] || null;
+  }
+
+  async saveConquestGame(id: string, state: unknown) {
+    const result = await getDb()
+      .update(schema.conquestGames)
+      .set({ state: state as object, updatedAt: new Date() })
+      .where(eq(schema.conquestGames.id, id))
+      .returning();
+    return result[0] || null;
+  }
+
   async deleteMatch(id: string) {
     const matchLegs = await getDb()
       .select({ id: schema.legs.id })
