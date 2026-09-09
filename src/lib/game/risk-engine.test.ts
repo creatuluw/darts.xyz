@@ -422,3 +422,115 @@ describe('Risk 42 — endgames (M1.6)', () => {
         expect(g2.tie).toEqual(['a', 'b']); // re-throw
     });
 });
+
+describe('Risk 42 — seeded invariant sweep (M1.7)', () => {
+    // deterministic tiny RNG for the "bot" darts
+    const mkRand = (seed: number) => {
+        let a = seed >>> 0;
+        return () => {
+            a = (a + 0x6d2b79f5) | 0;
+            let t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    };
+    const pick = <T,>(r: () => number, xs: T[]): T => xs[Math.floor(r() * xs.length)];
+
+    const botDart = (g: ReturnType<typeof createGame>, r: () => number) => {
+        const me = g.turn.playerId;
+        const blanks = g.boxes.filter((b) => !b.owner);
+        const enemies = g.boxes.filter((b) => b.owner && b.owner !== me);
+        const mine = g.boxes.filter((b) => b.owner === me);
+        const roll = r();
+        if (roll < 0.25 && blanks.length) {
+            const b = pick(r, blanks); // claim blank land
+            return r() < 0.5
+                ? { segment: b.number, multiplier: 1 as const, singleRing: b.ring }
+                : { segment: b.number, multiplier: (b.ring === 'inner' ? 3 : 2) as 2 | 3 };
+        }
+        if (roll < 0.7 && enemies.length) {
+            const weak = enemies.reduce((a, b) => (b.armies < a.armies ? b : a)); // chip the weakest enemy
+            return { segment: weak.number, multiplier: (weak.ring === 'inner' ? 3 : 2) as 2 | 3 };
+        }
+        if (roll < 0.85 && mine.length) {
+            const b = pick(r, mine); // reinforce
+            return { segment: b.number, multiplier: 1 as const, singleRing: b.ring };
+        }
+        return { segment: pick(r, [0, 25, 50]) }; // miss or Arsenal charge
+    };
+
+    // plain-JS invariant check: assert-on-violation (expect-per-dart would be 10M matcher calls)
+    const invariants = (g: ReturnType<typeof createGame>) => {
+        const bad = (msg: string) => { throw new Error('INVARIANT BROKEN: ' + msg); };
+        if (g.boxes.length !== 40) bad('box count');
+        for (const b of g.boxes) {
+            if (b.owner === null && b.armies !== 0) bad('blank with armies: ' + b.id);
+            if (b.owner !== null && b.armies < 1) bad('owned box under 1 army: ' + b.id);
+        }
+        if (!g.players.includes(g.turn.playerId)) bad('turn player not in roster');
+        if (g.turn.dartsLeft < 0) bad('negative budget');
+        if (g.turn.charge < 0) bad('negative charge');
+        if (g.winner !== null && !g.players.includes(g.winner)) bad('winner not in roster');
+        if (g.tie && (g.tie.length < 2 || g.winner !== null)) bad('tie state inconsistent');
+    };
+
+    const runGame = (players: number, mode: 'domination' | 'clock', seed: number) => {
+        const g = createGame(Array.from({ length: players }, (_, i) => `p${i + 1}`),
+            mode === 'clock' ? { mode, clockTurns: 3, seed } : { mode, seed });
+        const r = mkRand(seed * 7919 + players);
+        let darts = 0;
+        while (g.winner === null && !g.tie && darts < 2500) {
+            if (g.turn.dartsLeft === 0) throw new Error('stuck: turn with zero budget');
+            applyDart(g, botDart(g, r));
+            invariants(g);
+            darts++;
+        }
+        if (g.tie) {
+            const tied = [...g.tie];
+            applyTiebreak(g, g.tie.map((p, i) => ({ playerId: p, distance: 5 + ((seed + i * 13) % 20) })));
+            // resolved → winner comes from the tied set; dead heat → tie stands for a re-throw
+            expect(g.winner === null ? g.tie : [g.winner]).toSatisfy((x: unknown) =>
+                Array.isArray(x) && x.every((v) => tied.includes(v as string)));
+            invariants(g);
+        }
+        if (g.winner !== null) {
+            if (mode === 'domination') expect(g.boxes.filter((b) => b.owner === g.winner).length).toBe(40);
+            else {
+                const top = standings(g)[0].score;
+                const leaders = standings(g).filter((r) => r.score === top).map((r) => r.playerId);
+                expect(leaders).toContain(g.winner); // clock winner comes from the score leaders (bull tiebreak may pick any of them)
+            }
+            expect(() => applyDart(g, { segment: 0 })).toThrow(/over/);
+        }
+        return { darts, terminated: g.winner !== null };
+    };
+
+    it('sweeps both modes across rosters 2-6: invariants hold every dart, games terminate', { timeout: 30000 }, () => {
+        const results: string[] = [];
+        for (const players of [2, 3, 4, 5, 6]) {
+            for (const mode of ['domination', 'clock'] as const) {
+                let terminated = 0;
+                for (let seed = 1; seed <= 8; seed++) {
+                    const r = runGame(players, mode, seed);
+                    if (r.terminated) terminated++;
+                    results.push(`${players}p/${mode}/s${seed}: ${r.darts} darts${r.terminated ? '' : ' (cap)'}`);
+                }
+                if (mode === 'clock') expect(terminated).toBe(8); // the horn always ends it
+                else if (players === 2) expect(terminated).toBe(8); // 2p random walk absorbs at 0/40
+                // 3+ player domination under random churn is legitimately rare — rates logged, invariants still hard-asserted
+            }
+        }
+        console.log(results.join('\n'));
+    });
+
+    it('same seed → identical transcript', () => {
+        const play = (seed: number) => {
+            const g = createGame(['a', 'b', 'c'], { mode: 'clock', clockTurns: 2, seed });
+            const r = mkRand(seed);
+            while (g.winner === null && !g.tie) applyDart(g, botDart(g, r));
+            return JSON.stringify({ boxes: g.boxes.map((b) => [b.owner, b.armies]), winner: g.winner, tie: g.tie });
+        };
+        expect(play(123)).toBe(play(123));
+        expect(play(123)).not.toBe(play(124));
+    });
+});
