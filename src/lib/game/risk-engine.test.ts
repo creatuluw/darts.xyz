@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyDart, createGame, isExiled } from './risk-engine';
+import { applyDart, budgetWithSources, createGame, isExiled } from './risk-engine';
 
 describe('Risk 42 — the Deal (M1.1)', () => {
     it('deals all 40 boxes equally with 2 armies each (2 players)', () => {
@@ -281,5 +281,73 @@ describe('Risk 42 — exile & clawback (M1.4)', () => {
         const { g, box } = setup();
         expect(g.boxes.filter((b) => b.owner === 'b').length).toBeGreaterThan(0);
         expect(typeof isExiled(g, 'b')).toBe('boolean');
+    });
+});
+
+describe('Risk 42 — continent income (M1.5)', () => {
+    const SA_IDS = ['19-outer', '7-outer', '16-inner', '16-outer'];
+    const AS_IDS = ['1-outer', '18-inner', '18-outer', '4-inner', '4-outer', '13-inner', '13-outer', '6-inner', '6-outer', '10-inner', '2-inner'];
+
+    const setup = () => {
+        const g = createGame(['a', 'b'], { seed: 42 });
+        const box = (id: string) => g.boxes.find((x) => x.id === id)!;
+        const give = (ids: string[], p: string) => ids.forEach((id) => { box(id).owner = p; });
+        return { g, box, give };
+    };
+    const playTurn = (g: ReturnType<typeof createGame>) => {
+        const p = g.turn.playerId; // play out THIS player turn only — the advance hands over mid-loop
+        while (g.turn.playerId === p && g.turn.dartsLeft > 0) applyDart(g, { segment: 0 });
+    };
+
+    it('full South America = +1 dart per turn (budget 4)', () => {
+        const { g, give } = setup();
+        give(SA_IDS, 'b');
+        playTurn(g);
+        expect(g.turn.playerId).toBe('b');
+        expect(g.turn.dartsLeft).toBe(4);
+    });
+
+    it('Asia pays double (+2 → budget 5); stacking SA + Asia → 6', () => {
+        const { g, give } = setup();
+        give(AS_IDS, 'b');
+        playTurn(g);
+        expect(g.turn.playerId).toBe('b');
+        expect(g.turn.dartsLeft).toBe(5);
+
+        give(SA_IDS, 'b');
+        playTurn(g); playTurn(g);
+        expect(g.turn.playerId).toBe('b');
+        expect(g.turn.dartsLeft).toBe(6);
+    });
+
+    it('losing one box kills the bonus; a blank in the continent blocks it', () => {
+        const { g, box, give } = setup();
+        give(SA_IDS, 'b');
+        box('19-outer').owner = 'a';
+        playTurn(g);
+        expect(g.turn.playerId).toBe('b');
+        expect(g.turn.dartsLeft).toBe(3);
+
+        give(SA_IDS, 'b');
+        box('16-outer').owner = null; box('16-outer').armies = 0; // blank blocks control
+        playTurn(g); playTurn(g); // b consumes, a consumes, b's fresh turn
+        expect(g.turn.playerId).toBe('b');
+        expect(g.turn.dartsLeft).toBe(3);
+    });
+
+    it('budgetWithSources itemizes the pre-turn banner', () => {
+        const { g, give } = setup();
+        for (const b of g.boxes) b.owner = 'b'; // neutralize the random deal
+        give(SA_IDS, 'a');
+        give(AS_IDS, 'a');
+        g.turn.playerId = 'a';
+
+        const budget = budgetWithSources(g);
+        expect(budget.base).toBe(3);
+        expect(budget.sources).toEqual([
+            expect.objectContaining({ continent: 'AS', darts: 2 }),
+            expect.objectContaining({ continent: 'SA', darts: 1 }),
+        ]);
+        expect(budget.total).toBe(6);
     });
 });

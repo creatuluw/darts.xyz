@@ -133,6 +133,38 @@ export function isExiled(state: RiskGameState, playerId: PlayerId): boolean {
     return !state.boxes.some((b) => b.owner === playerId);
 }
 
+const CONTINENT_IDS: Record<Continent, string[]> = (() => {
+    const m: Record<Continent, string[]> = { NA: [], SA: [], EU: [], AF: [], AS: [], OC: [] };
+    for (const [number, ring, _t, cont] of BOARD) m[cont].push(`${number}-${ring}`);
+    return m;
+})();
+
+/** Continents where the player owns every box (blanks break control). */
+export function continentsHeld(state: RiskGameState, playerId: PlayerId): Continent[] {
+    return (Object.keys(CONTINENT_IDS) as Continent[]).filter((c) =>
+        CONTINENT_IDS[c].every((id) => state.boxes.find((b) => b.id === id)?.owner === playerId),
+    );
+}
+
+function continentDarts(c: Continent): number {
+    return c === 'AS' ? 2 : 1; // Asia pays superpower money
+}
+
+export interface DartBudget {
+    base: number;
+    sources: Array<{ continent: Continent; darts: number }>;
+    total: number;
+}
+
+/** For the pre-turn banner: exact dart count with itemized sources. */
+export function budgetWithSources(state: RiskGameState): DartBudget {
+    const held = continentsHeld(state, state.turn.playerId);
+    const sources = held
+        .map((c) => ({ continent: c, darts: continentDarts(c) }))
+        .sort((x, y) => y.darts - x.darts); // biggest bonus first for the banner
+    return { base: BASE_DARTS, sources, total: BASE_DARTS + sources.reduce((s, x) => s + x.darts, 0) };
+}
+
 const RING_VALUE: Record<1 | 2 | 3, number> = { 1: 1, 2: 2, 3: 2 };
 
 /** Which box a dart deposits into: S → the hit box; T → the wedge's inner; D → the wedge's outer. */
@@ -183,7 +215,8 @@ export function applyDart(state: RiskGameState, hit: DartHit): RiskGameState {
         const at = order.indexOf(state.turn.playerId);
         state.turn = {
             playerId: order[(at + 1) % order.length],
-            dartsLeft: BASE_DARTS, // continent income lands in M1.5
+            dartsLeft: BASE_DARTS + continentsHeld(state, order[(at + 1) % order.length])
+                .reduce((s, c) => s + continentDarts(c), 0),
             charge: 0,
             index: state.turn.index + 1,
         };
