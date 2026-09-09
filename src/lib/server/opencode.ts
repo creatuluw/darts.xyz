@@ -1,26 +1,24 @@
 /**
- * OpenCode zen/go LLM client — server-side only (OPENCODE_API).
- * Endpoint requires x-opencode-session + custom User-Agent (verified 200 OK).
+ * DeepSeek chat client — server-side only (DEEPSEEK_API_KEY).
+ * https://api-docs.deepseek.com/ · OpenAI-compatible endpoint.
+ * Model: deepseek-v4-flash (fast enough to keep commentary snappy).
  */
 import { env } from "$env/dynamic/private";
-import { randomUUID } from "node:crypto";
 import { parseInterview, type InterviewResult } from "$lib/game/interview-json";
 
 export type { InterviewResult };
 
-const ENDPOINT = "https://opencode.ai/zen/go/v1/chat/completions";
-const MODEL = "glm-5.3-flash";
-const TIMEOUT_MS = 20_000;
+const ENDPOINT = "https://api.deepseek.com/chat/completions";
+const MODEL = "deepseek-v4-flash";
+const TIMEOUT_MS = 45_000;
 
-/** Sends the interview prompt; returns Dutch {question, answer}. */
+/** Sends the interview prompt; returns Dutch {question, answer, analysis, outlook}. */
 export async function generateInterview(prompt: string): Promise<InterviewResult> {
 	const res = await fetch(ENDPOINT, {
 		method: "POST",
 		headers: {
-			Authorization: `Bearer ${env.OPENCODE_API}`,
-			"Content-Type": "application/json",
-			"x-opencode-session": randomUUID(),
-			"User-Agent": "dart-monster/1.0"
+			Authorization: `Bearer ${env.DEEPSEEK_API_KEY}`,
+			"Content-Type": "application/json"
 		},
 		body: JSON.stringify({
 			model: MODEL,
@@ -29,7 +27,7 @@ export async function generateInterview(prompt: string): Promise<InterviewResult
 		}),
 		signal: AbortSignal.timeout(TIMEOUT_MS)
 	});
-	if (!res.ok) throw new Error(`opencode ${res.status}: ${(await res.text()).slice(0, 200)}`);
+	if (!res.ok) throw new Error(`deepseek ${res.status}: ${(await res.text()).slice(0, 200)}`);
 	const data = await res.json();
 	const content: string = data.choices?.[0]?.message?.content ?? "";
 	return parseInterview(content);

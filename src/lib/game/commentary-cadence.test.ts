@@ -3,7 +3,8 @@ import {
 	DEFAULT_COMMENTARY_CADENCE,
 	boundaryOf,
 	newBoundaries,
-	boundaryKey
+	boundaryKey,
+	enqueueBoundaries
 } from './commentary-cadence';
 
 describe('commentary cadence', () => {
@@ -37,5 +38,23 @@ describe('commentary cadence', () => {
 		expect(boundaryKey('abc', 3)).toBe(boundaryKey('abc', 3));
 		expect(boundaryKey('abc', 3)).not.toBe(boundaryKey('abc', 4));
 		expect(boundaryKey('abc', 3)).not.toBe(boundaryKey('xyz', 3));
+	});
+});
+
+describe('enqueueBoundaries (mid-generation queue)', () => {
+	it('appends fresh boundaries to the queue', () => {
+		expect(enqueueBoundaries([3], [4])).toEqual([3, 4]);
+	});
+
+	it('keeps only the newest when the queue overflows', () => {
+		expect(enqueueBoundaries([3, 4], [5, 6])).toEqual([5, 6]);
+	});
+
+	it('caps a custom max', () => {
+		expect(enqueueBoundaries([], [1, 2, 3], 1)).toEqual([3]);
+	});
+
+	it('leaves empty inputs alone', () => {
+		expect(enqueueBoundaries([], [])).toEqual([]);
 	});
 });

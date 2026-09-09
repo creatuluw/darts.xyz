@@ -25,7 +25,7 @@ export function pickPersona(rand: () => number = Math.random): SpectatorPersona 
 }
 
 export interface InterviewInput {
-	kind: 'classic' | 'conquest';
+	kind: 'classic' | 'conquest' | 'risk';
 	players: string[];
 	turnLines: string[];
 	persona: SpectatorPersona;
@@ -38,10 +38,12 @@ export interface InterviewInput {
 
 /** Builds the full Dutch interview prompt; response must be strict JSON. */
 export function buildInterviewPrompt(input: InterviewInput): string {
-	const game =
-		input.kind === 'conquest'
-			? 'Trebles & Territories (Risk-darts op het bord)'
-			: 'een klassieke x01-dartwedstrijd';
+	const games: Record<InterviewInput['kind'], string> = {
+		classic: 'een klassieke x01-dartwedstrijd',
+		conquest: 'Trebles & Territories (Risk-darts op het bord)',
+		risk: 'Risk 42 (world-map Risk op het dartbord: gebieden, legers, het Arsenaal op de bull)'
+	};
+	const game = games[input.kind];
 	const asker = input.asker ?? 'Leo';
 	const analyst = input.analyst ?? 'Theodore';
 	const hasPrior = (input.priorLines?.length ?? 0) > 0;
@@ -59,10 +61,14 @@ export function buildInterviewPrompt(input: InterviewInput): string {
 	];
 	lines.push(
 		'',
-		`Taak 1: Stel als commentator ${asker} één scherpe, gevatte vraag in het Nederlands over deze beurten.`,
-		`Taak 2: Beantwoord die vraag als toeschouwer ${input.persona.name} — toon: ${input.persona.tone.trim()}, stijl: ${input.persona.style}. Geef een eerlijke, kleurrijke mening in het Nederlands.`,
-		`Taak 3: Geef daarna als commentator ${analyst} jouw eigen deskundige analyse in het Nederlands, vanuit eigen ervaring en expertise. Dit is een improvisatieslot: je mag vergelijken met eerdere beurten${hasPrior ? ' (Eerdere context)' : ''} of met andere spelers om het spannender te maken.`,
+		`Taak 1: Stel als commentator ${asker} één scherpe, gevatte vraag in het Nederlands over deze beurten. Reageer op het opvallendste moment — een treffer, een misser, een ommezwaai — en daag de toeschouwer uit.`,
+		`Taak 2: Beantwoord die vraag als toeschouwer ${input.persona.name} — toon: ${input.persona.tone.trim()}, stijl: ${input.persona.style}. Geef een eerlijke, kleurrijke, grappige mening in het Nederlands: juich, kreun of spot — maar reageer op wat er echt gebeurde.`,
+		`Taak 3: Geef daarna als commentator ${analyst} jouw eigen deskundige analyse in het Nederlands, vanuit eigen ervaring en expertise. Dit is een improvisatieslot: je mag vergelijken met eerdere beurten${hasPrior ? ' (Eerdere context)' : ''} of met andere spelers om het spannender te maken. Reken vooruit: wat moet er gebeuren om te winnen?`,
 		`Taak 4: Sluit af als commentator ${analyst} met wat je hoopt dat er hierna gebeurt, en eindig met een leuke, spannende cliffhanger in het Nederlands.`,
+		'Belangrijk — feiten first:',
+		'- Gebruik ALLEEN de beurten en spelers die hierboven genoemd worden. Verzin GEEN worpen, scores of gebeurtenissen die niet in de lijst staan.',
+		'- Een grap of overdrijving mag, maar de feiten eronder moeten kloppen met de lijst.',
+		'- Houd het levendig en betrokken: dit is een feestje, geen nieuwsuitzending.',
 		'Houd alle vier de teksten kort (max 3 zinnen elk).',
 		'',
 		'Antwoord ALLEEN met geldige JSON, zonder markdown:',

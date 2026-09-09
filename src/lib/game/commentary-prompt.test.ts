@@ -118,3 +118,37 @@ describe('buildInterviewPrompt', () => {
 		expect(prompt).toContain('Theodore');
 	});
 });
+
+describe('buildInterviewPrompt — grounding & fun (2026-09-09 hardening)', () => {
+	const base = {
+		kind: 'classic' as const,
+		players: ['Ada', 'Ben'],
+		turnLines: ['beurt 1 — Ada: T20 T20 T20 (60 remaining)'],
+		persona: pickPersona(() => 0)
+	};
+
+	it('forbids inventing facts not in the turn lines', () => {
+		const prompt = buildInterviewPrompt(base);
+		expect(prompt).toContain('ALLEEN');
+		expect(prompt).toContain('Verzin GEEN');
+	});
+
+	it('asks for reactions and liveliness (fun goal)', () => {
+		const prompt = buildInterviewPrompt(base);
+		expect(prompt).toContain('juich');
+		expect(prompt).toContain('grappige');
+		expect(prompt).toContain('feestje');
+	});
+});
+
+describe('buildInterviewPrompt — risk 42 kind', () => {
+	it('names the Risk 42 game for the risk kind', () => {
+		const prompt = buildInterviewPrompt({
+			kind: 'risk',
+			players: ['Ada'],
+			turnLines: ['beurt 1 — Ada: T20 D20 S20'],
+			persona: pickPersona(() => 0)
+		});
+		expect(prompt).toContain('Risk 42');
+	});
+});

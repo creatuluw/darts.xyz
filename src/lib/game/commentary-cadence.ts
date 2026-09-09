@@ -28,3 +28,12 @@ export function newBoundaries(
 export function boundaryKey(matchRef: string, boundary: number): string {
 	return `${matchRef}:${boundary}`;
 }
+
+/**
+ * Queue boundaries that arrive while a broadcast is generating (or playing),
+ * so none are silently dropped. Capped at `max` — the newest boundaries win
+ * when the queue overflows (a stale backlog from a long freeze is worthless).
+ */
+export function enqueueBoundaries(queue: number[], fresh: number[], max = 2): number[] {
+	return [...queue, ...fresh].slice(-max);
+}

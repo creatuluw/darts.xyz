@@ -4,6 +4,7 @@
     import {
         DEFAULT_COMMENTARY_CADENCE,
         newBoundaries,
+        enqueueBoundaries,
     } from "$lib/game/commentary-cadence";
     import { COMMENTATORS } from "$lib/game/elevenlabs-voices";
 
@@ -20,7 +21,7 @@
         done = false,
     }: {
         matchRef: string;
-        kind: "classic" | "conquest";
+        kind: "classic" | "conquest" | "risk";
         turnCount: number;
         turnLines: string[];
         players: string[];
@@ -42,6 +43,8 @@
     // ── boundary detection ────────────────────────────────────────────
     let prevTurnCount = turnCount;
     let inFlight = $state(false);
+    // boundaries that arrive while a broadcast is generating/playing — drained, never dropped
+    let pending: number[] = [];
 
     interface Playing {
         question: string;
@@ -129,6 +132,10 @@
             addToast("Commentaar mislukt — even geen interview", "error", 30_000);
         } finally {
             inFlight = false;
+            // drain the queue — a boundary that arrived mid-broadcast still fires
+            if (pending.length > 0 && !done && !paused && !document.hidden) {
+                generate(pending.shift()!);
+            }
         }
     }
 
@@ -139,7 +146,8 @@
         }
         const fresh = newBoundaries(prevTurnCount, turnCount, n);
         prevTurnCount = turnCount;
-        if (fresh.length > 0 && !inFlight) generate(fresh[fresh.length - 1]);
+        if (fresh.length > 0) pending = enqueueBoundaries(pending, fresh);
+        if (pending.length > 0 && !inFlight) generate(pending.shift()!);
     });
 
     function setN(v: number) {
@@ -179,7 +187,7 @@
 
 <!-- subtitles -->
 {#if subtitle}
-    <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 max-w-2xl text-center px-6">
+    <div class="fixed bottom-1.5 left-1/2 -translate-x-1/2 z-20 max-w-xl text-center px-6">
         <p class="text-emerald-400 text-sm font-semibold mb-1">{speaker}</p>
         <p class="bg-zinc-900/90 border border-zinc-700 rounded-xl px-5 py-3 text-lg text-zinc-100 leading-snug">
             {subtitle}

@@ -24,7 +24,7 @@ export const POST: RequestHandler = async ({ request }) => {
     !matchRef ||
     typeof boundary !== "number" ||
     boundary < 1 ||
-    (kind !== "classic" && kind !== "conquest") ||
+    (kind !== "classic" && kind !== "conquest" && kind !== "risk") ||
     !Array.isArray(players) ||
     !Array.isArray(turnLines) ||
     turnLines.length === 0
@@ -76,9 +76,11 @@ export const POST: RequestHandler = async ({ request }) => {
       analyst: analyst.name,
       persona
     });
-    const interview = await generateInterview(prompt);
-
-    const voices = await getDutchVoices();
+    // LLM and voice-list fetch run concurrently — the voice list is cached per process
+    const [interview, voices] = await Promise.all([
+      generateInterview(prompt),
+      getDutchVoices()
+    ]);
     const spectator = pickSpectatorVoice(voices);
     if (!spectator) throw new Error("No Dutch spectator voices available");
 
@@ -100,7 +102,7 @@ export const POST: RequestHandler = async ({ request }) => {
       commentatorVoice: asker.voiceId,
       analystVoice: analyst.voiceId,
       spectatorVoice: spectator.voice_id,
-      spectatorName: spectator.name,
+      spectatorName: persona.name,
       audioQuestion,
       audioAnswer,
       audioAnalysis,
