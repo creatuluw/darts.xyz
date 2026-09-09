@@ -210,16 +210,75 @@ export function applyDart(state: RiskGameState, hit: DartHit): RiskGameState {
 
     state.turn.dartsLeft -= 1;
     if (state.turn.dartsLeft === 0) {
-        // turn advances: next player from the starter, fresh budget, charge cleared
+        // turn advances: next player from the starter, fresh budget + income, charge cleared
         const order = [state.starterPlayerId, ...state.players.filter((p) => p !== state.starterPlayerId)];
         const at = order.indexOf(state.turn.playerId);
+        const next = order[(at + 1) % order.length];
         state.turn = {
-            playerId: order[(at + 1) % order.length],
-            dartsLeft: BASE_DARTS + continentsHeld(state, order[(at + 1) % order.length])
-                .reduce((s, c) => s + continentDarts(c), 0),
+            playerId: next,
+            dartsLeft: BASE_DARTS + continentsHeld(state, next).reduce((s, c) => s + continentDarts(c), 0),
             charge: 0,
             index: state.turn.index + 1,
         };
+        if (state.mode === 'clock' && state.turn.index - 1 >= (state.clockTurns ?? 0) * state.players.length) {
+            soundTheHorn(state);
+        }
+    }
+    checkDomination(state);
+    return state;
+}
+
+const CLOCK_CONTINENT_POINTS: Record<Continent, number> = { NA: 2, SA: 3, EU: 3, AF: 3, AS: 5, OC: 3 };
+
+export interface StandingRow {
+    playerId: PlayerId;
+    boxes: number;
+    continents: Continent[];
+    armies: number;
+    score: number;
+}
+
+export function standings(state: RiskGameState): StandingRow[] {
+    return state.players
+        .map((p) => {
+            const owned = state.boxes.filter((b) => b.owner === p);
+            const conts = continentsHeld(state, p);
+            return {
+                playerId: p,
+                boxes: owned.length,
+                continents: conts,
+                armies: owned.reduce((s, b) => s + b.armies, 0),
+                score: owned.length + conts.reduce((s, c) => s + CLOCK_CONTINENT_POINTS[c], 0),
+            };
+        })
+        .sort((x, y) => y.score - x.score || y.boxes - x.boxes || y.armies - x.armies);
+}
+
+function checkDomination(state: RiskGameState): void {
+    if (state.winner !== null) return;
+    const sole = state.boxes[0].owner !== null && state.boxes.every((b) => b.owner === state.boxes[0].owner);
+    if (sole) state.winner = state.boxes[0].owner;
+}
+
+function soundTheHorn(state: RiskGameState): void {
+    const table = standings(state);
+    const top = table[0].score;
+    const leaders = table.filter((r) => r.score === top).map((r) => r.playerId);
+    if (leaders.length === 1) state.winner = leaders[0];
+    else state.tie = leaders;
+}
+
+/** Sudden death after a tied clock horn: one dart at the bull each, nearest wins. */
+export function applyTiebreak(state: RiskGameState, throws: Array<{ playerId: PlayerId; distance: number }>): RiskGameState {
+    if (state.winner !== null) throw new Error('game is over');
+    if (!state.tie) throw new Error('no tie to break');
+    const best = Math.min(...state.tie.map((p) => throws.find((t) => t.playerId === p)?.distance ?? Infinity));
+    const still = state.tie.filter((p) => (throws.find((t) => t.playerId === p)?.distance ?? Infinity) === best);
+    if (still.length === 1) {
+        state.winner = still[0];
+        state.tie = null;
+    } else {
+        state.tie = still; // dead heat — re-throw
     }
     return state;
 }

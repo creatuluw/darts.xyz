@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyDart, budgetWithSources, createGame, isExiled } from './risk-engine';
+import { applyDart, applyTiebreak, budgetWithSources, createGame, isExiled, standings } from './risk-engine';
 
 describe('Risk 42 — the Deal (M1.1)', () => {
     it('deals all 40 boxes equally with 2 armies each (2 players)', () => {
@@ -247,8 +247,9 @@ describe('Risk 42 — turn lifecycle & the Arsenal (M1.3)', () => {
 });
 
 describe('Risk 42 — exile & clawback (M1.4)', () => {
+    // 3 players: exile only exists while someone else still holds land — 2p zero-boxes IS domination
     const setup = () => {
-        const g = createGame(['a', 'b'], { seed: 42 });
+        const g = createGame(['a', 'b', 'c'], { seed: 42 });
         const box = (id: string) => g.boxes.find((x) => x.id === id)!;
         return { g, box };
     };
@@ -349,5 +350,75 @@ describe('Risk 42 — continent income (M1.5)', () => {
             expect.objectContaining({ continent: 'SA', darts: 1 }),
         ]);
         expect(budget.total).toBe(6);
+    });
+});
+
+describe('Risk 42 — endgames (M1.6)', () => {
+    const setup = () => {
+        const g = createGame(['a', 'b'], { seed: 42 });
+        const box = (id: string) => g.boxes.find((x) => x.id === id)!;
+        return { g, box };
+    };
+    const playTurn = (g: ReturnType<typeof createGame>) => {
+        const p = g.turn.playerId;
+        while (g.turn.playerId === p && g.turn.dartsLeft > 0 && g.winner === null) applyDart(g, { segment: 0 });
+    };
+
+    it('domination: the game is won the instant one player owns all 40', () => {
+        const { g, box } = setup();
+        for (const b of g.boxes) { b.owner = 'a'; b.armies = 2; }
+        box('3-outer').owner = 'b'; box('3-outer').armies = 1;
+        expect(g.winner).toBeNull();
+
+        applyDart(g, { segment: 3, multiplier: 2 }); // capture the last enemy box
+        expect(g.winner).toBe('a');
+        expect(() => applyDart(g, { segment: 3, multiplier: 3 })).toThrow(/over/);
+    });
+
+    it('a blank box still on the board blocks domination', () => {
+        const { g, box } = setup();
+        for (const b of g.boxes) { b.owner = 'a'; b.armies = 2; }
+        box('3-outer').owner = null; box('3-outer').armies = 0;
+        applyDart(g, { segment: 3, multiplier: 2 }); // claims the blank
+        expect(g.winner).toBe('a');
+    });
+
+    it('clock: the horn sounds after every player completes their turns; standings rank by score', () => {
+        const g = createGame(['a', 'b', 'c'], { mode: 'clock', clockTurns: 1, seed: 42 });
+        // arrange a decisive board: a takes everything, b keeps 2 boxes, c keeps 1
+        for (const b of g.boxes) b.owner = 'a';
+        const keep = (id: string, p: string) => { const b = g.boxes.find((x) => x.id === id)!; b.owner = p; b.armies = 2; };
+        keep('19-outer', 'b'); keep('7-outer', 'b'); // SA pair, not the continent
+        keep('16-inner', 'c');
+
+        playTurn(g); playTurn(g); playTurn(g); // one turn each
+
+        expect(g.winner).toBe('a');
+        const table = standings(g);
+        expect(table[0].playerId).toBe('a');
+        expect(table.find((r) => r.playerId === 'b')?.boxes).toBe(2);
+        expect(table.find((r) => r.playerId === 'c')?.boxes).toBe(1);
+        expect(table.find((r) => r.playerId === 'a')?.score).toBe(37 + 2 + 3 + 3 + 5 + 3); // 37 boxes + NA2 + EU3 + AF3 + AS5 + OC3
+    });
+
+    it('clock tie: nearest-bull tiebreak resolves; equal distances demand a re-throw', () => {
+        const g = createGame(['a', 'b'], { mode: 'clock', clockTurns: 1, seed: 42 });
+        for (const b of g.boxes) { b.owner = 'a'; }
+        for (let i = 0; i < 20; i++) g.boxes[i].owner = 'b'; // 20/20 split
+        playTurn(g); playTurn(g);
+
+        expect(g.winner).toBeNull();
+        expect(g.tie).toEqual(['a', 'b']);
+
+        applyTiebreak(g, [{ playerId: 'a', distance: 12.5 }, { playerId: 'b', distance: 9.75 }]);
+        expect(g.winner).toBe('b');
+
+        const g2 = createGame(['a', 'b'], { mode: 'clock', clockTurns: 1, seed: 42 });
+        for (const b of g2.boxes) { b.owner = 'a'; }
+        for (let i = 0; i < 20; i++) g2.boxes[i].owner = 'b';
+        playTurn(g2); playTurn(g2);
+        applyTiebreak(g2, [{ playerId: 'a', distance: 10 }, { playerId: 'b', distance: 10 }]);
+        expect(g2.winner).toBeNull();
+        expect(g2.tie).toEqual(['a', 'b']); // re-throw
     });
 });
