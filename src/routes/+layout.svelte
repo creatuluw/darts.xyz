@@ -62,9 +62,11 @@
     >
         {#if !isTv}<FloatingNav />{/if}
         <main
-            class="{isFullscreen
-                ? 'pt-2 pb-2 px-3 md:px-4'
-                : 'pt-16 pb-16 px-4 md:px-8'} max-w-7xl mx-auto transition-all duration-300"
+            class="{isTv
+                ? ''
+                : isFullscreen
+                    ? 'pt-2 pb-2 px-3 md:px-4'
+                    : 'pt-16 pb-16 px-4 md:px-8'} {isTv ? '' : 'max-w-7xl mx-auto transition-all duration-300'}"
         >
             {@render children()}
         </main>

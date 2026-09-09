@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
+    import { IconCast } from "@tabler/icons-svelte";
     import RiskBoard from "$lib/components/risk/RiskBoard.svelte";
     import {
         applyDart,
@@ -173,6 +174,19 @@
     {#if game && setup}
         <div class="max-w-6xl mx-auto px-4 py-6 grid lg:grid-cols-[minmax(0,1fr)_360px] gap-6">
             <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h1 class="font-display font-extrabold text-2xl md:text-3xl">Risk 42</h1>
+                    {#if gameId}
+                        <button
+                            onclick={() => window.open(`/match/risk/${gameId}/tv`, "_blank")}
+                            aria-label="Open TV-weergave in nieuw tabblad"
+                            class="flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                        >
+                            <IconCast size={16} />
+                            TV
+                        </button>
+                    {/if}
+                </div>
                 {#if game.winner}
                     <div class="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-500/30 p-6 mb-4 flex items-center justify-between">
                         <div>
