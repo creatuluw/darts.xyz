@@ -20,6 +20,11 @@
 
     interface PlayerMeta { id: string; name: string; color: string; }
 
+    function initialsOf(name: string): string {
+        const parts = name.trim().split(/\s+/);
+        return ((parts[0]?.[0] ?? "?") + (parts[1]?.[0] ?? "")).toUpperCase();
+    }
+
     let game = $state(null as RiskGameState | null);
     let players = $state<PlayerMeta[]>([]);
     let feed = $state<{ id: number; text: string; color: string }[]>([]);
@@ -170,7 +175,7 @@
                 {/if}
 
                 <div class="rounded-2xl bg-white dark:bg-zinc-900 ring-1 ring-black/10 dark:ring-white/15 p-4">
-                    <RiskBoard state={game} playerColor={Object.fromEntries(players.map((p) => [p.id, p.color]))} onHit={throwDart} disabled={boardDisabled} />
+                    <RiskBoard state={game} playerColor={Object.fromEntries(players.map((p) => [p.id, p.color]))} playerInitials={Object.fromEntries(players.map((p) => [p.id, initialsOf(p.name)]))} onHit={throwDart} disabled={boardDisabled} />
                     <div class="mt-3 flex items-center justify-between">
                         <p class="text-xs text-zinc-400">Treble feeds the inner box · double feeds the outer · bull charges the Arsenal</p>
                         {#if !boardDisabled}

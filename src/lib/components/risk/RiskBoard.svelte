@@ -6,11 +6,13 @@
         onHit,
         disabled = false,
         playerColor,
+        playerInitials = {},
     }: {
         state: RiskGameState;
         onHit: (hit: DartHit) => void;
         disabled?: boolean;
         playerColor: Record<string, string>;
+        playerInitials: Record<string, string>;
     } = $props();
 
     const CX = 250,
@@ -105,8 +107,11 @@
     const innerLabelPos = labelPos("inner");
     const outerLabelPos = labelPos("outer");
     const badgePos = (ring: "inner" | "outer") => {
-        const r = ring === "inner" ? 68 : 160;
-        return (idx: number) => polarToXY(r, idx * segAngle);
+        // outer badges sit in the wedge corner (clockwise wire side, near the double ring),
+        // clear of the centered territory label; inner badges pulled toward the bull
+        const r = ring === "inner" ? 58 : 170;
+        const skew = ring === "inner" ? 0 : segAngle / 2 - (4 * Math.PI) / 180;
+        return (idx: number) => polarToXY(r, idx * segAngle + skew);
     };
     const innerBadge = badgePos("inner");
     const outerBadge = badgePos("outer");
@@ -203,17 +208,21 @@
             {#if boxOf(`${w.num}-outer`)?.owner}
                 {@const p = outerBadge(idx)}
                 {@const box = boxOf(`${w.num}-outer`)!}
-                <circle cx={p.x} cy={p.y - 4} r={9} fill={ownedFill(`${w.num}-outer`, "#888")} stroke="#fff" stroke-width="1.2" pointer-events="none" />
-                <text x={p.x} y={p.y - 4} text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="800" fill={textOn(ownedFill(`${w.num}-outer`, w.singleColor))} pointer-events="none">
-                    {box.armies}
+                {@const ini = playerInitials[box.owner!] ?? ""}
+                <circle cx={p.x} cy={p.y} r={10} fill={ownedFill(`${w.num}-outer`, "#888")} stroke="#fff" stroke-width="1.2" pointer-events="none" />
+                <text x={p.x} text-anchor="middle" font-weight="700" fill={textOn(ownedFill(`${w.num}-outer`, w.singleColor))} pointer-events="none">
+                    <tspan x={p.x} y={p.y - 3.6} dominant-baseline="central" font-size="6.5">{ini}</tspan>
+                    <tspan x={p.x} y={p.y + 4.8} dominant-baseline="central" font-size="9.5" font-weight="800">{box.armies}</tspan>
                 </text>
             {/if}
             {#if boxOf(`${w.num}-inner`)?.owner}
                 {@const p = innerBadge(idx)}
                 {@const box = boxOf(`${w.num}-inner`)!}
-                <circle cx={p.x} cy={p.y - 4} r={9} fill={ownedFill(`${w.num}-inner`, "#888")} stroke="#fff" stroke-width="1.2" pointer-events="none" />
-                <text x={p.x} y={p.y - 4} text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="800" fill={textOn(ownedFill(`${w.num}-inner`, w.singleColor))} pointer-events="none">
-                    {box.armies}
+                {@const ini = playerInitials[box.owner!] ?? ""}
+                <circle cx={p.x} cy={p.y} r={7.5} fill={ownedFill(`${w.num}-inner`, "#888")} stroke="#fff" stroke-width="1.2" pointer-events="none" />
+                <text x={p.x} text-anchor="middle" font-weight="700" fill={textOn(ownedFill(`${w.num}-inner`, w.singleColor))} pointer-events="none">
+                    <tspan x={p.x} y={p.y - 2.6} dominant-baseline="central" font-size="5">{ini}</tspan>
+                    <tspan x={p.x} y={p.y + 3.4} dominant-baseline="central" font-size="8" font-weight="800">{box.armies}</tspan>
                 </text>
             {/if}
 
