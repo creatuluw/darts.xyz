@@ -45,8 +45,8 @@ test.describe('TV commentary', () => {
 			data: { state: withTurns(base, 2) }
 		});
 
-		// fake-mode interview: subtitle appears, exactly one POST fired
-		await expect(page.getByText('Commentator').first()).toBeVisible({ timeout: 10_000 });
+		// fake-mode interview: subtitle appears (Leo or Theodore presents), exactly one POST fired
+		await expect(page.getByText(/^(Leo|Theodore)$/).first()).toBeVisible({ timeout: 10_000 });
 		await page.waitForTimeout(1_500);
 		expect(posts).toBe(1);
 	});

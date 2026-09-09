@@ -3,6 +3,7 @@
     import { page as pageStore } from "$app/stores";
     import { IconCast, IconLink } from "@tabler/icons-svelte";
     import TvCommentary from "$lib/components/tv/TvCommentary.svelte";
+    import TvStage from "$lib/components/tv/TvStage.svelte";
     import { getCheckoutSuggestions } from "$lib/game/checkout-suggestions";
     import { addToast } from "$lib/stores/toast";
 
@@ -151,7 +152,8 @@
 
 <svelte:head><title>TV — dart.monster</title></svelte:head>
 
-<div class="min-h-dvh bg-zinc-950 text-white p-6 md:p-10 flex flex-col select-none">
+<TvStage>
+    <div class="h-full w-full bg-zinc-950 text-white p-10 flex flex-col select-none">
     {#if missing}
         <div class="flex-1 flex items-center justify-center">
             <p class="text-zinc-400 text-2xl">Wedstrijd niet gevonden.</p>
@@ -162,10 +164,10 @@
         </div>
     {:else}
         <!-- header: format + live dot + copy link -->
-        <header class="flex items-center justify-between mb-6 md:mb-10">
+        <header class="flex items-center justify-between mb-10">
             <div class="flex items-center gap-4">
-                <span class="font-display font-black text-3xl md:text-4xl tracking-tight">DARTS</span>
-                <span class="text-zinc-500 text-xl md:text-2xl">
+                <span class="font-display font-black text-4xl tracking-tight">DARTS</span>
+                <span class="text-zinc-500 text-2xl">
                     {match.startingScore} · {fmt(match.legsPerSet)} legs × {fmt(match.setsPerMatch)} sets
                 </span>
             </div>
@@ -185,20 +187,20 @@
         </header>
 
         <!-- player cards -->
-        <div class="flex-1 grid gap-4 md:gap-6 {seats.length <= 2 ? 'grid-cols-1 md:grid-cols-2' : seats.length <= 4 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3'} content-center">
+        <div class="flex-1 grid gap-6 {seats.length > 4 ? 'grid-cols-3' : 'grid-cols-2'} content-center">
             {#each seats as seat, i (seat.id)}
                 <div
-                    class="rounded-2xl border-4 p-6 md:p-8 text-center transition-colors
+                    class="rounded-2xl border-4 p-8 text-center transition-colors
                     {i === activeSeatIdx ? 'border-emerald-400 bg-zinc-900' : 'border-zinc-800 bg-zinc-900/50'}"
                 >
-                    <p class="text-xl md:text-2xl text-zinc-400 truncate {i === activeSeatIdx ? 'text-emerald-400' : ''}">
+                    <p class="text-2xl text-zinc-400 truncate {i === activeSeatIdx ? 'text-emerald-400' : ''}">
                         {names[seat.playerId] ?? "…"}
-                        {#if i === activeSeatIdx}· gooiet{/if}
+                        {#if i === activeSeatIdx}· gooit{/if}
                     </p>
-                    <p class="font-display font-black text-7xl md:text-8xl lg:text-9xl tabular-nums leading-none my-3 md:my-5">
+                    <p class="font-display font-black text-9xl tabular-nums leading-none my-5">
                         {remainingOf(seat.playerId)}
                     </p>
-                    <div class="flex items-center justify-center gap-6 text-lg md:text-xl text-zinc-400">
+                    <div class="flex items-center justify-center gap-6 text-xl text-zinc-400">
                         <span>S {seat.setsWon}</span>
                         <span>L {seat.legsWon}</span>
                         <span>avg {legAverage(seat.playerId)}</span>
@@ -208,7 +210,7 @@
         </div>
 
         <!-- footer strip: last turn + checkout -->
-        <footer class="mt-6 md:mt-10 flex items-center justify-between gap-6 text-lg md:text-2xl">
+        <footer class="mt-10 flex items-center justify-between gap-6 text-2xl">
             <div class="text-zinc-400 min-w-0">
                 {#if lastTurn}
                     <span class="text-zinc-200">{lastTurn.name}</span>
@@ -230,7 +232,7 @@
         {#if finished && winner}
             <div class="fixed inset-0 z-10 bg-zinc-950/95 flex flex-col items-center justify-center text-center">
                 <p class="text-emerald-400 text-2xl mb-2">Wedstrijd afgelopen</p>
-                <p class="font-display font-black text-6xl md:text-8xl mb-4">{winner.name}</p>
+                <p class="font-display font-black text-8xl mb-4">{winner.name}</p>
                 <p class="text-zinc-400 text-2xl">wint met {seats.find(s => s.playerId === match!.winnerId)?.setsWon ?? 0}–{seats.filter(s => s.playerId !== match!.winnerId).map(s => s.setsWon).join("/") ?? 0} sets</p>
             </div>
         {/if}
@@ -247,3 +249,4 @@
         {/if}
     {/if}
 </div>
+</TvStage>
