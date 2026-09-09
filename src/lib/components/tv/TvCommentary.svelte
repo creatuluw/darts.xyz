@@ -91,19 +91,32 @@
             .catch(() => {});
     });
 
+    /** Human reading/speaking time for a segment — subtitles and audio caps use it. */
+    function segmentMs(text: string): number {
+        return Math.min(30_000, 3500 + text.length * 90); // ~11 chars/s + buffer
+    }
+
     function playBase64(b64: string | null, text: string, who: string, role: string): Promise<void> {
         subtitle = text;
         speaker = who;
         speakerRole = role;
         if (!b64) {
             // no audio (fake mode / generation without TTS) — subtitle only
-            return new Promise((resolve) => setTimeout(resolve, 4000));
+            return new Promise((resolve) => setTimeout(resolve, segmentMs(text)));
         }
         return new Promise((resolve) => {
+            let done = false;
+            const finish = () => {
+                if (done) return;
+                done = true;
+                resolve();
+            };
+            // ponytail: hidden/throttled windows never fire onended — cap every segment
+            const cap = setTimeout(finish, segmentMs(text));
             const audio = new Audio(`data:audio/mpeg;base64,${b64}`);
-            audio.onended = () => resolve();
-            audio.onerror = () => resolve();
-            audio.play().catch(() => setTimeout(resolve, 4000)); // autoplay blocked → subtitles carry it
+            audio.onended = () => { clearTimeout(cap); finish(); };
+            audio.onerror = () => { clearTimeout(cap); finish(); };
+            audio.play().catch(() => { clearTimeout(cap); setTimeout(finish, 4000); }); // autoplay blocked → subtitles carry it
         });
     }
 
