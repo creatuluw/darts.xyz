@@ -1,14 +1,14 @@
 ---
 type: Artifact
 title: In-game session testing reports (docs/in-game-session-testing/)
-description: Four full playtest session reports from 2026-09-09, played through the real UI (BrowserOS neo against the dev server, master `46a429e`) with the TV second scree
+description: Five full playtest session reports from 2026-09-09, played through the real UI (BrowserOS neo against the dev server, master `46a429e`) with the TV second scree
 tags: [playtest, qa, reports, conquest, risk-42]
 timestamp: "2026-09-09T19:48:45.129Z"
 ---
 
 # In-game session testing reports (docs/in-game-session-testing/)
 
-Four full playtest session reports from 2026-09-09, played through the real UI (BrowserOS neo against the dev server, master `46a429e`) with the TV second screen open and every turn verified against engine/API state — plus a cross-session index with a prioritized improvement backlog and reusable helper scripts.
+Five full playtest session reports from 2026-09-09, played through the real UI (BrowserOS neo against the dev server, master `46a429e`) with the TV second screen open and every turn verified against engine/API state — plus a cross-session index with a prioritized improvement backlog and reusable helper scripts. Session 5 (evening) covered the Risk 42 continent-palette map work and the TV full-bleed overlay redesign verification.
 
 ## What it documents
 

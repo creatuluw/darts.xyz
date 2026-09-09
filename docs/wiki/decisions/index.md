@@ -41,3 +41,5 @@
 - [TV cast pages render on a fixed 1920×1080 TvStage canvas, scaled to fit — no viewport breakpoints](./tv-cast-pages-render-on-a-fixed-1920-1080-tvstage-canvas-sca.md) - Context
 - [TvStage fills the viewport (independent x/y scale) — letterboxing dropped](./tvstage-fills-the-viewport-independent-x-y-scale-letterboxin.md) - Context
 - [Risk 42 wears the classic Risk continent palette everywhere](./risk-42-wears-the-classic-risk-continent-palette-everywhere.md) - Context
+- [Risk 42 TV: full-bleed map with overlay panels pinned to measured-empty margins](./risk-42-tv-full-bleed-map-with-overlay-panels-pinned-to-meas.md) - Context
+- [Commentary API degrades per-segment — TTS failure drops to subtitles, never a whole-request 502](./commentary-api-degrades-per-segment-tts-failure-drops-to-sub.md) - Context

@@ -234,6 +234,15 @@ export class DatabaseService {
     return result[0] || null;
   }
 
+  /** Full commentary history for a match, oldest first (TV replay drawer). */
+  async listCommentary(matchRef: string) {
+    return getDb()
+      .select()
+      .from(schema.commentary)
+      .where(eq(schema.commentary.matchRef, matchRef))
+      .orderBy(schema.commentary.createdAt);
+  }
+
   async createCommentary(row: {
     matchRef: string;
     boundaryKey: string;

@@ -9,3 +9,4 @@
 - [Board SVGs are generated — edit the regenerator, never the output](./board-svgs-are-generated.md) - Guideline
 - [Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets](./engine-invariant-sweeps-plain-asserts-assert-theorems-not-em.md) - The guideline
 - [New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board](./new-game-modes-follow-the-conquest-cut-pure-setup-module-fun.md) - The rule
+- [Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert](./prove-overlays-never-block-gameplay-live-dom-bbox-measuremen.md) - The guideline

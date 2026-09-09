@@ -200,15 +200,32 @@
                 </p>
             </div>
 
-            <!-- winner card -->
+            <!-- winner card: full standings over the frozen end-state map -->
             {#if frozen && game.winner}
-                <div class="absolute inset-0 z-10 bg-zinc-950/95 flex flex-col items-center justify-center text-center">
-                    <p class="text-emerald-400 text-2xl mb-2">Kampioen</p>
-                    <p class="font-display font-black text-8xl mb-6">{nameOf(game.winner)}</p>
-                    <div class="space-y-1 text-xl text-zinc-400">
-                        {#each standings(game).slice(0, 3) as st, i (st.playerId)}
-                            <p>{i + 1}. {nameOf(st.playerId)} — {st.score} pt · {st.boxes} boxes</p>
-                        {/each}
+                <div class="absolute inset-0 z-10 bg-zinc-950/75 backdrop-blur-[2px] flex flex-col items-center justify-center text-center px-16">
+                    <p class="text-emerald-400 text-xl mb-1 font-bold tracking-wider uppercase">Kampioen</p>
+                    <p class="font-display font-black text-7xl mb-4" style="color: {colorOf(game.winner)}">{nameOf(game.winner)}</p>
+                    <p class="text-zinc-400 mb-8">{game.mode === "clock" ? `Klok · ${game.clockTurns} beurten per speler` : "Domination"} · {game.turn.index - 1} beurten</p>
+                    <div class="rounded-2xl bg-zinc-900/80 border border-zinc-800 p-6 min-w-[560px]">
+                        <table class="w-full text-lg">
+                            <thead>
+                                <tr class="text-zinc-500 text-xs uppercase tracking-wider text-left">
+                                    <th></th><th>Speler</th><th class="text-right">Boxes</th><th class="text-right">Armies</th><th class="text-right">Score</th><th>Continenten</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {#each standings(game) as row, i (row.playerId)}
+                                    <tr class="{row.playerId === game.winner ? 'font-bold text-white' : 'text-zinc-300'}">
+                                        <td class="py-1.5 pr-2"><span class="text-zinc-500">{i + 1}.</span> <span class="inline-block w-3 h-3 rounded-full align-middle" style="background: {colorOf(row.playerId)}"></span></td>
+                                        <td class="py-1.5 pr-6">{nameOf(row.playerId)}</td>
+                                        <td class="py-1.5 text-right tabular-nums pr-6">{row.boxes}</td>
+                                        <td class="py-1.5 text-right tabular-nums pr-6">{row.armies}</td>
+                                        <td class="py-1.5 text-right tabular-nums pr-6">{row.score}</td>
+                                        <td class="py-1.5">{#each row.continents as c (c)}<span class="inline-block bg-zinc-800 rounded px-1.5 py-0.5 mx-0.5 text-sm text-emerald-300">{c}</span>{/each}</td>
+                                    </tr>
+                                {/each}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             {/if}

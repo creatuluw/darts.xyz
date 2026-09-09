@@ -8,10 +8,12 @@ okf_version: "0.1"
 Auto-generated digest of the most recent conventions, decisions, rules and
 development patterns, plus architecture and global patterns — newest first.
 The actual files live in the wiki subfolders; follow the links (clickable in /wiki).
-Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21:10:13.266Z.
+Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21:33:41.261Z.
 
 ## Recent Decisions
 
+- [Commentary API degrades per-segment — TTS failure drops to subtitles, never a whole-request 502](decisions/commentary-api-degrades-per-segment-tts-failure-drops-to-sub.md) — Context (2026-09-09)
+- [Risk 42 TV: full-bleed map with overlay panels pinned to measured-empty margins](decisions/risk-42-tv-full-bleed-map-with-overlay-panels-pinned-to-meas.md) — Context (2026-09-09)
 - [Risk 42 wears the classic Risk continent palette everywhere](decisions/risk-42-wears-the-classic-risk-continent-palette-everywhere.md) — Context (2026-09-09)
 - [TvStage fills the viewport (independent x/y scale) — letterboxing dropped](decisions/tvstage-fills-the-viewport-independent-x-y-scale-letterboxin.md) — Context (2026-09-09)
 - [TV cast pages render on a fixed 1920×1080 TvStage canvas, scaled to fit — no viewport breakpoints](decisions/tv-cast-pages-render-on-a-fixed-1920-1080-tvstage-canvas-sca.md) — Context (2026-09-09)
@@ -25,11 +27,10 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21
 - [Risk 42 continent income: +1 dart per full continent (Asia +2); budget shown pre-turn](decisions/risk-42-continent-income.md) — Context (2026-09-09)
 - [Risk 42 bulls: the Arsenal charge (25 = +1, 50 = +2)](decisions/risk-42-bulls-the-arsenal-charge-25-1-50-2.md) — Context (2026-09-09)
 - [Risk 42 elimination: exile & clawback — zero boxes ≠ death](decisions/risk-42-exile-and-clawback.md) — Context (2026-09-09)
-- [Risk 42 endgame: Domination as headline, 170/301/501 clock as alt — mirroring T&T](decisions/risk-42-domination-headline-clock-alt.md) — Context (2026-09-09)
-- [Territory labels go horizontal: centered in each box, no rotation](decisions/territory-labels-go-horizontal-centered-in-each.md) — Context (2026-09-08)
 
 ## Active Rules
 
+- [Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert](rules/prove-overlays-never-block-gameplay-live-dom-bbox-measuremen.md) — The guideline (2026-09-09)
 - [New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board](rules/new-game-modes-follow-the-conquest-cut-pure-setup-module-fun.md) — The rule (2026-09-09)
 - [Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets](rules/engine-invariant-sweeps-plain-asserts-assert-theorems-not-em.md) — The guideline (2026-09-09)
 - [Board SVGs are generated — edit the regenerator, never the output](rules/board-svgs-are-generated.md) — Guideline (2026-09-08)
@@ -46,6 +47,7 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21
 
 ## Recent Learnings — development patterns
 
+- [startRisk clears risk42_state but not risk42_game_id — new game silently resumes the old one](learnings/startrisk-clears-risk42-state-but-not-risk42-game-id-new-gam.md) — **Found during the Risk 42 prod playtest campaign (2026-09-09/10), logged P1.** (2026-09-09)
 - [Commentary LLM = DeepSeek deepseek-v4-flash (from glm-5.3-flash); ~1s LLM latency](learnings/commentary-llm-deepseek-deepseek-v4-flash-from-glm-5-3-flash.md) — 2026-09-09 evening: commentary LLM switched from OpenCode Zen Go (glm-5.3-flash, ~20-50s latency, needed x-opencode-session header) to **Dee… (2026-09-09)
 - [Risk map SVG layers share a translate(-168,-119) — apply it when extracting paths or labels misalign](learnings/risk-map-svg-layers-share-a-translate-168-119-apply-it-when-.md) — While building the Risk 42 TV world map (2026-09-09): `docs/risk/risk-territory-board.svg` puts ALL its content layers (countries, labels, t… (2026-09-09)
 - [TV cast pages freeze in background tabs — document.hidden pauses polling and commentary](learnings/tv-cast-pages-freeze-in-background-tabs-document-hidden-paus.md) — All three TV cast routes — `src/routes/match/[id]/tv/+page.svelte` (classic), `src/routes/match/conquest/[id]/tv/+page.svelte` (T&T), `src/r… (2026-09-09)
@@ -65,7 +67,6 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21
 - [Game-engine tests: filler darts must be misses, and fixtures obey the rules they enforce](learnings/game-engine-tests-filler-darts-must-be-misses-and-fixtures-o.md) — Caught red-handed twice during the Risk 42 M1 TDD cycles (2026-09-09), both produced false reds (and one false green that slipped into a com… (2026-09-09)
 - [Fresh SvelteKit worktree needs `svelte-kit sync` before tests run](learnings/fresh-sveltekit-worktree-needs-svelte-kit-sync-before-tests-.md) — Gotcha from the Risk 42 M1 build (2026-09-09): a freshly created SvelteKit worktree (deps junctioned from the main checkout) is **missing th… (2026-09-09)
 - [risk-territory-board.svg palette: fills live in layer2, join to territories by centroid containment](learnings/risk-territory-board-svg-palette-fills-live-in-layer2-join-t.md) — The world map for the Risk 42 TV view (`docs/risk/risk-territory-board.svg`, a copy of `risk-board.svg`) carries its **per-territory tints i… (2026-09-09)
-- [Top-level return in a CJS script skips the file write — silent no-op](learnings/top-level-return-in-a-cjs-script-skips-the-file.md) — Gotcha (2026-09-08)
 
 ## Architecture
 

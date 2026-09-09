@@ -4,6 +4,7 @@
     import { goto } from "$app/navigation";
     import { IconCast } from "@tabler/icons-svelte";
     import RiskBoard from "$lib/components/risk/RiskBoard.svelte";
+    import RiskWorldMap from "$lib/components/risk/RiskWorldMap.svelte";
     import {
         applyDart,
         budgetWithSources,
@@ -77,6 +78,20 @@
     const budget = $derived(game ? budgetWithSources(game) : null);
     const activeName = $derived(game ? setup?.name(game.turn.playerId) : "");
     const boardDisabled = $derived(!game || game.winner !== null || game.tie !== null || gate);
+
+    // end screen: final map + per-player maps for it + simple game stats from the war log
+    const playerColor = $derived(Object.fromEntries(players.map((p) => [p.id, p.color])));
+    const playerInitials = $derived(Object.fromEntries(players.map((p) => [p.id, initialsOf(p.name)])));
+    const endStats = $derived.by(() => {
+        if (!game?.winner) return null;
+        const texts = feed.map((f) => f.text);
+        return {
+            turns: game.turn.index - 1,
+            captures: texts.filter((t) => t.includes("captures")).length,
+            arsenal: texts.filter((t) => t.includes("Arsenal")).length,
+            misses: texts.filter((t) => t.endsWith("misses")).length,
+        };
+    });
 
     function log(text: string, color: string) {
         feed = [{ id: ++feedId, text, color }, ...feed].slice(0, 40);
@@ -219,13 +234,36 @@
                 {/if}
 
                 <div class="rounded-2xl bg-white dark:bg-zinc-900 ring-1 ring-black/10 dark:ring-white/15 p-4">
-                    <RiskBoard state={game} onHit={throwDart} disabled={boardDisabled} />
-                    <div class="mt-3 flex items-center justify-between">
-                        <p class="text-xs text-zinc-400">Treble feeds the inner box · double feeds the outer · bull charges the Arsenal</p>
-                        {#if !boardDisabled}
-                            <button class="text-xs font-semibold px-3 py-1.5 rounded-full ring-1 ring-black/10 dark:ring-white/15 text-zinc-500" onclick={() => throwDart({ segment: 0, multiplier: 1 })}>Miss</button>
-                        {/if}
-                    </div>
+                    {#if game.winner}
+                        <!-- end state: the world as it ended, not the throwing board -->
+                        <div class="h-[420px]">
+                            <RiskWorldMap
+                                game={game}
+                                {playerColor}
+                                {playerInitials}
+                                activePlayerId={null}
+                            />
+                        </div>
+                        <div class="mt-3 flex items-center justify-center gap-6 text-sm text-zinc-500">
+                            {#if endStats}
+                                <span>{endStats.turns} turns</span>
+                                <span>·</span>
+                                <span>{endStats.captures} captures</span>
+                                <span>·</span>
+                                <span>⚡ {endStats.arsenal}×</span>
+                                <span>·</span>
+                                <span>{endStats.misses} misses</span>
+                            {/if}
+                        </div>
+                    {:else}
+                        <RiskBoard state={game} onHit={throwDart} disabled={boardDisabled} />
+                        <div class="mt-3 flex items-center justify-between">
+                            <p class="text-xs text-zinc-400">Treble feeds the inner box · double feeds the outer · bull charges the Arsenal</p>
+                            {#if !boardDisabled}
+                                <button class="text-xs font-semibold px-3 py-1.5 rounded-full ring-1 ring-black/10 dark:ring-white/15 text-zinc-500" onclick={() => throwDart({ segment: 0, multiplier: 1 })}>Miss</button>
+                            {/if}
+                        </div>
+                    {/if}
                 </div>
             </div>
 
@@ -263,6 +301,18 @@
                             {/each}
                         </tbody>
                     </table>
+                    {#if standings(game).some((r) => r.continents.length)}
+                        <div class="mt-3 pt-3 border-t border-black/5 dark:border-white/10 space-y-1.5">
+                            {#each standings(game).filter((r) => r.continents.length) as row (row.playerId)}
+                                <p class="text-sm">
+                                    <span class="text-zinc-400">{setup.name(row.playerId)}:</span>
+                                    {#each row.continents as c (c)}
+                                        <span class="inline-block bg-black/5 dark:bg-white/10 rounded-lg px-2 py-0.5 mx-1 text-emerald-600 dark:text-emerald-300 font-semibold">{c}</span>
+                                    {/each}
+                                </p>
+                            {/each}
+                        </div>
+                    {/if}
                 </div>
 
                 <div class="rounded-2xl bg-white dark:bg-zinc-900 ring-1 ring-black/10 dark:ring-white/15 p-4">

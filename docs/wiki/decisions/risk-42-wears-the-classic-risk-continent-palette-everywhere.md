@@ -17,8 +17,8 @@ The Risk 42 game surfaces had inconsistent color stories: the scorer dartboard u
 
 Adopt the **classic Risk continent palette** as the single source of truth, exported from `risk-engine.ts` (`CONTINENT_COLORS` / `CONTINENT_DARK`, body + darker companion per continent): NA yellow, SA red-orange, EU cyan, AF golden-brown, AS green, OC purple.
 
-- **Scorer dartboard**: unowned/base box fills wear continent colors (outer box = body shade, inner box = darker companion); owned boxes still fill with the player color (ownership glanceability on the playing surface).
-- **TV world map**: territories ALWAYS wear their continent color — because the Risk 42 deal assigns every box an owner, a player-color fill would erase the scheme entirely. Ownership rides on the army-badge disc (player color), owner initials (player color, dark halo), and a white stroke on the active player's territories — the classic Risk model of colored pieces on continent-colored land.
+- **Scorer dartboard**: boxes wear continent colors (outer box = body shade, inner box = darker companion), matching the map. AMENDED same turn per user refinement: owned boxes no longer fill with player color, and player stats/labels were removed from the board — only territory names remain; ownership and player data live in the scorer panels.
+- **TV world map**: territories ALWAYS wear their continent color — because the Risk 42 deal assigns every box an owner, a player-color fill would erase the scheme entirely. Ownership rides on a **thick player-colored stroke on every owned territory** (distinct per-player palette, width 1.8) plus the army-badge disc (player color) with owner initials; unowned territories get a thin (0.8) stroke in a 72%-darkened continent shade — the classic Risk model of colored pieces on continent-colored land. AMENDED same turn per user refinement (was: white stroke on active player only — not distinct enough at a glance).
 
 ## Alternatives considered
 

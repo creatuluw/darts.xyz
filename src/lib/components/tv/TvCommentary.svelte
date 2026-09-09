@@ -62,10 +62,39 @@
     let playing = $state<Playing | null>(null);
     let subtitle = $state("");
     let speaker = $state("");
+    let speakerRole = $state("");
 
-    function playBase64(b64: string | null, text: string, who: string): Promise<void> {
+    // ── replay drawer: every segment ever broadcast for this match ─────
+    interface HistoryEntry { boundary: number; speaker: string; role: string; text: string; at: number; }
+    let history = $state<HistoryEntry[]>([]);
+    let drawerOpen = $state(false);
+
+    $effect(() => {
+        // seed the drawer with commentary generated before this TV joined
+        fetch(`/api/commentary/${encodeURIComponent(matchRef)}?all=1`)
+            .then((r) => (r.ok ? r.json() : []))
+            .then((rows: Array<{ boundaryKey: string; question: string; answer: string; analysis: string | null; outlook: string | null; spectatorName: string | null; commentatorVoice: string | null; analystVoice: string | null; createdAt: string }>) => {
+                const seeded: HistoryEntry[] = [];
+                for (const r of rows) {
+                    const b = Number(r.boundaryKey.split(":").pop()) || 0;
+                    const asker = commentatorName(r.commentatorVoice);
+                    const analyst = commentatorName(r.analystVoice);
+                    const spec = r.spectatorName ?? "Toeschouwer";
+                    seeded.push({ boundary: b, speaker: asker, role: "presentator", text: r.question, at: Date.parse(r.createdAt) || 0 });
+                    seeded.push({ boundary: b, speaker: spec, role: "toeschouwer", text: r.answer, at: Date.parse(r.createdAt) || 0 });
+                    if (r.analysis) seeded.push({ boundary: b, speaker: analyst, role: "analist", text: r.analysis, at: Date.parse(r.createdAt) || 0 });
+                    if (r.outlook) seeded.push({ boundary: b, speaker: analyst, role: "vooruitblik", text: r.outlook, at: Date.parse(r.createdAt) || 0 });
+                }
+                // only seed if we haven't already broadcast these live (no dupes)
+                if (history.filter((h) => h.boundary > 0).length === 0) history = seeded;
+            })
+            .catch(() => {});
+    });
+
+    function playBase64(b64: string | null, text: string, who: string, role: string): Promise<void> {
         subtitle = text;
         speaker = who;
+        speakerRole = role;
         if (!b64) {
             // no audio (fake mode / generation without TTS) — subtitle only
             return new Promise((resolve) => setTimeout(resolve, 4000));
@@ -78,20 +107,25 @@
         });
     }
 
-    async function play(interview: Playing) {
+    async function play(interview: Playing, boundary: number) {
         playing = interview;
-        await playBase64(interview.audioQuestion, interview.question, interview.askerName);
-        await playBase64(interview.audioAnswer, interview.answer, interview.spectatorName);
+        await playBase64(interview.audioQuestion, interview.question, interview.askerName, "presentator");
+        history = [...history, { boundary, speaker: interview.askerName, role: "presentator", text: interview.question, at: Date.now() }];
+        await playBase64(interview.audioAnswer, interview.answer, interview.spectatorName, "toeschouwer");
+        history = [...history, { boundary, speaker: interview.spectatorName, role: "toeschouwer", text: interview.answer, at: Date.now() }];
         // analyst segments — skip silently on cached rows from before the 4-segment format
         if (interview.analysis) {
-            await playBase64(interview.audioAnalysis, interview.analysis, interview.analystName);
+            await playBase64(interview.audioAnalysis, interview.analysis, interview.analystName, "analist");
+            history = [...history, { boundary, speaker: interview.analystName, role: "analist", text: interview.analysis, at: Date.now() }];
         }
         if (interview.outlook) {
-            await playBase64(interview.audioOutlook, interview.outlook, interview.analystName);
+            await playBase64(interview.audioOutlook, interview.outlook, interview.analystName, "vooruitblik");
+            history = [...history, { boundary, speaker: interview.analystName, role: "vooruitblik", text: interview.outlook, at: Date.now() }];
         }
         playing = null;
         subtitle = "";
         speaker = "";
+        speakerRole = "";
     }
 
     async function generate(boundary: number) {
@@ -100,6 +134,7 @@
             const res = await fetch("/api/commentary", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                signal: AbortSignal.timeout(60_000), // hung upstream must not pin the pill
                 body: JSON.stringify({
                     matchRef,
                     boundary,
@@ -127,7 +162,7 @@
                 audioAnswer: data.audioAnswer,
                 audioAnalysis: data.audioAnalysis,
                 audioOutlook: data.audioOutlook,
-            });
+            }, boundary);
         } catch {
             addToast("Commentaar mislukt — even geen interview", "error", 30_000);
         } finally {
@@ -183,16 +218,58 @@
         </select>
         beurten
     </label>
+    <button
+        aria-label="Commentaar teruglezen"
+        onclick={() => (drawerOpen = !drawerOpen)}
+        class="flex items-center gap-2 rounded-full bg-zinc-900/90 border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:text-white transition-colors"
+    >
+        <IconMessage class="w-4 h-4" />
+        Teruglezen ({history.length})
+    </button>
 </div>
 
-<!-- subtitles -->
+<!-- subtitles: speaker + role make the host → spectator → analyst flow readable -->
 {#if subtitle}
     <div class="fixed bottom-1.5 left-1/2 -translate-x-1/2 z-20 max-w-xl text-center px-6">
-        <p class="text-emerald-400 text-sm font-semibold mb-1">{speaker}</p>
+        <p class="mb-1 flex items-center justify-center gap-2 text-sm font-semibold">
+            <span class="rounded-full px-2 py-0.5 text-xs uppercase tracking-wider
+                {speakerRole === 'presentator' ? 'bg-emerald-500/20 text-emerald-300'
+                : speakerRole === 'toeschouwer' ? 'bg-amber-500/20 text-amber-300'
+                : 'bg-sky-500/20 text-sky-300'}">{speakerRole}</span>
+            <span class="text-zinc-200">{speaker}</span>
+        </p>
         <p class="bg-zinc-900/90 border border-zinc-700 rounded-xl px-5 py-3 text-lg text-zinc-100 leading-snug">
             {subtitle}
         </p>
     </div>
+{/if}
+
+<!-- replay drawer: every broadcast segment, newest first -->
+{#if drawerOpen}
+    <div class="fixed inset-0 z-30 bg-zinc-950/60" onclick={() => (drawerOpen = false)} aria-hidden="true"></div>
+    <aside class="fixed top-0 right-0 bottom-0 z-40 w-[440px] max-w-[90vw] bg-zinc-950/95 border-l border-zinc-800 flex flex-col">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
+            <h2 class="font-bold text-lg">Commentaar</h2>
+            <button class="text-zinc-400 hover:text-white text-sm" onclick={() => (drawerOpen = false)}>Sluiten ✕</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+            {#each [...history].reverse() as h, i (history.length - i)}
+                <div class="rounded-xl bg-zinc-900/70 border border-zinc-800 p-3">
+                    <p class="flex items-center gap-2 text-xs mb-1.5">
+                        <span class="rounded-full px-2 py-0.5 uppercase tracking-wider font-semibold
+                            {h.role === 'presentator' ? 'bg-emerald-500/20 text-emerald-300'
+                            : h.role === 'toeschouwer' ? 'bg-amber-500/20 text-amber-300'
+                            : 'bg-sky-500/20 text-sky-300'}">{h.role}</span>
+                        <span class="text-zinc-300 font-semibold">{h.speaker}</span>
+                        <span class="ml-auto text-zinc-500">beurt {h.boundary}</span>
+                    </p>
+                    <p class="text-sm text-zinc-300 leading-snug">{h.text}</p>
+                </div>
+            {:else}
+                <p class="text-zinc-500 text-sm text-center py-8">Nog geen commentaar uitgezonden.</p>
+            {/each}
+        </div>
+    </aside>
 {/if}
 
 <!-- generating indicator -->

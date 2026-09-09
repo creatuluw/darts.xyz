@@ -84,11 +84,15 @@ export const POST: RequestHandler = async ({ request }) => {
     const spectator = pickSpectatorVoice(voices);
     if (!spectator) throw new Error("No Dutch spectator voices available");
 
+    // ponytail: one flaky TTS call must not kill the broadcast — a failed
+    // segment degrades to subtitles-only (null audio); only LLM failure 502s
+    const ttsSoft = (text: string, voiceId: string) =>
+      tts(text, voiceId).catch(() => null);
     const [audioQuestion, audioAnswer, audioAnalysis, audioOutlook] = await Promise.all([
-      tts(interview.question, asker.voiceId),
-      tts(interview.answer, spectator.voice_id),
-      tts(interview.analysis, analyst.voiceId),
-      tts(interview.outlook, analyst.voiceId)
+      ttsSoft(interview.question, asker.voiceId),
+      ttsSoft(interview.answer, spectator.voice_id),
+      ttsSoft(interview.analysis, analyst.voiceId),
+      ttsSoft(interview.outlook, analyst.voiceId)
     ]);
 
     const row = await dbService.createCommentary({
