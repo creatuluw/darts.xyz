@@ -54,7 +54,7 @@
         return ((parts[0]?.[0] ?? "?") + (parts[1]?.[0] ?? "")).toUpperCase();
     }
 
-    let gameId: string | null = null;
+    let gameId = $state<string | null>(null);
 
     /** Server write-through on every action — fire-and-forget, never blocks scoring. */
     function persist() {
