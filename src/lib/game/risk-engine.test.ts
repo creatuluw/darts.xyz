@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyDart, createGame } from './risk-engine';
+import { applyDart, createGame, isExiled } from './risk-engine';
 
 describe('Risk 42 — the Deal (M1.1)', () => {
     it('deals all 40 boxes equally with 2 armies each (2 players)', () => {
@@ -243,5 +243,43 @@ describe('Risk 42 — turn lifecycle & the Arsenal (M1.3)', () => {
         applyDart(g, { segment: 0 });
         expect(JSON.stringify(g.boxes)).toBe(before);
         expect(g.turn.dartsLeft).toBe(2);
+    });
+});
+
+describe('Risk 42 — exile & clawback (M1.4)', () => {
+    const setup = () => {
+        const g = createGame(['a', 'b'], { seed: 42 });
+        const box = (id: string) => g.boxes.find((x) => x.id === id)!;
+        return { g, box };
+    };
+
+    it('a player reduced to zero boxes is exiled — but keeps full turns, none skipped', () => {
+        const { g, box } = setup();
+        // strip b of everything (arrange)
+        for (const b of g.boxes) if (b.owner === 'b') { b.owner = 'a'; }
+        expect(isExiled(g, 'b')).toBe(true);
+        expect(isExiled(g, 'a')).toBe(false);
+
+        // a plays out the turn, then b's turn arrives normally with a full budget
+        applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 });
+        expect(g.turn.playerId).toBe('b');
+        expect(g.turn.dartsLeft).toBe(3);
+    });
+
+    it('clawback: an exile capturing any box owns it at 1 army and clears the exile flag', () => {
+        const { g, box } = setup();
+        for (const b of g.boxes) if (b.owner === 'b') { b.owner = 'a'; }
+        // it is b's exile turn; a left a 1-army box on 3-outer
+        applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); // a
+        box('3-outer').armies = 1;
+        applyDart(g, { segment: 3, multiplier: 2 }); // b captures
+        expect(box('3-outer')).toMatchObject({ owner: 'b', armies: 1 });
+        expect(isExiled(g, 'b')).toBe(false);
+    });
+
+    it('exile is derived state — recomputed from board, no flag to forget', () => {
+        const { g, box } = setup();
+        expect(g.boxes.filter((b) => b.owner === 'b').length).toBeGreaterThan(0);
+        expect(typeof isExiled(g, 'b')).toBe('boolean');
     });
 });

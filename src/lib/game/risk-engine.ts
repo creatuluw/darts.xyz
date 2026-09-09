@@ -128,6 +128,11 @@ export function createGame(playerIds: PlayerId[], opts: CreateGameOptions = {}):
     };
 }
 
+export function isExiled(state: RiskGameState, playerId: PlayerId): boolean {
+    // derived, never stored — an exile owns nothing; the clawback clears it by owning something
+    return !state.boxes.some((b) => b.owner === playerId);
+}
+
 const RING_VALUE: Record<1 | 2 | 3, number> = { 1: 1, 2: 2, 3: 2 };
 
 /** Which box a dart deposits into: S → the hit box; T → the wedge's inner; D → the wedge's outer. */
