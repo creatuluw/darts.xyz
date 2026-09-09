@@ -142,29 +142,46 @@ function targetBoxId(hit: DartHit): string {
 export function applyDart(state: RiskGameState, hit: DartHit): RiskGameState {
     if (state.winner !== null) throw new Error('game is over');
     if (state.turn.dartsLeft <= 0) throw new Error('no darts left this turn');
-    if (hit.segment < 1 || hit.segment > 20) throw new Error(`segment out of range: ${hit.segment}`);
 
-    const box = state.boxes.find((b) => b.id === targetBoxId(hit));
-    if (!box) throw new Error(`no box for hit ${JSON.stringify(hit)}`);
-
-    const value = RING_VALUE[hit.multiplier] + state.turn.charge; // charge stays 0 until M1.3 wires the Arsenal
     const me = state.turn.playerId;
 
-    if (box.owner === null) {
-        // claim blank land with the full deposit
-        box.owner = me;
-        box.armies = value;
-    } else if (box.owner === me) {
-        box.armies += value; // reinforce, uncapped
+    if (hit.segment === 0) {
+        // miss: consumes a dart, changes nothing
+    } else if (hit.segment === 25 || hit.segment === 50) {
+        // the Arsenal: a bull charges the darts thrown after it, this turn only
+        state.turn.charge += hit.segment === 50 ? 2 : 1;
     } else {
-        // mirror damage on enemy land; at 0 the box flips to the attacker with 1 army (overkill wasted)
-        box.armies -= value;
-        if (box.armies <= 0) {
+        if (hit.segment < 1 || hit.segment > 20) throw new Error(`segment out of range: ${hit.segment}`);
+        const box = state.boxes.find((b) => b.id === targetBoxId(hit));
+        if (!box) throw new Error(`no box for hit ${JSON.stringify(hit)}`);
+
+        const value = RING_VALUE[hit.multiplier] + state.turn.charge;
+
+        if (box.owner === null) {
             box.owner = me;
-            box.armies = 1;
+            box.armies = value;
+        } else if (box.owner === me) {
+            box.armies += value;
+        } else {
+            box.armies -= value;
+            if (box.armies <= 0) {
+                box.owner = me;
+                box.armies = 1;
+            }
         }
     }
 
     state.turn.dartsLeft -= 1;
+    if (state.turn.dartsLeft === 0) {
+        // turn advances: next player from the starter, fresh budget, charge cleared
+        const order = [state.starterPlayerId, ...state.players.filter((p) => p !== state.starterPlayerId)];
+        const at = order.indexOf(state.turn.playerId);
+        state.turn = {
+            playerId: order[(at + 1) % order.length],
+            dartsLeft: BASE_DARTS, // continent income lands in M1.5
+            charge: 0,
+            index: state.turn.index + 1,
+        };
+    }
     return state;
 }

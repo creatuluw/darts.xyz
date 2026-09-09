@@ -151,3 +151,97 @@ describe('Risk 42 — deposits & mirror combat (M1.2)', () => {
         expect(box('12-inner').armies).toBe(100);
     });
 });
+
+describe('Risk 42 — turn lifecycle & the Arsenal (M1.3)', () => {
+    const setup = () => {
+        const g = createGame(['a', 'b', 'c'], { seed: 42 });
+        const box = (id: string) => g.boxes.find((x) => x.id === id)!;
+        return { g, box };
+    };
+
+    it('a bull charges the darts thrown after it: 25 = +1, 50 = +2', () => {
+        const { g, box } = setup();
+        const me = g.turn.playerId;
+        box('20-inner').owner = me; box('20-inner').armies = 5;
+
+        applyDart(g, { segment: 25 });                      // charge +1
+        applyDart(g, { segment: 20, multiplier: 1, singleRing: 'inner' }); // 1 + 1
+        applyDart(g, { segment: 0 });                       // end turn harmlessly
+        expect(box('20-inner').armies).toBe(7);
+
+        // a's next turn (3 players: b, c in between) — 50 = +2
+        applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); // b
+        applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); // c
+        expect(g.turn.playerId).toBe(me);
+        applyDart(g, { segment: 50 });
+        applyDart(g, { segment: 20, multiplier: 3 });       // 2 + 2
+        expect(box('20-inner').armies).toBe(11);
+    });
+
+    it('charges stack additively: 25 then 50 = +3 on the following dart', () => {
+        const { g, box } = setup();
+        const me = g.turn.playerId;
+        const foe = g.players.find((p) => p !== me)!;
+        box('3-outer').owner = foe; box('3-outer').armies = 5;
+
+        applyDart(g, { segment: 25 });
+        applyDart(g, { segment: 50 });
+        applyDart(g, { segment: 3, multiplier: 2 }); // 2 + 3 = 5 damage → 0 → flips
+        expect(box('3-outer')).toMatchObject({ owner: me, armies: 1 });
+    });
+
+    it('a bull as the last dart fizzles — no board effect; a bull-only turn touches nothing', () => {
+        const { g } = setup();
+        const before = JSON.stringify(g.boxes);
+        applyDart(g, { segment: 25 });
+        applyDart(g, { segment: 25 });
+        applyDart(g, { segment: 50 }); // last-dart bull: charge set but turn ends
+        expect(JSON.stringify(g.boxes)).toBe(before); // bulls never touch boxes
+        expect(g.turn.charge).toBe(0); // fresh turn, nothing carried
+        expect(g.turn.dartsLeft).toBe(3);
+    });
+
+    it('charge never leaks across the turn boundary', () => {
+        const { g, box } = setup();
+        const me = g.turn.playerId;
+        applyDart(g, { segment: 25 });
+        applyDart(g, { segment: 20, multiplier: 3 });
+        applyDart(g, { segment: 20, multiplier: 3 });
+        // turn advanced (3 darts spent); next player's deposits are uncharged
+        expect(g.turn.playerId).not.toBe(me);
+        const next = g.turn.playerId;
+        box('1-inner').owner = next; box('1-inner').armies = 4;
+        applyDart(g, { segment: 1, multiplier: 3 });
+        expect(box('1-inner').armies).toBe(6); // 2 + 0, no charge
+    });
+
+    it('after the last dart the turn advances: next player, fresh budget, charge cleared, index increments', () => {
+        const { g } = setup();
+        const starter = g.turn.playerId;
+        applyDart(g, { segment: 20, multiplier: 3 });
+        applyDart(g, { segment: 20, multiplier: 3 });
+        applyDart(g, { segment: 20, multiplier: 3 });
+
+        expect(g.turn.playerId).not.toBe(starter);
+        expect(g.turn.dartsLeft).toBe(3);
+        expect(g.turn.charge).toBe(0);
+        expect(g.turn.index).toBe(2);
+    });
+
+    it('turn order rotates through the roster from the starter', () => {
+        const { g } = setup();
+        g.turn.playerId = 'c'; // starter input honored mid-arrange
+        applyDart(g, { segment: 20, multiplier: 3 });
+        applyDart(g, { segment: 20, multiplier: 3 });
+        applyDart(g, { segment: 20, multiplier: 3 });
+        expect(g.turn.playerId).toBe('a');
+    });
+
+    it('a miss (segment 0) consumes a dart and changes nothing else', () => {
+        const { g } = setup();
+        const before = JSON.stringify(g.boxes);
+        applyDart(g, { segment: 0 });
+        expect(JSON.stringify(g.boxes)).toBe(before);
+        expect(g.turn.dartsLeft).toBe(2);
+    });
+});
