@@ -32,6 +32,7 @@ export interface RiskGameState {
     boxes: Box[];
     turn: TurnState;
     winner: PlayerId | null;
+    tie: PlayerId[] | null; // clock horn ended level → sudden-death darts
 }
 
 export interface CreateGameOptions {
@@ -43,9 +44,9 @@ export interface CreateGameOptions {
 
 /** One dart as thrown. Singles carry their ring — inner and outer are different territories. */
 export interface DartHit {
-    segment: number; // 1..20
-    multiplier: 1 | 2 | 3;
-    singleRing?: Ring; // required when multiplier === 1
+    segment: number; // 0 = miss, 25/50 = Arsenal, 1..20 = box dart
+    multiplier?: 1 | 2 | 3; // required for box darts
+    singleRing?: Ring; // required for singles — inner and outer are different territories
 }
 
 // Locked proximity fit (docs/risk/apply-territory-labels.cjs carries the same table)
@@ -125,6 +126,7 @@ export function createGame(playerIds: PlayerId[], opts: CreateGameOptions = {}):
         boxes,
         turn: { playerId: starter, dartsLeft: BASE_DARTS, charge: 0, index: 1 },
         winner: null,
+        tie: null,
     };
 }
 
@@ -169,6 +171,7 @@ const RING_VALUE: Record<1 | 2 | 3, number> = { 1: 1, 2: 2, 3: 2 };
 
 /** Which box a dart deposits into: S → the hit box; T → the wedge's inner; D → the wedge's outer. */
 function targetBoxId(hit: DartHit): string {
+    if (!hit.multiplier) throw new Error('box darts need a multiplier');
     if (hit.multiplier === 1) {
         if (!hit.singleRing) throw new Error('singles must carry singleRing (inner/outer)');
         return `${hit.segment}-${hit.singleRing}`;
@@ -192,7 +195,7 @@ export function applyDart(state: RiskGameState, hit: DartHit): RiskGameState {
         const box = state.boxes.find((b) => b.id === targetBoxId(hit));
         if (!box) throw new Error(`no box for hit ${JSON.stringify(hit)}`);
 
-        const value = RING_VALUE[hit.multiplier] + state.turn.charge;
+        const value = RING_VALUE[hit.multiplier!] + state.turn.charge;
 
         if (box.owner === null) {
             box.owner = me;
