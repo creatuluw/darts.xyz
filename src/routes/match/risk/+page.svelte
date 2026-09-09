@@ -15,7 +15,7 @@
     import { PRESET_TURNS, type RiskClockPreset } from "$lib/game/risk-setup";
 
     const SETUP_KEY = "risk42_setup";
-    const STATE_KEY = "risk42_state";
+    const GAME_ID_KEY = "risk42_game_id";
     const PLAYER_COLORS = ["#9B2226", "#023047", "#FB8500", "#AE2012", "#8ECAE6", "#BB3E03"];
 
     interface PlayerMeta { id: string; name: string; color: string; }
@@ -32,6 +32,41 @@
     let gateFor = $state("");
     let feedId = 0;
     let lastTurnIndex = $state(0);
+
+    let gameId = $state<string | null>(null);
+
+    /** What gets persisted — the engine state plus the player meta it doesn't carry. */
+    function payload() {
+        return { game, players: players.map((p) => ({ id: p.id, name: p.name })) };
+    }
+
+    /** Server write-through on every dart — fire-and-forget, never blocks scoring. */
+    function persist() {
+        if (game && gameId) {
+            fetch(`/api/conquest/${gameId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ state: payload() }),
+            }).catch(() => {});
+        }
+    }
+
+    async function startServerGame() {
+        try {
+            const res = await fetch("/api/conquest", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ state: payload() }),
+            });
+            if (res.ok) {
+                const { id } = await res.json();
+                gameId = id;
+                sessionStorage.setItem(GAME_ID_KEY, id);
+            }
+        } catch {
+            /* server unreachable — game still playable this visit */
+        }
+    }
 
     const setup = $derived(
         players.length && game
@@ -63,25 +98,31 @@
         log("Territories dealt — " + (cfg.mode === "clock" ? `clock ${cfg.clockPreset}` : "Domination"), "#666");
     }
 
-    onMount(() => {
-        const saved = sessionStorage.getItem(STATE_KEY);
-        if (saved) {
+    onMount(async () => {
+        // server is the source of truth — resume by game id if the server knows it
+        const savedId = sessionStorage.getItem(GAME_ID_KEY);
+        if (savedId) {
             try {
-                const { game: g, cfg } = JSON.parse(saved);
-                game = g;
-                players = cfg.players.map((p: { id: string; name: string }, i: number) => ({ id: p.id, name: p.name, color: PLAYER_COLORS[i % PLAYER_COLORS.length] }));
-                gate = true; gateFor = g.turn.playerId; lastTurnIndex = g.turn.index;
-                log("Resumed campaign", "#666");
-                return;
-            } catch { /* fall through */ }
+                const res = await fetch(`/api/conquest/${savedId}`);
+                if (res.ok) {
+                    const { state } = await res.json();
+                    const g = state?.game;
+                    if (g && Array.isArray(g.boxes) && g.turn && g.winner === null) {
+                        game = g;
+                        players = (state.players ?? []).map((p: { id: string; name: string }, i: number) => ({ id: p.id, name: p.name, color: PLAYER_COLORS[i % PLAYER_COLORS.length] }));
+                        gate = true; gateFor = g.turn.playerId; lastTurnIndex = g.turn.index;
+                        log("Resumed campaign", "#666");
+                        return;
+                    }
+                }
+            } catch {
+                /* offline — fall through to setup flow */
+            }
         }
         const raw = sessionStorage.getItem(SETUP_KEY);
         if (!raw) { goto("/match/setup?tab=fun"); return; }
         startGame(JSON.parse(raw));
-    });
-
-    $effect(() => {
-        if (game) sessionStorage.setItem(STATE_KEY, JSON.stringify({ game, cfg: { players: players.map((p) => ({ id: p.id, name: p.name })) } }));
+        await startServerGame();
     });
 
     function describe(before: RiskGameState, hit: DartHit): string {
@@ -112,6 +153,7 @@
         }
         if (game.winner) log(`🏆 ${setup?.name(game.winner)} wins!`, "#7fb069");
         else if (game.tie) log(`Horn! Tie: ${game.tie.map((p) => setup?.name(p)).join(" vs ")} — nearest bull wins`, "#d9a441");
+        persist();
     }
 
     function breakTie() {
@@ -123,6 +165,7 @@
         game.winner = tied[0].playerId;
         game.tie = null;
         log(`Tiebreak (boxes, then armies): ${setup?.name(game.winner)} wins`, "#d9a441");
+        persist();
     }
 </script>
 
@@ -136,7 +179,7 @@
                             <p class="text-xs uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold">Game over</p>
                             <h1 class="font-display text-2xl font-bold">🏆 {setup.name(game.winner)} wins</h1>
                         </div>
-                        <button class="px-4 py-2 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm" onclick={() => startGame(JSON.parse(sessionStorage.getItem(SETUP_KEY)!))}>Rematch</button>
+                        <button class="px-4 py-2 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm" onclick={() => { startGame(JSON.parse(sessionStorage.getItem(SETUP_KEY)!)); startServerGame(); }}>Rematch</button>
                     </div>
                 {:else if game.tie}
                     <div class="rounded-2xl bg-amber-50 dark:bg-amber-950/40 ring-1 ring-amber-500/30 p-6 mb-4">

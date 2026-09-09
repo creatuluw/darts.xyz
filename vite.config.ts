@@ -9,4 +9,9 @@ config();
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
+  // House worktrees (E:/worktrees/*) junction node_modules from the main
+  // checkout — allow Vite to serve those real paths.
+  server: {
+    fs: { allow: ["E:/dart.monster/node_modules"] },
+  },
 });
