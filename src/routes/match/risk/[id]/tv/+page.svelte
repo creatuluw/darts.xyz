@@ -16,16 +16,22 @@
     const gameId = $derived($pageStore.params.id);
 
     const PLAYER_COLORS = [
-        "#9B2226",
-        "#023047",
-        "#FB8500",
-        "#AE2012",
-        "#8ECAE6",
-        "#BB3E03",
+        "#E63946", // red
+        "#1D3557", // navy
+        "#F77F00", // orange
+        "#2A9D8F", // teal
+        "#9D4EDD", // purple
+        "#4CC9F0", // sky
     ];
 
     let game = $state(null as RiskGameState | null);
     let players = $state<{ id: string; name: string; color: string; initials: string }[]>([]);
+
+    /** Collision-free chips: first 2 letters, extended to 3 when players clash (KAAL vs KAUW). */
+    function initialsFor(names: string[]): string[] {
+        const base = names.map((n) => n.trim().slice(0, 2).toUpperCase());
+        return base.map((b, i) => (base.filter((o, j) => o === b && j !== i).length ? names[i].trim().slice(0, 3).toUpperCase() : b));
+    }
     let missing = $state(false);
     let frozen = $state(false);
 
@@ -77,9 +83,11 @@
                     id: p.id,
                     name: p.name,
                     color: PLAYER_COLORS[i % PLAYER_COLORS.length],
-                    initials: p.name.trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
+                    initials: "",
                 }),
             );
+            const chips = initialsFor(players.map((p) => p.name));
+            players = players.map((p, j) => ({ ...p, initials: chips[j] }));
             if (g.winner !== null) frozen = true;
         } catch { /* transient */ }
     }
@@ -203,14 +211,17 @@
             <!-- winner card: full standings over the frozen end-state map -->
             {#if frozen && game.winner}
                 <div class="absolute inset-0 z-10 bg-zinc-950/75 backdrop-blur-[2px] flex flex-col items-center justify-center text-center px-16">
-                    <p class="text-emerald-400 text-xl mb-1 font-bold tracking-wider uppercase">Kampioen</p>
-                    <p class="font-display font-black text-7xl mb-4" style="color: {colorOf(game.winner)}">{nameOf(game.winner)}</p>
-                    <p class="text-zinc-400 mb-8">{game.mode === "clock" ? `Klok · ${game.clockTurns} beurten per speler` : "Domination"} · {game.turn.index - 1} beurten</p>
-                    <div class="rounded-2xl bg-zinc-900/80 border border-zinc-800 p-6 min-w-[560px]">
+                    <!-- scrim so dimmed territory labels can't collide with the podium text -->
+                    <div class="absolute inset-x-0 top-0 h-2/5 bg-gradient-to-b from-zinc-950/90 to-transparent pointer-events-none"></div>
+                    <div class="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-zinc-950/80 to-transparent pointer-events-none"></div>
+                    <p class="relative text-emerald-400 text-xl mb-1 font-bold tracking-wider uppercase">Kampioen</p>
+                    <p class="relative font-display font-black text-7xl mb-4" style="color: {colorOf(game.winner)}">{nameOf(game.winner)}</p>
+                    <p class="relative text-zinc-400 mb-8">{game.mode === "clock" ? `Klok · ${game.clockTurns} beurten per speler` : "Domination"} · {game.turn.index - 1} beurten</p>
+                    <div class="relative rounded-2xl bg-zinc-900/80 border border-zinc-800 p-6 min-w-[560px]">
                         <table class="w-full text-lg">
                             <thead>
                                 <tr class="text-zinc-500 text-xs uppercase tracking-wider text-left">
-                                    <th></th><th>Speler</th><th class="text-right">Boxes</th><th class="text-right">Armies</th><th class="text-right">Score</th><th>Continenten</th>
+                                    <th></th><th class="pr-6">Speler</th><th class="text-right pr-6">Boxes</th><th class="text-right pr-6">Armies</th><th class="text-right pr-6">Score</th><th>Continenten</th>
                                 </tr>
                             </thead>
                             <tbody>

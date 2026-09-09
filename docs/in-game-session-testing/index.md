@@ -3,6 +3,7 @@
 Four full game sessions played through the real UI (BrowserOS neo against the dev server, master `46a429e`), each with the TV second screen open, every turn verified against the engine/API state. Reports + screenshots live in this folder.
 
 ## Sessions
+- [2026-09-10 — Session 6: Risk 42 prod playtest & analysis campaign](2026-09-10-session-6-prod-risk-analysis.md) — 8 games on dart.monster; rules matrix (zero drift), 3 P1 bugs (2 fixed+deployed), vision verdicts, commentary assessment, fun factor, ranked improvement backlog.
 
 | # | Game | Players | Result | Report |
 |---|---|---|---|---|

@@ -18,14 +18,27 @@
 
     const SETUP_KEY = "risk42_setup";
     const GAME_ID_KEY = "risk42_game_id";
-    const PLAYER_COLORS = ["#9B2226", "#023047", "#FB8500", "#AE2012", "#8ECAE6", "#BB3E03"];
+    // hue-spread palette — 6 players must read at TV distance (vision-tested:
+    // the old dark-red/dark-red pair and brown-on-Africa were indistinguishable)
+    const PLAYER_COLORS = ["#E63946", "#1D3557", "#F77F00", "#2A9D8F", "#9D4EDD", "#4CC9F0"];
 
     interface PlayerMeta { id: string; name: string; color: string; }
+
+    /** Collision-free chips: first 2 letters, extended to 3 when players clash (KAAL vs KAUW). */
+    function initialsFor(names: string[]): string[] {
+        const base = names.map((n) => n.trim().slice(0, 2).toUpperCase());
+        return base.map((b, i) => (base.filter((o, j) => o === b && j !== i).length ? names[i].trim().slice(0, 3).toUpperCase() : b));
+    }
 
     function initialsOf(name: string): string {
         const parts = name.trim().split(/\s+/);
         return ((parts[0]?.[0] ?? "?") + (parts[1]?.[0] ?? "")).toUpperCase();
     }
+    // end-screen map chips resolve collisions across the full roster
+    const playerInitials = $derived.by(() => {
+        const chips = initialsFor(players.map((p) => p.name));
+        return Object.fromEntries(players.map((p, i) => [p.id, chips[i]]));
+    });
 
     let game = $state(null as RiskGameState | null);
     let players = $state<PlayerMeta[]>([]);
@@ -81,7 +94,6 @@
 
     // end screen: final map + per-player maps for it + simple game stats from the war log
     const playerColor = $derived(Object.fromEntries(players.map((p) => [p.id, p.color])));
-    const playerInitials = $derived(Object.fromEntries(players.map((p) => [p.id, initialsOf(p.name)])));
     const endStats = $derived.by(() => {
         if (!game?.winner) return null;
         const texts = feed.map((f) => f.text);
