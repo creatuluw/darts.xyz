@@ -2,19 +2,23 @@ import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { dbService } from "$lib/db/database-service";
 import { generateInterview } from "$lib/server/opencode";
-import { getDutchVoices, tts, COMMENTATOR_VOICE_ID } from "$lib/server/elevenlabs";
-import { pickSpectatorVoice } from "$lib/game/elevenlabs-voices";
+import { getDutchVoices, tts } from "$lib/server/elevenlabs";
+import {
+	pickSpectatorVoice,
+	commentatorPair
+} from "$lib/game/elevenlabs-voices";
 import { buildInterviewPrompt, pickPersona } from "$lib/game/commentary-prompt";
 import { boundaryKey } from "$lib/game/commentary-cadence";
 
 /**
  * Generate (or return cached) a Dutch interview for a completed N-turn
- * boundary. Called only by an open, unpaused 2nd screen.
- * COMMENTARY_FAKE=1 → deterministic canned text, no audio, no LLM/TTS spend.
+ * boundary: asker questions a spectator, the analyst analyses + cliffhangs.
+ * Commentators swap roles per boundary. Called only by an open, unpaused
+ * 2nd screen. COMMENTARY_FAKE=1 → deterministic canned text, no spend.
  */
 export const POST: RequestHandler = async ({ request }) => {
   const body = await request.json().catch(() => null);
-  const { matchRef, boundary, kind, players, turnLines } = body ?? {};
+  const { matchRef, boundary, kind, players, turnLines, priorLines } = body ?? {};
   if (
     typeof matchRef !== "string" ||
     !matchRef ||
@@ -33,6 +37,9 @@ export const POST: RequestHandler = async ({ request }) => {
   const cached = await dbService.getCommentary(key);
   if (cached) return json({ cached: true, ...cached });
 
+  const { asker, analyst } = commentatorPair(boundary);
+  const context = Array.isArray(priorLines) ? priorLines.filter((l) => typeof l === "string") : [];
+
   // E2E / CI: canned interview, no external calls. "fail-" matchRefs force 500.
   if (process.env.COMMENTARY_FAKE === "1") {
     if (matchRef.startsWith("fail-")) {
@@ -43,12 +50,17 @@ export const POST: RequestHandler = async ({ request }) => {
       boundaryKey: key,
       question: `Wat een beurten! ${players.join(" en ")}, wat gebeurt daar?`,
       answer: `Als ${turnLines.length}-beurten-toeschouwer zeg ik: ${turnLines[turnLines.length - 1]}. Prachtig gewoon.`,
+      analysis: `${analyst.name} hier — als ik die cijfers naast eerdere beurten leg, zie ik een stijgende lijn. Dit gaat morgen nog interessant worden.`,
+      outlook: `Ik hoop op een negendarter — en laat de volgende beurt nou net de kans zijn om het te bewijzen…`,
       persona: { name: "Fake Fan", tone: "test", style: "test" },
-      commentatorVoice: COMMENTATOR_VOICE_ID,
+      commentatorVoice: asker.voiceId,
+      analystVoice: analyst.voiceId,
       spectatorVoice: "fake",
       spectatorName: "Fake Fan",
       audioQuestion: null,
-      audioAnswer: null
+      audioAnswer: null,
+      audioAnalysis: null,
+      audioOutlook: null
     });
     return json({ cached: false, ...row });
   }
@@ -59,6 +71,9 @@ export const POST: RequestHandler = async ({ request }) => {
       kind,
       players: players.slice(0, 6),
       turnLines: turnLines.slice(-8),
+      priorLines: context.slice(-8),
+      asker: asker.name,
+      analyst: analyst.name,
       persona
     });
     const interview = await generateInterview(prompt);
@@ -67,9 +82,11 @@ export const POST: RequestHandler = async ({ request }) => {
     const spectator = pickSpectatorVoice(voices);
     if (!spectator) throw new Error("No Dutch spectator voices available");
 
-    const [audioQuestion, audioAnswer] = await Promise.all([
-      tts(interview.question, COMMENTATOR_VOICE_ID),
-      tts(interview.answer, spectator.voice_id)
+    const [audioQuestion, audioAnswer, audioAnalysis, audioOutlook] = await Promise.all([
+      tts(interview.question, asker.voiceId),
+      tts(interview.answer, spectator.voice_id),
+      tts(interview.analysis, analyst.voiceId),
+      tts(interview.outlook, analyst.voiceId)
     ]);
 
     const row = await dbService.createCommentary({
@@ -77,12 +94,17 @@ export const POST: RequestHandler = async ({ request }) => {
       boundaryKey: key,
       question: interview.question,
       answer: interview.answer,
+      analysis: interview.analysis,
+      outlook: interview.outlook,
       persona,
-      commentatorVoice: COMMENTATOR_VOICE_ID,
+      commentatorVoice: asker.voiceId,
+      analystVoice: analyst.voiceId,
       spectatorVoice: spectator.voice_id,
       spectatorName: spectator.name,
       audioQuestion,
-      audioAnswer
+      audioAnswer,
+      audioAnalysis,
+      audioOutlook
     });
     return json({ cached: false, ...row });
   } catch (e) {

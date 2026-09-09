@@ -286,12 +286,17 @@ export const commentary = darts.table(
     boundaryKey: varchar("boundary_key", { length: 320 }).notNull(),
     question: text("question").notNull(),
     answer: text("answer").notNull(),
+    analysis: text("analysis").notNull().default(""),
+    outlook: text("outlook").notNull().default(""),
     persona: jsonb("persona").notNull(),
     commentatorVoice: varchar("commentator_voice", { length: 64 }).notNull(),
+    analystVoice: varchar("analyst_voice", { length: 64 }),
     spectatorVoice: varchar("spectator_voice", { length: 64 }).notNull(),
     spectatorName: varchar("spectator_name", { length: 100 }).notNull(),
     audioQuestion: text("audio_question"), // base64 mp3
     audioAnswer: text("audio_answer"), // base64 mp3
+    audioAnalysis: text("audio_analysis"), // base64 mp3
+    audioOutlook: text("audio_outlook"), // base64 mp3
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

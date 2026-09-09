@@ -239,12 +239,17 @@ export class DatabaseService {
     boundaryKey: string;
     question: string;
     answer: string;
+    analysis: string;
+    outlook: string;
     persona: unknown;
     commentatorVoice: string;
+    analystVoice: string | null;
     spectatorVoice: string;
     spectatorName: string;
     audioQuestion: string | null;
     audioAnswer: string | null;
+    audioAnalysis: string | null;
+    audioOutlook: string | null;
   }) {
     const result = await getDb()
       .insert(schema.commentary)

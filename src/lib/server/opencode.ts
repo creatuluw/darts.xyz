@@ -4,29 +4,13 @@
  */
 import { env } from "$env/dynamic/private";
 import { randomUUID } from "node:crypto";
+import { parseInterview, type InterviewResult } from "$lib/game/interview-json";
+
+export type { InterviewResult };
 
 const ENDPOINT = "https://opencode.ai/zen/go/v1/chat/completions";
 const MODEL = "glm-5.3-flash";
 const TIMEOUT_MS = 20_000;
-
-export interface InterviewResult {
-	question: string;
-	answer: string;
-}
-
-/** Extracts the first JSON object from a possibly chatty response. */
-function parseInterviewJson(raw: string): InterviewResult {
-	const start = raw.indexOf("{");
-	const end = raw.lastIndexOf("}");
-	if (start === -1 || end === -1 || end <= start) {
-		throw new Error("LLM response contained no JSON object");
-	}
-	const parsed = JSON.parse(raw.slice(start, end + 1));
-	if (typeof parsed.question !== "string" || typeof parsed.answer !== "string") {
-		throw new Error("LLM JSON missing question/answer");
-	}
-	return parsed as InterviewResult;
-}
 
 /** Sends the interview prompt; returns Dutch {question, answer}. */
 export async function generateInterview(prompt: string): Promise<InterviewResult> {
@@ -48,5 +32,5 @@ export async function generateInterview(prompt: string): Promise<InterviewResult
 	if (!res.ok) throw new Error(`opencode ${res.status}: ${(await res.text()).slice(0, 200)}`);
 	const data = await res.json();
 	const content: string = data.choices?.[0]?.message?.content ?? "";
-	return parseInterviewJson(content);
+	return parseInterview(content);
 }

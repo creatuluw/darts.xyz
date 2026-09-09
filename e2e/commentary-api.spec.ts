@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { COMMENTATOR_VOICE_IDS } from '../src/lib/game/elevenlabs-voices';
 
 /**
  * Commentary API (fake mode — no LLM/TTS spend): idempotent per boundary,
@@ -21,6 +22,10 @@ test.describe('Commentary API', () => {
 		expect(a.cached).toBe(false);
 		expect(a.question).toBeTruthy();
 		expect(a.answer).toBeTruthy();
+		expect(a.analysis).toBeTruthy();
+		expect(a.outlook).toBeTruthy();
+		expect(a.analystVoice).toBeTruthy();
+		expect(COMMENTATOR_VOICE_IDS).toContain(a.analystVoice);
 
 		const second = await request.post('/api/commentary', { data: payload });
 		expect(second.status()).toBe(200);
