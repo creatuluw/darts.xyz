@@ -6,7 +6,7 @@ tags: [svg, risk, labels, docs]
 timestamp: "2026-09-08T23:05:56.892Z"
 ---
 
-> **Superseded (2026-09-09):** labels are no longer radial — they are horizontal and centered in each box. See [territory-labels-go-horizontal-centered-in-each-box-no-rotat](../decisions/territory-labels-go-horizontal-centered-in-each-box-no-rotat.md). Kept for history.
+> **Superseded (2026-09-09):** labels are no longer radial — they are horizontal and centered in each box. See [territory-labels-go-horizontal-centered-in-each](../decisions/territory-labels-go-horizontal-centered-in-each.md). Kept for history.
 
 # Flipped labels: negate radial offset on left half
 
@@ -26,8 +26,8 @@ For each label, compute the anchor's polar position from its own transform and a
 
 ## Related gotchas in the same tooling family
 
-- [[svg-path-parsing-arc-arguments-are-not-points-tokenize-by-co]] — tokenize paths by command, not coordinate-pair regex
-- [[wedge-index-from-a-seg-path-s-m-point-needs-a-9-half-wedge-s]] — M point needs the +9° half-wedge shift
+- [[svg-path-parsing-arc-arguments-are-not-points]] — tokenize paths by command, not coordinate-pair regex
+- [[wedge-index-from-a-seg-path-s-m-point-needs-a-9]] — M point needs the +9° half-wedge shift
 - [[risk-board-svg-attribute-order]] — extract attributes element-wise
 
 ## Source

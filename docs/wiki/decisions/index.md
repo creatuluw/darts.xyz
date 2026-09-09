@@ -26,4 +26,12 @@
 - [Risk 42 attack rule locked: mirror damage — deposit down on enemy land, reduce-to-zero capture](./risk-42-attack-rule-mirror-damage.md) - Context
 - [Real Risk world map on the board — 40 territories via inner/outer boxes, Japan & Madagascar cut](./real-risk-world-map-draft.md) - Context
 - [World map → dartboard mapping via azimuthal projection + Hungarian assignment (bull = Black Sea)](./board-mapping-azimuthal-hungarian.md) - Azimuthal + Hungarian fit replaces the hand-drawn draft; inner = Old World core, outer = frontier
-- [Territory labels go horizontal: centered in each box, no rotation](./territory-labels-go-horizontal-centered-in-each-box-no-rotat.md) - Context
+- [Territory labels go horizontal: centered in each box, no rotation](./territory-labels-go-horizontal-centered-in-each.md) - Context
+- [Risk 42 endgame: Domination as headline, 170/301/501 clock as alt — mirroring T&T](./risk-42-domination-headline-clock-alt.md) - Context
+- [Risk 42 elimination: exile & clawback — zero boxes ≠ death](./risk-42-exile-and-clawback.md) - Context
+- [Risk 42 bulls: the Arsenal charge (25 = +1, 50 = +2)](./risk-42-bulls-the-arsenal-charge-25-1-50-2.md) - Context
+- [Risk 42 continent income: +1 dart per full continent (Asia +2); budget shown pre-turn](./risk-42-continent-income.md) - Context
+- [Risk 42 game start: random deal of all 40 territories (1 army each), no claiming phase](./risk-42-game-start-random-deal.md) - Context
+- [Risk 42 deal amended: exactly equal deal, 2 armies each, blank leftovers claimable, players pick starter](./risk-42-deal-final-equal-2-armies-blanks.md) - Context
+- [Risk 42 two-screen identity: dartboard to play, world map to spectate](./risk-42-two-screen-identity-dartboard-to-play-world-map-to-s.md) - Context
+- [Risk 42 applyDart seam: DartHit carries singleRing for singles](./risk-42-applydart-seam-darthit-carries-singlering-for-single.md) - Context

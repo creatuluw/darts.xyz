@@ -27,7 +27,7 @@ The pristine production dartboard SVG (`docs/risk/dart-board-orig.svg`, a copy o
   - **Full territory names, word-per-line multi-line tspans, never abbreviated** (user directive 2026-09-09: copy the names from the world-map mockup [risk-dart-board-mockup-risk-dart-board-svg](./risk-dart-board-mockup-risk-dart-board-svg.md) — "Northwest Territory", "Western United States", …; `apply-mapping.cjs`'s `LINES` map holds the line breaks)
   - Gold `#FFD700` stroke on the two pinned anchors (Iceland, South Africa)
   - Double ring and treble band kept traditional (untouched)
-- **Editing gotchas**: wedge index needs the +9° half-wedge shift; replace attributes, never append duplicates — see [wedge-index-from-a-seg-path-s-m-point-needs-a-9-half-wedge-shift](../../learnings/wedge-index-from-a-seg-path-s-m-point-needs-a-9-half-wedge-s.md) and [risk-board-svg-attribute-order](../../learnings/risk-board-svg-attribute-order.md).
+- **Editing gotchas**: wedge index needs the +9° half-wedge shift; replace attributes, never append duplicates — see [wedge-index-from-a-seg-path-s-m-point-needs-a-9-half-wedge-shift](../../learnings/wedge-index-from-a-seg-path-s-m-point-needs-a-9.md) and [risk-board-svg-attribute-order](../../learnings/risk-board-svg-attribute-order.md).
 
 ## Source
 

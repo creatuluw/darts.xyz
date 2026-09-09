@@ -734,6 +734,8 @@ timestamp: "2026-09-07T19:11:02.020Z"
 │   ├── darts-501-app/ — Spec + task breakdown for the darts-501 app feature set
 │       ├── spec.md — Full application specification — tech stack, success criteria, data model, match/stat rules, API surface
 │       ├── tasks.json — Machine-readable task list and progress from the spec workflow
+│   ├── trebles-and-territories/ — Conquest mode (Trebles & Territories) implementation spec
+│       ├── spec.html — Self-contained HTML spec — locked rules, preset ladder 51–1501, state-board visual language, LLM commentator + recap-video pipelines, milestones M1–M6
 ├── .svelte-kit/ — SvelteKit generated artifacts — dev code, build output, route types
 │   ├── adapter-node/ — adapter-node scratch directory during build
 │   ├── generated/ — SvelteKit-generated dev/build artifacts
@@ -2735,6 +2737,54 @@ The project had zero automated tests despite containing ~500 lines of pure game-
 - E2E requires a reachable DB (dev environment) — CI would need a Postgres service.
 - E2E suite is slow-ish by design (14 tests, real server + real DB) — acceptable, kept small.
 `,
+  "decisions/board-mapping-azimuthal-hungarian.md": `---
+type: Decision
+title: World map → dartboard mapping via azimuthal projection + Hungarian assignment (bull = Black Sea)
+description: Azimuthal + Hungarian fit replaces the hand-drawn world-map draft; bull = Black Sea, inner = Old World core, outer = frontier
+tags: [risk-darts, trebles-territories, board-mapping]
+status: proposed
+timestamp: "2026-09-08T22:41:06.269Z"
+---
+
+# World map → dartboard mapping via azimuthal projection + Hungarian assignment (bull = Black Sea)
+
+## Context
+
+[[risk-darts-proposed-game-mode]] needs its 40 world-map territories assigned to the 40 dartboard boxes (one inner + one outer per number wedge, 1–20), with two user-pinned anchors: **Iceland = outer-5**, **South Africa = outer-3**. Source geometry: \`docs/risk/risk-dart-board.svg\` (named territory paths) and \`gen-labels.cjs\` (40 hand-nudged label positions = territory centroids).
+
+## Approaches tried and rejected
+
+1. **Rigid two-anchor similarity transform** — overflows badly. The world map is wide, a dartboard is circular: Alaska lands at radius 13 vs outer ring at 6; Southern Europe dragged 133° off.
+2. **Greedy cost optimizer** — can't guarantee anchors; drifts (W Europe 59° off).
+3. **Local search / swap loops** — corrupts state during iteration (duplicated territories across wedges) and gets stuck in minima (Americas shredded across 5 wedges). Also a design trap: the optimizer parked the center *on top of Southern Europe*, where bearings are meaningless noise.
+
+## The choice
+
+**Azimuthal projection** (angle = true bearing from a center; radius = compressed map distance), then a **Hungarian algorithm** assignment (globally optimal for the 40×40 problem) with joint cost = angular deviation to wedge center + radial-rank mismatch. Anchors hard-pinned; center kept ≥50 units from every region; angular cost weighted by distance.
+
+- **Optimal center: (600, 340) — the Black Sea is the bull.**
+- **Inner ring = the Old World core** (Europe, Middle East, N Africa, interior Asia); **outer ring = the frontier** (Alaska, Kamchatka, Australia, Argentina, Greenland). The supply-line rule reads: *trebles feed the homeland, doubles feed the frontier.*
+
+Regenerable via \`node docs/risk/fit-map.cjs\` ([[board-preview-and-fit-map]]); overrides are one-line pins.
+
+## Known compromises (the geometry tax)
+
+1. **Greenland lands inner-5** — forced by the Iceland=outer-5 pin, though Greenland is farther from the bull. One deliberate rank inversion.
+2. **N Europe (47°) & S Europe (57°) angular deviation** — both hug the bull where compass directions are noise; they fill inner gaps.
+3. **South America splits around Africa's arc** (Argentina-19, Brazil-7, Venezuela/Peru-16).
+
+## Status
+
+Draft presented to the user as **accept-with-veto-rights**: swap any named wedge manually; the script takes pinned overrides. Next mechanic-stack questions once blessed: continent bonuses, game end, the bulls.
+
+## Rationale
+
+For a 40×40 assignment with anchors, local search provably stalls; the Hungarian algorithm is the standard globally-optimal tool. The azimuthal projection is the only projection family that maps a wide map onto a circle while preserving the "core lands inner, frontier lands outer" semantic.
+
+## Supersedes
+
+- [[real-risk-world-map-draft]] — the earlier hand-drawn pairing table (Iceland=outer-13, no bull). The user re-pinned Iceland=outer-5 and asked for the closest possible geometric fit; this optimizer-derived mapping replaces that draft. The structural honesty rules of that draft (wedge-pair adjacency, continent arcs, straddle bridges) remain the lens for judging this fit.
+`,
   "decisions/bull-altar-resurrection-replaces-siege-lock.md": `---
 type: Decision
 title: Bull Altar resurrection replaces insurgents; Siege map B locked
@@ -2881,6 +2931,76 @@ Also locked in the same turn: the **ON FIRE effect = Artillery**, reinterpreted 
 - If B, late-game fortification amplifies (a 200-claim #20 is a castle) → the **win condition needs a clock** (time/round limit or similar), which is the following question.
 - Rationale is proposal-stage design, not implemented code.
 `,
+  "decisions/commentary-gated-on-2nd-screen.md": `---
+type: Decision
+title: Commentary gated on open 2nd screen + pause button; all match types; every-N-turns cadence
+description: Context
+tags: [commentary, interviews, llm, tv, elevenlabs, cost-control]
+status: accepted
+timestamp: "2026-09-08T20:24:29.350Z"
+---
+
+# Commentary gated on open 2nd screen + pause button; all match types; every-N-turns cadence
+
+## Context
+
+Interview round 4 (2026-09-08) of the 2nd-screen + commentary grill. Q15 had proposed **conquest-only** interviews with silent-skip failure. The user's answers settled the remaining mechanics, and the assistant drafted the full acceptance criteria (Q16) for final confirmation.
+
+## Decision
+
+- **Generation gating (cost control)**: commentary/interviews are generated **only while a 2nd screen (TV) is open AND not paused**. No TV tab polling → nothing generated, nothing billed. A **pause button on the TV view** stops ALL generation — including audio spend — while paused.
+- **Scope: ALL match types** — classic 301/501 matches get the same Dutch interview commentary as conquest. Supersedes the Q15 "conquest-only for now" proposal.
+- **Cadence: every N turns, default 2, adjustable** — N doubles as the LLM aggregation window: N=4 → the LLM aggregates events of the last 4 turns.
+- **Failure UX**: dismissible toast on the TV, auto-hides after **30 s** (replaces the earlier "silent skip"); the game still never waits on commentary.
+- **Defaults confirmed as drafted (Q16 final confirm, 2026-09-08 — TODO-54d2879c)**: the N-turns control lives on the TV view (persisted per match); "2nd screen active" = the TV tab is polling; interviews target ~2 min; work split into **two PRs** — (1) 2nd screen + conquest persistence, (2) commentary pipeline — so the screen ships before the LLM work.
+
+## Alternatives considered
+
+- **Conquest-only first** (Q15 proposal) — rejected by the user: all matches get it.
+- **Fixed every-2-turns cadence** — rejected: N must be adjustable, with deeper aggregation at higher N.
+- **Always-generate + cache for later** — rejected: a paused/closed screen generates nothing; spend follows attention.
+
+## Consequences
+
+- Zero LLM ([[learnings/opencode-zen-go-needs-session-header]] \`OPENCODE_API\`) + ElevenLabs spend without an actual audience.
+- The TV route becomes load-bearing for generation: its polling is the "active" signal, its pause button the kill switch ([[tv-mode-url-tab-cast-polling]]).
+- The cadence/aggregation N is stored per match alongside the commentary cache.
+- Two-PR split sequences the build: [[conquest-state-server-persisted]] + TV view first, LLM pipeline second.
+`,
+  "decisions/conquest-state-server-persisted.md": `---
+type: Decision
+title: "Conquest state persists server-side: write-through per dart, own table + uuid"
+description: Context
+tags: [conquest, persistence, tv, database, drizzle]
+status: accepted
+timestamp: "2026-09-08T20:03:02.211Z"
+---
+
+# Conquest state persists server-side: write-through per dart, own table + uuid
+
+## Context
+
+The live conquest game (\`/match/conquest\`) is entirely client-side — state lives in \`sessionStorage\` ([[conquest-state-client-side-only]]), which is the M3 stopgap. The TV spectator mode ([[tv-mode-url-tab-cast-polling]]) needs a second device to poll conquest state, and the LLM commentary feed ([[llm-commentary-trebles-territories]]) plus the recap video pipeline ([[recap-video-pipeline-trebles-territories]]) both need server-side state. Grill Q8 asked how the TV view gets conquest state; the user settled it as **(a) server-persisted** (2026-09-08, interview round 2).
+
+## Decision
+
+- **Write-through on every dart**: the scorer persists \`ConquestState\` to the server on each throw — TV polls it, exactly the pattern classic 301/501 matches already use for their ~1s polling TV view.
+- **Own table + uuid**, not a jsonb column bolted onto \`matches\` — a conquest game is not a classic match row and has its own lifecycle.
+- **One TV route pattern serves both match types** (classic + conquest), not two divergent TV views.
+
+## Alternatives considered
+
+- **jsonb column on matches** — rejected: couples conquest lifecycle to the classic match schema.
+- **Same-browser \`storage\`-event sync** — rejected earlier: only covers one browser (no remote spectators), two tabs can fight over one key ([[conquest-state-client-side-only]]).
+
+## Consequences
+
+- Unblocks conquest TV/spectator view via the same polling pattern as classic — no conquest-specific realtime work.
+- Unblocks server-side LLM commentary (M4) and the day-after recap pipeline.
+- Conquest games become refresh-safe / resumable across tabs and devices (today they die with the tab).
+- sessionStorage handoff from setup becomes an initialization concern only.
+- Implementation pending as of this decision — design settled, code not yet written. Grill Q9 (share affordance: button vs button+QR vs URL convention) still open.
+`,
   "decisions/dual-layout-match-view.md": `---
 type: Decision
 title: "Dual-layout live match view: standings strip for 3+ players"
@@ -2998,6 +3118,84 @@ Also tabled for later tuning: holding a full arc of neighboring numbers ("kingdo
 - [Recap videos via HyperFrames for day-after match reminders](./recap-videos-via-hyperframes.md) - Context
 - [Preset ladder re-banded to 51–1501 in steps of 50 (301 default)](./preset-ladder-51-1501-steps-of-50.md) - Decision
 - [Trebles & Territories board palette locked (Coolors 10-color band)](./trebles-territories-board-palette-coolors.md) - Decision
+- [Remember-me: session-only login shadows remembered login](./remember-me-session-only-login.md) - Context
+- [TV spectator mode: URL + tab-cast, 1s polling, public-by-link, room-first](./tv-mode-url-tab-cast-polling.md) - Context
+- [Conquest state persists server-side: write-through per dart, own table + uuid](./conquest-state-server-persisted.md) - Context
+- [Interview questions: per-player 1–2 curated options, randomly surfaced](./interview-questions-per-player-curated.md) - Interview questions: per-player 1–2 curated options, randomly surfaced
+- [Interviews on ElevenLabs live TTS: fixed commentator voice, random Dutch spectators](./interviews-elevenlabs-live-tts.md) - Context
+- [Commentary gated on open 2nd screen + pause button; all match types; every-N-turns cadence](./commentary-gated-on-2nd-screen.md) - Context
+- [Risk 42 base mechanic: two-feeder army deposits (any-dart claims, treble feeds inner +2, double feeds outer +2)](./risk-42-base-mechanic-two-feeder-deposits.md) - Context
+- [Risk 42 attack rule locked: mirror damage — deposit down on enemy land, reduce-to-zero capture](./risk-42-attack-rule-mirror-damage.md) - Context
+- [Real Risk world map on the board — 40 territories via inner/outer boxes, Japan & Madagascar cut](./real-risk-world-map-draft.md) - Context
+- [World map → dartboard mapping via azimuthal projection + Hungarian assignment (bull = Black Sea)](./board-mapping-azimuthal-hungarian.md) - Azimuthal + Hungarian fit replaces the hand-drawn draft; inner = Old World core, outer = frontier
+- [Territory labels go horizontal: centered in each box, no rotation](./territory-labels-go-horizontal-centered-in-each.md) - Context
+`,
+  "decisions/interview-questions-per-player-curated.md": `---
+type: Decision
+title: "Interview questions: per-player 1–2 curated options, randomly surfaced"
+description: "Interview questions: per-player 1–2 curated options, randomly surfaced"
+tags: [conquest, interviews, trebles-and-territories, game-design]
+status: accepted
+timestamp: "2026-09-08T20:11:16.954Z"
+---
+
+# Interview questions: per-player 1–2 curated options, randomly surfaced
+
+# Interview questions: per-player 1–2 curated options, randomly surfaced
+
+## Context
+
+Mid-grill (2026-09-08, interview round 2) for the planned spectator-interview feature in Trebles & Territories: LLM-generated mid-game interviews (commentator asks, a random spectator persona answers) in Dutch, voiced and subtitled on the TV second screen. Q13 asked what the question pool looks like. User settled it: "for each player a random 1–2 options that make sense or heat up the game."
+
+## Decision
+
+- The question pool is **per-player and curated**: each player gets **1–2 interview options**, filtered to be either **sensible** (make sense for that player/game state) or **dramatic** (heat up the game).
+- At interview time the feature **randomly surfaces** one of the player's options.
+- Questions are **conquest-focused**.
+
+## Alternatives considered
+
+- LLM free-form question generation — implicitly rejected by the settlement: a small authored pool keeps questions on-brand, game-relevant, and safely dramatic rather than randomly offensive.
+
+## Consequences
+
+- Curating per-player options is authoring work, but bounded (1–2 per player).
+- The "heat up the game" category gives the vox-pop format its drama lever.
+- See [[spectator-interviews-trebles-territories]] for the full feature; Q14 (voice engine) was still open at settlement time.
+`,
+  "decisions/interviews-elevenlabs-live-tts.md": `---
+type: Decision
+title: "Interviews on ElevenLabs live TTS: fixed commentator voice, random Dutch spectators"
+description: Context
+tags: [trebles-and-territories, conquest, tts, elevenlabs, interviews]
+status: accepted
+timestamp: "2026-09-08T20:19:37.768Z"
+---
+
+# Interviews on ElevenLabs live TTS: fixed commentator voice, random Dutch spectators
+
+## Context
+
+The spectator-interview feature ([spectator-interviews-trebles-territories](../pages/entities/spectator-interviews-trebles-territories.md)) had Q14 open: which engine voices the Dutch Q&A. The standing recommendation (2026-09-08) was **webSpeech now** (the only browser engine speaking nl-NL, free, per-device voice randomness fits the vox-pop vibe) with **ElevenLabs live API later** as a quality upgrade. The user then directed: use ElevenLabs now — per https://elevenlabs.io/docs/overview/intro, commentator = voice \`GiGOaehga8enaTnFQvb4\` (https://elevenlabs.io/voices/GiGOaehga8enaTnFQvb4), spectators = **any Dutch voice (mandatory), never the commentator's**, \`ELEVENLABS_KEY\` already in \`.env\`.
+
+## Decision
+
+Interviews use the **ElevenLabs live TTS API immediately** — no webSpeech-first stage:
+
+- **Commentator**: fixed voice \`GiGOaehga8enaTnFQvb4\` on every interview.
+- **Spectators**: a random **Dutch** voice per interview, hard-excluded from the commentator voice.
+- **Keys**: \`ELEVENLABS_KEY\` (audio) + \`OPENCODE_API\` (text LLM writes the Dutch Q&A) — both already in \`.env\`.
+
+## Alternatives considered
+
+- **webSpeech now, ElevenLabs later** — free and zero-dep, superseded by the user's explicit voice mandate the same day it was proposed.
+- **Kokoro** — ruled out earlier: English-only voice bank ([webspeech-only-dutch-tts](../learnings/webspeech-only-dutch-tts.md)).
+
+## Consequences
+
+- Live TTS costs per generation → interviews must be generated **once and cached** (text in the DB with conquest state, audio file/blob-cached) so replays and late joiners never re-bill.
+- Dutch subtitles stay on the TV view (muted screens still get the show); any LLM/TTS failure = silent skip — the game never waits on an interview.
+- The caller's webSpeech path remains the only *browser-side* Dutch engine; that fact is unchanged, only the "must start on webSpeech" guidance is superseded.
 `,
   "decisions/last-stand-amendment-blank-first-resurrection.md": `---
 type: Decision
@@ -3072,6 +3270,69 @@ The spec turn had fixed a 10-entry ladder (201 / 301 / 501 / 701 / 1001 / 1301 /
 - 2001+ marathon games are gone from the presets; the band tops out at 1501.
 - These thirty are the *only* selectable start scores; the wiki pages documenting the old ladder were updated.
 `,
+  "decisions/real-risk-world-map-draft.md": `---
+type: Decision
+title: Real Risk world map on the board — 40 territories via inner/outer boxes, Japan & Madagascar cut
+description: Context
+tags: [game-mode, risk-darts, map-design, ideation, draft, superseded-by-board-mapping-azimuthal-hungarian]
+status: superseded
+timestamp: "2026-09-08T22:29:41.423Z"
+---
+
+# Real Risk world map on the board — 40 territories via inner/outer boxes, Japan & Madagascar cut
+
+## Context
+
+Ideation pass (continuing the bonuses conversation) translating the **original Risk world map** onto the dartboard. Board model in this thread: 20 wedges × **inner/outer box = 40 territories**, both bulls left **without function for now**. This is a real-map redesign direction relative to the shipped baseline (fictional six continents over single-wedge territories — see [[risk-darts-proposed-game-mode]]); nothing is implemented yet.
+
+## The choice (DRAFT — awaiting veto, "Q5: does this map fly?")
+
+1. **Japan and Madagascar are excluded** (user's cut): the two single-connection island dead-ends of the Risk graph. 42 − 2 = 40 = 20 wedges × 2 boxes, exact fit.
+2. **Three structural rules** make the translation honest:
+   - Each same-wedge inner/outer pair must be a **genuine Risk adjacency** (two neighboring territories).
+   - **Continents occupy contiguous arcs of wedges**, in world order.
+   - **Inter-continental bridges become straddle wedges** — inner belongs to one continent, outer to its neighbor. The famous chokepoints land exactly there: **wedge 13 Greenland/Iceland (NA↔EU)** and **wedge 3 Middle East/E.Africa (AS↔AF)**.
+3. **Adjacency is declared, not derived**: same-wedge adjacency + the two bridge straddles + neighboring-wedge continuity. Known dishonesties accepted: Oceania↔S.America and Argentina↔Alaska sit adjacent on the circle but not on the map (fake boundaries); Kamchatka↔Alaska is a real Risk adjacency the circle can't honor.
+
+## Draft pairing table
+
+| # | Inner | Outer | Continent |
+|---|---|---|---|
+| 20 | Alaska | NW Territory | N. America |
+| 1 | Alberta | Ontario | N. America |
+| 18 | Quebec | Eastern US | N. America |
+| 4 | Western US | Central America | N. America |
+| 13 | Greenland | Iceland | NA↔EU bridge |
+| 6 | Great Britain | Scandinavia | Europe |
+| 10 | N. Europe | W. Europe | Europe |
+| 15 | S. Europe | Ukraine | Europe |
+| 2 | Egypt | N. Africa | Africa |
+| 17 | C. Africa | S. Africa | Africa |
+| 3 | Middle East | E. Africa | AS↔AF bridge |
+| 19 | Afghanistan | China | Asia |
+| 7 | Ural | Siberia | Asia |
+| 16 | Yakutsk | Kamchatka | Asia |
+| 8 | Irkutsk | Mongolia | Asia |
+| 11 | India | Siam | Asia |
+| 14 | Indonesia | New Guinea | Oceania |
+| 9 | W. Australia | E. Australia | Oceania |
+| 12 | Venezuela | Peru | S. America |
+| 5 | Brazil | Argentina | S. America |
+
+Free bonus from the circle: **Siam → Indonesia** (wedge 11 outer → wedge 14 inner) — the Asia↔Oceania bridge lands on neighboring arcs without effort. Treble/double rings then read as **supply lines into specific territories** (T20 hits Alaska specifically, D20 the NW Territory).
+
+## Alternatives / open knobs
+
+- Inner vs outer orientation per pair (which box gets the easier target) — tune in the spec pass.
+- Both bulls functionless "for now" — Bull Altar role undecided in this variant.
+- Next topic if the map flies: **continent bonuses**.
+
+## Consequences
+
+If accepted, this replaces the fictional-continent board with the recognizable Risk world (instant legibility for anyone who's played Risk) at the cost of the two fake boundaries above. Status stays **proposed** until the user's veto pass.
+
+> **Superseded** by [[board-mapping-azimuthal-hungarian]] (2026-09-08): optimizer-derived mapping with user anchors Iceland=outer-5 / South Africa=outer-3 replaces this hand-drawn table. Kept for the structural rules and the Japan/Madagascar cut rationale.
+`,
   "decisions/recap-videos-via-hyperframes.md": `---
 type: Decision
 title: Recap videos via HyperFrames for day-after match reminders
@@ -3106,6 +3367,131 @@ Pipeline specced in §07 ("Morning-After recap"): **daily cron → GLM-5.3-Flash
 - GLM writes the recap script, reusing the already-tested commentary integration rather than a second LLM path.
 
 Status: **proposed** — specced in §07; implementation not started (M1 engine green light still pending).
+`,
+  "decisions/remember-me-session-only-login.md": `---
+type: Decision
+title: "Remember-me: session-only login shadows remembered login"
+description: Context
+tags: [email, auth, emailgate, storage, session]
+status: accepted
+timestamp: "2026-09-08T11:06:38.428Z"
+---
+
+# Remember-me: session-only login shadows remembered login
+
+## Context
+
+The email gate already persisted logins: \`localStorage['darts_email']\` (remembered login) plus a saved-accounts list, with the gate skipped entirely when an email is present. Recon in [[emailgate-remember-me-already-ships]] found the only genuine gap was **shared devices** — playing on a borrowed browser left your email behind in that browser's localStorage.
+
+## Choice
+
+A "Remember me on this device" checkbox (default **on**) in both gate forms:
+
+- **Checked** → remembered login: \`localStorage['darts_email']\` + saved-accounts entry (existing behavior).
+- **Unchecked** → **session-only login**: stored under a sessionStorage key, never written to \`localStorage\` or the saved-accounts list; the gate reappears when the browser session ends.
+
+Store API becomes \`setEmail(email, remember)\` with shadowing semantics:
+- a live session login **shadows** the remembered one (session wins while it exists),
+- a remembered login clears stale session keys,
+- sign-out wipes **both** storages.
+
+## Alternatives considered
+
+1. **Always persist (status quo)** — simplest, but leaves the email on shared devices; the actual complaint.
+2. **Never persist** — safe but loses one-tap "Welcome back" on personal devices.
+3. **Separate guest/incognito mode** — extra UI and no email identity for stats; more complexity for the same outcome.
+
+## Consequences
+
+- \`src/lib/stores/email.ts\` stays the single source of truth — no route reads \`darts_email\` directly, so no page needed changes.
+- Login/sign-out flows must now handle BOTH storage keys together; breaking the shadowing contract breaks gate skipping.
+- Covered by \`scripts/smoke-email-store.ts\` (5 scenarios, run via \`tsx\`) until the Vitest suite lands on master (see [[vitest-suite-uncommitted-master-has-no-test-runner]]).
+- Shipped via PR #1, branch \`feature/remember-me\` (commits \`5bc53ab\` store semantics, \`a467d1e\` gate UI); pending user merge at time of recording. Railway deploys from master only — nothing live until merged.
+`,
+  "decisions/risk-42-attack-rule-mirror-damage.md": `---
+type: Decision
+title: "Risk 42 attack rule locked: mirror damage — deposit down on enemy land, reduce-to-zero capture"
+description: Context
+tags: [game-design, risk-42, conquest-mode, combat, attack-rule]
+status: accepted
+timestamp: "2026-09-08T22:22:59.134Z"
+---
+
+# Risk 42 attack rule locked: mirror damage — deposit down on enemy land, reduce-to-zero capture
+
+## Context
+
+Brainstorming [Risk 42](../pages/concepts/risk-42-proposed-game-mode.md), the proposed second conquest mode. The base mechanic — [two-feeder army deposits](./risk-42-base-mechanic-two-feeder-deposits.md) — was already user-declared, but it only defined darts into **blank** (claim) and **own** (deposit +1/+2) territory. Q3 — what a dart does into **enemy** territory — was the last open piece of the base game. The assistant had recommended **mirror damage**; this turn's user ruling ("B") accepts it. Assistant confirmation: "Base game is now complete."
+
+## Choice
+
+**Mirror damage attack rule (Q3 = B):** a dart into an enemy territory subtracts its value from that box —
+
+- Direct hit (single / any non-ring landing): **−1 army**
+- Ring hit (double or treble): **−2 armies**
+- Reducing an enemy box to **0 flips the territory to the attacker with 1 army.**
+
+One rule now covers every dart: **the dart's value goes in the box — up if it's yours or blank, down if it's theirs; 0 flips it to you with 1 army.** Attack is the exact mirror of deposit (+1 direct / +2 ring), preserving the one-mechanic-does-everything purity and the structural income symmetry.
+
+Emergent property (called out at lock time): **mid-turn flips chain** — knock an enemy box to 0 with an early dart and your remaining darts in the same turn can immediately deposit into your fresh conquest (attack→capture→reinforce inside one throw of 3).
+
+## Alternatives considered
+
+- **Dead dart on enemy land** — rejected: too passive, rewards turtling.
+- **Duel throws** (defender responds) — rejected: ceremony on every contested dart, slows the night.
+- (Both alternatives were already weighed when the recommendation was posed; the ruling picks mirror damage.)
+
+## Consequences / open items
+
+- Territory state stays minimal: owner + army count per box. Deposition and attack are the same operation with a sign flip — implementation surface is tiny if this gets built.
+- The treble remains the best dart in every situation (attacks −2, feeds inner +2); social balancing (table shoots the leader) is the counterweight.
+- **Open — Q4, what do the bulls do?** 25 and 50 are the only territories with **no ring feeder** — dead-end boxes on the hardest targets, a deliberate design gift. Options posed:
+  - **A — one-shot strikes** (event-on-hit): hit 50 → immediately strike any territory (−3 armies, say); 25 → smaller strike. Bulls become artillery / leader-killing — but sharks hit bulls more, so it *favors* precision.
+  - **B — perk-while-owned** (event-on-ownership, assistant recommendation): bulls stay normal claimable territories; owning **bullseye** buffs your treble damage (3 instead of 2), owning **outer bull** buffs your doubles (3 instead of 2); holding both = double-barreled. Zero bookkeeping, keeps the sacred 42 = 42 count, and inverts the anti-shark valve: the perk-holder *becomes* the target, and dethroning them means throwing centerward — which everyone can do.
+  - **C — card economy**: bull hit = draw a Risk-style card. Most classically Risk, most bookkeeping, feeds the shark — worst fit for the mixed table.
+  - **D — plain territories**: no rider; wastes the dead-space gift.
+- Still design-stage: no Risk 42 code exists yet.
+`,
+  "decisions/risk-42-base-mechanic-two-feeder-deposits.md": `---
+type: Decision
+title: "Risk 42 base mechanic: two-feeder army deposits (any-dart claims, treble feeds inner +2, double feeds outer +2)"
+description: Risk 42 base mechanic locked as two-feeder army deposits — any dart claims a blank, own-land dart +1, treble feeds inner box +2, double feeds outer box +2; attack rule (Q3) open.
+tags: [game-design, risk-42, conquest-mode, armies]
+status: accepted
+timestamp: "2026-09-08T22:21:10.489Z"
+---
+
+# Risk 42 base mechanic: two-feeder army deposits (any-dart claims, treble feeds inner +2, double feeds outer +2)
+
+## Context
+
+Brainstorming [Risk 42](../pages/concepts/risk-42-proposed-game-mode.md), the proposed second conquest mode (42 claimable areas = 20 inner singles + 20 outer singles + 2 bulls, mirroring classic Risk's 42 territories). The prior proposal on the table was "armies = dart multiplier" (S/D/T = 1/2/3 armies wherever the dart lands, with a round-robin claiming phase). The user then declared the base mechanic directly: "each turn you have 3 darts, every dart thrown at a blank territory gets claimed by that player, each dart that hits that territory adds 1 defensive army. a triple box adds 2 armies to the box below it, the inner one territory. each double adds 2 armies to the outer box it belongs to. this is the base mechanic."
+
+## Choice
+
+**Two-feeder army deposits** as the Risk 42 base mechanic (user-declared):
+
+- Turn = **3 darts**.
+- Any dart into a **blank** territory **claims** it for the thrower (any dart founds — no treble-only founding, unlike T&T's treble-frontier rule).
+- Any dart into **own** territory = **+1 defensive army**.
+- **Treble** of a wedge = **+2 armies** to that wedge's **inner** box.
+- **Double** of a wedge = **+2 armies** to that wedge's **outer** box.
+- **Bulls** are plain territories (2 of the 42) with no ring feeders — parked for the bonuses/special-events discussion.
+
+The property that makes it elegant: **every territory has exactly two feeders** — a +1 direct hit and a +2 ring hit (the double *must* feed the outer box by geometry; the treble is paired with the inner). Army income per box is identical across the whole board — **balanced by construction**, no per-wedge fudging needed.
+
+## Alternatives considered
+
+- **S/D/T = 1/2/3 armies wherever the dart lands** (the prior proposal) — replaced by the feeder model: ring hits feed a *specific* box (inner for treble, outer for double) rather than acting as bigger direct hits, which is what makes per-box income symmetric.
+- **Treble-only founding** (T&T's treble-frontier rule) — not carried over; any dart claims a blank here.
+
+## Consequences
+
+- If built, territory state = owner + army count per box, with deposits applied on every dart; income symmetry is structural, so no per-wedge balancing pass is needed.
+- **Two assumptions pending user veto:** (1) *claim-via-ring* — a treble into a blank inner box claims it with 2 armies (a deposit is a deposit; first army in claims the box); (2) *no cap* — armies stack without limit, classic-Risk style.
+- **Q3 (open) — dart into enemy territory:** the base mechanic doesn't define attack yet. Assistant recommendation: **mirror damage** — your dart's value subtracts (single −1, ring −2); box at 0 → flips to attacker with 1 army. Keeps the one-mechanic-does-everything purity (deposit up on blank/own, down on enemy); the treble stays the best dart in every situation, which is what social balancing (shoot the leader) is for. Alternatives rejected: dead dart on enemy land (too passive/turtle), duel throws (ceremony on every dart, slows the night). Unanswered at time of recording.
+- The prior page's round-robin claiming phase: whether it survives "any dart claims a blank" is unconfirmed.
+- Next design steps queued: bonuses/special events (bulls first), caps/inflation if stacking runs away, then game end.
 `,
   "decisions/risk-territory-darts-over-heat-economies.md": `---
 type: Decision
@@ -3191,6 +3577,44 @@ Assistant-assumed defaults (vetoable, not yet user-ruled — fold into the Quest
 - Caller audio: needs a "SHANGHAI!" event clip (fits the existing ElevenLabs soundboard pattern in \`static/audio/\`).
 - Detection: match/territory engine must check single+double+treble of one wedge across a turn's darts. Edge to rule in the veto pass: on a 4-dart turn (earned by a previous Shanghai), does any 3-dart subset count, or strictly the turn's darts as thrown?
 - Question 7 remains open: final veto pass over the full read-back + naming the game (Conquest / 20 Kingdoms / Trebles & Territories / Gold Coast).
+`,
+  "decisions/territory-labels-go-horizontal-centered-in-each.md": `---
+type: Decision
+title: "Territory labels go horizontal: centered in each box, no rotation"
+description: Context
+tags: [risk, svg, labels, design, board-map]
+status: accepted
+supersedes: "["learnings/flipped-labels-negate-radial-offset-on-left-half"]"
+timestamp: "2026-09-08T23:07:10.670Z"
+---
+
+# Territory labels go horizontal: centered in each box, no rotation
+
+## Context
+
+The labeled design board (\`docs/risk/risk-dart-board.svg\`, regenerated by \`docs/risk/apply-territory-labels.cjs\`) initially placed the 40 territory names **radially** — rotated along each wedge's angle, flipped upright on the left half. The user rejected the rotated look and pointed back to \`docs/risk/.archive/_board-inline.html\` — the earlier hand-built reference mockup: "in here you were on the right track".
+
+## Decision
+
+Territory labels are **horizontal, unrotated, centered in each box**, exactly like the archived reference:
+
+- \`text-anchor="middle"\` at the wedge's mid-angle bearing — no rotation anywhere
+- Inner-ring names at **r=98** (box center r=68 plus 30px toward the triple), outer-ring names at **r=166** (r=160 plus 20% of the way toward the double at 190) — nudged outward from band centers so names clear the wedge clutter
+- Two-line wraps for long world-map names still come from the script's \`LINES\` table
+- Colors unchanged: white-on-black / dark-on-cream derived from each box's own fill; design paths/fills/ids untouched
+
+## Alternatives considered
+
+- **Radial rotation with left-half flip** (the previous shipped mockup, documented in \`learnings/flipped-labels-negate-radial-offset-on-left-half\`) — rejected by the user as the wrong look; harder to read on wedges.
+
+## Verification
+
+40/40 labels sit inside their own box's radius band and wedge sector, 0 misplaced. Note: the first verifier "failures" were a bug in the *verifier* (coercing the string \`"inner"\` to NaN), not the board — the SVG radii (98) and bearings (exact wedge centers) were already correct. Fix the check, not the board.
+
+## Consequences
+
+- \`apply-territory-labels.cjs\` owns placement; the regenerate-don't-hand-edit rule ([[board-svgs-are-generated]]) is unchanged.
+- Supersedes the radial-orientation approach in [[risk-dart-board-mockup-risk-dart-board-svg]] and the flipped-labels learning.
 `,
   "decisions/timed-war-clock-in-turns-per-player.md": `---
 type: Decision
@@ -3342,6 +3766,41 @@ The spec's situation boards previously used ad-hoc colors. The user picked a 10-
 - Any future board/board-adjacent UI takes colors from this band (or shades of it), not new hues.
 - Implementers should read the continent table in \`.specs/trebles-and-territories/spec.html\` as the source of truth for exact hex pairs.
 `,
+  "decisions/tv-mode-url-tab-cast-polling.md": `---
+type: Decision
+title: "TV spectator mode: URL + tab-cast, 1s polling, public-by-link, room-first"
+description: Context
+tags: [tv, spectator, realtime, architecture, emailgate]
+status: accepted
+timestamp: "2026-09-08T19:45:52.275Z"
+---
+
+# TV spectator mode: URL + tab-cast, 1s polling, public-by-link, room-first
+
+## Context
+
+Task \`2nd-tv-screen-cast-realtime\` (second screen for live matches) was paused at step 3 awaiting scope answers. A grilling session (2026-09-08) settled the four root decisions. Facts that shaped them: no realtime infra exists (live match page loads everything once on mount, writes via REST); refresh-resume already rebuilds full state from the DB ([[learnings/refresh-resume-needs-chronological-turn-order]]); match IDs are unguessable UUIDs; EmailGate gates all pages client-side with no route exemptions ([[learnings/ssr-pages-are-empty-shells-emailgate]]).
+
+## Decisions
+
+1. **Audience: the room AND remote spectators — both first-class.** *(Amended 2026-09-08, interview round 2: user settled Q1 as "(c) both"; originally recorded room-first.)* Players score on one device; the TV is a big screen everyone glances at. Elevating remote spectators to a requirement is precisely what kills the native Chromecast SDK option for good: a cast session from the scorer's device can't serve remote viewers at all, while one shared URL serves both for free. Checkout suggestions and darts-thrown stay on the scorer; the TV shows big scores, averages, set/leg count, who's throwing.
+2. **Delivery: spectator URL + tab-cast, explicitly NOT the native Chromecast SDK.** A read-only scoreboard route (e.g. \`/match/[id]/tv\`) opened in the TV's browser or a cast browser tab. The native SDK (receiver registration, $5 dev fee, device allow-listing, app approval) is a YAGNI trap; add it only if tab-casting proves unusable in practice.
+3. **Realtime: poll ~1 s, not SSE/WebSocket.** State changes per dart at human speed; the resume logic already reconstructs the full match from the same endpoints, so a second device polling needs zero backend work. If 1 s polling ever measurably lags, SSE is a contained later upgrade — but likely never ships.
+4. **Access: TV route is public-by-link and exempt from EmailGate.** The gate is soft (any email passes, no verification) and would only annoy the person setting up the TV. The UUID link is the key — see [[learnings/match-api-unauthenticated]].
+5. **Share affordance: an in-app button that copies the TV URL — no QR code.** *(Settled 2026-09-08, interview round 2 Q9: user chose "button + copy-link, no QR".)* The scorer gets a button that copies the \`/match/[id]/tv\` link to the clipboard; no QR rendering. Remote spectators receive the link via any messenger.
+6. **End-of-match: result freeze — winner card, polling stops, card persists until closed.** *(Settled 2026-09-08, interview round 2 Q11: user chose "(a) result freeze".)* When a match ends, the TV route swaps to a winner card, **stops polling**, and keeps that card on screen until someone closes it — no auto-redirect, no countdown to a home screen. Same pattern for both game types (classic 301/501 and conquest), so the TV route has one end-of-match lifecycle regardless of match type.
+
+## Consequences
+
+- The open write API (PATCH/DELETE \`/api/matches/[id]\` unauthenticated) is a pre-existing, accepted risk for this feature: **noted, not fixed in the TV PR** — it deserves its own task and was flagged in the PR description.
+- Stopping the poll on match end means the TV route needs the match status in every poll response (it already gets it for free via the same read endpoints) so it knows when to freeze.
+- Round 2 of the grill: Q9 and Q11 settled (decisions 5 and 6 above).
+- **Final confirmation (2026-09-08): design tree fully settled** — spec captured as TODO-54d2879c.
+  - **Q10 settled: no caller audio on the TV, ever.** User overrode the muted-by-default + one-tap-unmute recommendation. (Interview/commentary audio still plays on the TV — it is the content; the caller is not.)
+  - **Q12 settled: conquest TV layout** = board, scoreboard, phase, last-dart strip, **turn clock (included** — overrides the earlier "skip for now" rec), and per-player curated options. Classic layout stays the 7-block scoreboard.
+  - **Ground rules locked with the spec:** the TV **never writes**; no caller audio on TV; no native Cast SDK; option curation is **heuristic, not LLM**; 1–6 players everywhere.
+  - **Kickoff:** branch \`feature/2nd-tv-screen-cast-realtime\`, worktree \`E:/worktrees/kees-2nd-tv-screen-cast-realtime\` on top of \`feature/trebles-territories\` (conquest PR #2 still unmerged — PR A and PR #2 overlap until it merges; plan: build PR A now, rebase if needed, or merge #2 first). Cast button opens the read-only \`/tv\` view in a new tab.
+`,
   "glossary.md": `---
 type: Glossary
 title: Glossary
@@ -3393,7 +3852,7 @@ okf_version: "0.1"
 <!-- wiki-nav:start -->
 ## Navigation map
 
-Auto-generated detailed index of every docs/wiki/ concept — the map the LLM uses to locate information. 4 concept(s). Regenerated on init and on wiki_mark_synced. Generated 2026-09-07T19:19:12.450Z.
+Auto-generated detailed index of every docs/wiki/ concept — the map the LLM uses to locate information. 48 concept(s). Regenerated on init and on wiki_mark_synced. Generated 2026-09-08T07:43:34.439Z.
 
 Each entry: \`concept-id\` (pass to wiki_get) — title — description.
 
@@ -3408,7 +3867,60 @@ Each entry: \`concept-id\` (pass to wiki_get) — title — description.
 
 ### Pages
 
+- \`pages/artifacts/test-suite\` — Test suite — The automated test layer for dart.monster: 67 Vitest unit tests over the pure game modules, plus 14 Playwright E2E tests (API lifecycle + real-browser UI) that 
+- \`pages/artifacts/trebles-and-territories-player-manual\` — Trebles and Territories player manual — Player-facing rules-only HTML manual distilling the Trebles and Territories implementation spec into 7 short Dutch sections.
+- \`pages/artifacts/trebles-territories-implementation-spec\` — Trebles & Territories implementation spec — The implementation spec for **Trebles and Territories** — the self-contained HTML design document (built with the html-docs skill) that drives the build. Contai
+- \`pages/concepts/risk-darts-proposed-game-mode\` — Risk Darts (proposed game mode) — What is it?
+- \`pages/entities/conquest-engine-and-live-game\` — Conquest engine (conquest-engine.ts + live conquest game) — The playable implementation of [[risk-darts-proposed-game-mode]] (Trebles & Territories): a pure, TDD'd game engine plus the board component and live game route
+- \`pages/entities/conquest-setup-fun-tab-conquest-setup-ts\` — Conquest setup (Fun tab + conquest-setup.ts) — The first shipped code for [risk-darts-proposed-game-mode](../concepts/risk-darts-proposed-game-mode.md) (Trebles and Territories): the **Fun tab** on the match setup page plus the pure setup-logic module
+- \`pages/entities/dart-monster-dns-railway-domain-setup\` — dart.monster DNS & Railway domain setup — Concrete infrastructure: how \`dart.monster\` (this project, also deployed as darts.xyz) is wired to its Railway service, as of 2026-09-07.
+- \`pages/entities/e2e-helpers\` — E2E helpers — \`e2e/helpers.ts\` — the shared seeding/util module every Playwright spec imports. It owns the account-isolation and persistence gotchas so each spec doesn't redi
+- \`pages/entities/live-match-page\` — Live Match Page — What is it?
+- \`pages/entities/llm-commentary-trebles-territories\` — LLM Commentary (Trebles & Territories) — The in-game AI commentary feed for [[risk-darts-proposed-game-mode|Trebles & Territories]]: an LLM writes a commentary blurb **every 2 turns**, rendered in a de
+- \`pages/entities/match-stats-tab\` — Match Stats Tab — All-players statistics table in the live match UI, plus the leg/match average displays shipped with it.
+- \`pages/entities/playerpanel\` — PlayerPanel — A reusable scoreboard panel component for the live match scorer, rendered around the board for every roster size (full-size for 1–2 players, condensed cards for 3–6).
+- \`pages/entities/recap-video-pipeline-trebles-territories\` — Recap Video Pipeline (Trebles & Territories) — The planned Morning-After recap feature for Trebles & Territories: the day after a game, each match gets an LLM-generated recap video, and players who stored an email address receive a link to it.
 - \`pages/TEMPLATES\` — Page Templates — Reference templates for Concept, Entity, and Artifact pages. Follow these when using wiki_note_page.
+
+### Decisions
+
+- \`decisions/adopt-vitest-playwright-real-db-e2e\` — Adopt Vitest + Playwright test stack with real-DB E2E — Context
+- \`decisions/bull-altar-resurrection-replaces-siege-lock\` — Bull Altar resurrection replaces insurgents; Siege map B locked — Context
+- \`decisions/cap-match-rosters-at-6-players\` — Cap match rosters at 6 players, enforced client and server — Context
+- \`decisions/cards-around-the-board\` — Cards around the board for all roster sizes (condensed panels for 3–6) — Decision
+- \`decisions/claim-based-territory-ownership\` — Claim-based territory ownership replaces the damage-flip model in Risk darts — Context
+- \`decisions/dual-layout-match-view\` — Dual-layout live match view: standings strip for 3+ players — Context
+- \`decisions/heat-momentum-core-balancing-mechanic\` — Heat momentum as the core balancing mechanic for the Risk-style conquest darts mode — Context
+- \`decisions/last-stand-amendment-blank-first-resurrection\` — Last Stand amendment: blank-first resurrection, next-player robbery, defender bull save — Context
+- \`decisions/preset-ladder-51-1501-steps-of-50\` — Preset ladder re-banded to 51–1501 in steps of 50 (301 default) — Decision
+- \`decisions/recap-videos-via-hyperframes\` — Recap videos via HyperFrames for day-after match reminders — Context
+- \`decisions/risk-territory-darts-over-heat-economies\` — Risk-territory darts over heat economies — Context
+- \`decisions/shanghai-feat-grants-1-dart-the-next-turn\` — Shanghai feat grants +1 dart the next turn — Context
+- \`decisions/timed-war-clock-in-turns-per-player\` — Timed War clock measured in turns per player, branded 170/301/501 (default 301) — Context
+- \`decisions/timed-war-default-endgame-fixed-continents\` — Timed War default endgame, fixed continents, no elimination for Risk darts — Context
+- \`decisions/treble-frontier-founding-requires-treble\` — Treble-frontier founding: blank territories require a treble to claim — Context
+- \`decisions/trebles-territories-board-palette-coolors\` — Trebles & Territories board palette locked (Coolors 10-color band) — Decision
+
+### Rules
+
+- \`rules/logic-todos-must-use-tdd-skill\` — All code/logic todos must use the TDD skill (red→green→refactor) — The rule
+- \`rules/never-hardcode-player-slots-in-match-ui\` — Never hardcode player slots in match UI — Guideline
+- \`rules/use-app-stores-page-for-page-state-house-style\` — Use $app/stores $page for page state — house style — Rule
+- \`rules/use-tooltip-not-native-title\` — Use the Tooltip component, not native title attributes — Guideline
+
+### Learnings
+
+- \`learnings/darts-email-localstorage-stores-raw-email\` — darts_email localStorage key stores the email raw, not JSON — The \`darts_email\` localStorage key stores the email as a **raw string** — \`getEmail\`/\`setEmail\` do not JSON-encode it. This differs from the accounts key, which
+- \`learnings/godaddy-apex-domain-a-record-to-edge-ip\` — GoDaddy apex domain on Railway: A record to live edge IP, not the documented one — The pattern (snooze.monster / dart.monster, Sep 2026)
+- \`learnings/godaddy-dns-can-t-serve-a-railway-apex-domain\` — GoDaddy DNS can't serve a Railway apex domain — The gotcha
+- \`learnings/miss-turns-must-persist-with-dartsthrown-1\` — Miss turns must persist with dartsThrown ≥ 1 — The turns table / API has a constraint that \`dartsThrown >= 1\`. A miss (all three darts off the board) is still a turn and must be persisted with \`dartsThrown\`
+- \`learnings/opencode-zen-go-needs-session-header\` — OpenCode zen/go LLM endpoint needs x-opencode-session header + custom User-Agent — The OpenCode Zen Go chat-completions endpoint (\`https://opencode.ai/zen/go/v1/chat/completions\`) rejects plain requests — it requires BOTH:
+- \`learnings/refresh-resume-needs-chronological-turn-order\` — Refresh-resume depends on chronological turn order and persisted firstThrowerId — Refreshing the browser mid-leg (resume logic in \`src/routes/match/[id]/+page.svelte\`) silently depends on two implicit contracts. Breaking either reproduces the
+- \`learnings/ssr-pages-are-empty-shells-emailgate\` — SSR pages are empty shells — EmailGate gates all rendering client-side — Gotcha
+- \`learnings/structuredclone-can-t-clone-svelte-5-state\` — structuredClone can't clone Svelte 5 $state proxies — pass $state.snapshot() at the engine boundary — Gotcha
+- \`learnings/tooltips-must-use-fixed-positioning\` — Tooltips must use fixed positioning to escape overflow clipping — Gotcha
+- \`learnings/ts-can-t-narrow-state-in-closures\` — TS can't narrow $state inside closures — use $derived.by with local capture — Gotcha
+- \`learnings/wiki-search-misses-recent-concepts\` — wiki_search misses recently-written concepts — verify with wiki_validate or ls before writing — Discovered while recapping the Risk-darts rollback turn: \`wiki_search("risk territory")\` and \`wiki_search("heat economies")\` both returned **no results**, yet \`
 <!-- wiki-nav:end -->
 
 An [OKF](https://github.com/earendil-works/okf) bundle documenting this project.
@@ -3417,6 +3929,107 @@ An [OKF](https://github.com/earendil-works/okf) bundle documenting this project.
 - [File tree](./architecture/file-tree.md) — Complete project file listing
 - [Glossary](./glossary.md) — Key terms for this project
 - [Pages](./pages/) — Concepts, entities, and artifacts of this project
+`,
+  "learnings/conquest-build-untracked-in-working-tree.md": `---
+type: Learning
+title: Trebles & Territories build was untracked in the working tree — now landed on feature/trebles-territories (PR #2)
+description: "RESOLVED 2026-09-08: the conquest build that survived the git rollback as untracked files is now committed on feature/trebles-territories and pushed as PR #2 (master still empty until merge)"
+tags: [git, conquest, trebles-and-territories, risk]
+timestamp: "2026-09-08T19:53:11.259Z"
+---
+
+# Trebles & Territories build lives uncommitted in the working tree (survived the git rollback on disk)
+
+Discovered when hunting for the Fun tab / Trebles & Territories code (2026-09): the **entire conquest build exists only as untracked files in the main working tree** — it was rolled back out of git history, but the files survived on disk. Not in any branch, stash, or ref. \`git reflog\` / dangling commits hold nothing.
+
+Untracked (never committed anywhere):
+- \`src/lib/game/conquest-engine.ts\` + \`conquest-engine.test.ts\`
+- \`src/lib/game/conquest-setup.ts\` + \`conquest-setup.test.ts\`
+- \`src/lib/components/conquest/ConquestBoard.svelte\` + \`ConquestScoreboard.svelte\`
+- \`src/routes/match/conquest/+page.svelte\`
+- \`vitest.config.ts\`, \`playwright.config.ts\`, \`e2e/\`, all game \`*.test.ts\`, \`PlayerPanel.svelte\`, the spec, the manual, \`docs/wiki/\`
+
+Modified but tracked: setup page (Fun tab), \`database-service.ts\`, \`api/matches\`, live match page, \`Dartboard.svelte\`, \`package.json\`.
+
+Consequences:
+
+- **Nothing needs rebuilding** — the code matches the spec at \`.specs/trebles-and-territories/spec.html\`; it just needs committing.
+- **\`git clean -fd\` or a hard reset would permanently destroy it.** Never run destructive git cleanup in this repo without first committing these files.
+- Any new feature build (e.g. the 2nd-screen/TV view) that wants to depend on conquest code must wait for this to land on master first.
+
+## Update 2026-09-08 — landed (PR #2)
+
+The danger below is resolved: the build is committed as 6 focused commits on \`feature/trebles-territories\` (built in its own locked worktree; the main tree was only read from), pushed to origin, and open as **PR #2** ([creatuluw/darts.xyz#2](https://github.com/creatuluw/darts.xyz/pull/2)).
+
+Still true until the PR merges:
+
+- **master has no conquest code** — do not assume fun games exist on master; check \`git ls-files src/lib/game/conquest-engine.ts\` on the branch you're on.
+- Merging PR #2 auto-deploys master to Railway.
+- Verification on the branch: 112/112 unit tests pass, build clean; the 4 \`svelte-check\` errors are pre-existing master debt (see [[ssr-pages-are-empty-shells-emailgate]]).
+`,
+  "learnings/conquest-state-client-side-only.md": `---
+type: Learning
+title: Conquest state is client-side only — nothing for a 2nd screen to poll
+description: The fact
+tags: [conquest, persistence, sessionstorage, tv-view, architecture]
+timestamp: "2026-09-08T20:02:01.435Z"
+---
+
+# Conquest state is client-side only — nothing for a 2nd screen to poll
+
+## The fact
+
+The live conquest game (\`/match/conquest\`) is **entirely client-side** — no API calls, no DB persistence. State lives in \`sessionStorage\` (the grill-session recon called it "localStorage"; the code uses \`sessionStorage\` — per-tab, dies with the tab):
+
+- \`conquest_setup\` — written by the Fun tab on \`/match/setup\` (\`sessionStorage.setItem\` in \`src/routes/match/setup/+page.svelte\`), cleared state key before \`goto("/match/conquest")\`
+- \`conquest_state\` — the evolving \`ConquestState\` on the live page (\`src/routes/match/conquest/+page.svelte\`)
+
+Classic 301/501 matches are the opposite: every turn is persisted through the REST API, which is why a TV/spectator view can poll a classic match "for free."
+
+## Why it matters
+
+Anything that reads conquest state from outside the scorer's tab is currently blocked:
+
+- **2nd TV screen / remote spectators** — nothing to poll; same-browser sync via \`storage\` events only covers the room and risks two tabs fighting over one key
+- **LLM commentary** (spec'd M4) — server-side needs the state
+- **Recap video pipeline** — day-after recap needs persisted state
+- Refresh-safety: conquest games are not resumable across tabs/devices (classic matches are)
+
+Grill Q8 (open as of this learning) recommends persisting \`ConquestState\` server-side on every dart — own table or jsonb column on matches — reusing the polling pattern the classic TV view needs anyway.
+
+## Source
+
+- \`src/routes/match/conquest/+page.svelte\` — \`SETUP_KEY\`/\`STATE_KEY\` constants
+- \`src/routes/match/setup/+page.svelte\` — writes \`conquest_setup\`, clears \`conquest_state\`
+- [[conquest-engine-and-live-game]] — the engine entity (persistence bullet calls this the M3 stopgap)
+- [[recap-video-pipeline-trebles-territories]] — downstream feature blocked on this
+`,
+  "learnings/dartboard-svg-paths-encode-box-identity-read.md": `---
+type: Learning
+title: Dartboard SVG paths encode box identity — read (number, ring) from geometry, don't hand-map
+description: The fact
+tags: [risk-darts, trebles-territories, board-mapping, svg]
+timestamp: "2026-09-08T22:49:45.408Z"
+---
+
+# Dartboard SVG paths encode box identity — read (number, ring) from geometry, don't hand-map
+
+## The fact
+
+Each \`<path>\` in the dartboard SVG **is** a specific (number, ring) box — its identity is readable directly from its own geometry:
+
+- **Ring** (inner/treble vs outer/double vs singles) from the path's radial extent.
+- **Number wedge** (1–20) from its mid-angle against the standard wedge layout.
+
+No fuzzy runtime angle math, no hand-maintained lookup table needed.
+
+## Why it matters
+
+The Trebles & Territories game needs click → exact score → territory → deposit. The canonical mapping pipeline exploits this: a script reads box identity straight from the SVG geometry, joins it with the locked fit table (the Hungarian assignment from [[board-mapping-azimuthal-hungarian]], see [[board-preview-and-fit-map]]), patches the board, and emits a game-facing \`mapping.json\`. The SVG's own geometry is the source of truth for *what each box is*; the fit table only decides *which territory occupies it*.
+
+## Rule of thumb
+
+If the board SVG changes (paths added/reordered), regenerate the mapping from geometry — never hand-edit \`mapping.json\` or re-derive wedges by angle math at runtime.
 `,
   "learnings/darts-email-localstorage-stores-raw-email.md": `---
 type: Learning
@@ -3433,6 +4046,95 @@ The \`darts_email\` localStorage key stores the email as a **raw string** — \`
 When seeding test/dev localStorage, set \`darts_email\` raw: \`localStorage.setItem('darts_email', email)\`. Encoded in \`e2e/helpers.ts\` comments.
 
 Discovered while wiring the Playwright E2E suite — the match-ui tests failed against a working API purely because of this quoting mismatch.
+`,
+  "learnings/db-push-ignores-darts-schema.md": `---
+type: Learning
+title: "db:push ignores the darts schema — migrations are file-as-record, applied directly"
+description: "\`drizzle-kit push\` (npm \`db:push\`) only manages the **\`public\`** schema — it silently ignores the \`darts\` schema, so a push can "succeed" while the table never "
+tags: [drizzle, database, migrations, gotcha]
+timestamp: "2026-09-08T21:25:12.550Z"
+---
+
+# db:push ignores the darts schema — migrations are file-as-record, applied directly
+
+\`drizzle-kit push\` (npm \`db:push\`) only manages the **\`public\`** schema — it silently ignores the \`darts\` schema, so a push can "succeed" while the table never lands in the DB. The \`darts\` schema is driven by \`drizzle-kit migrate\` + \`drizzle/meta/_journal.json\`.
+
+The journal is **stale by design in this repo**: migrations 0002–0007 were never journaled (applied directly to the DB). So the established pattern for a new migration:
+
+1. Write \`drizzle/000N_*.sql\` and register it in \`meta/_journal.json\` **as a record only**
+2. Apply the SQL directly to the DB (e.g. \`psql\` / script), NOT via \`drizzle-kit migrate\` — the journal gaps would make it try to replay/conflict
+
+Symptom of getting it wrong: table missing after a "successful" push; direct \`SELECT\` confirms absence.
+`,
+  "learnings/emailgate-remember-me-already-ships.md": `---
+type: Learning
+title: EmailGate remember-me already ships — email persists, gate skips, saved accounts exist
+description: A feature request to "remember the email on the EmailGate" (2026-09, worktree \`kees-remember-me\`) turned out to be **already shipped in master** — recon before 
+tags: [email, auth, emailgate, recon]
+timestamp: "2026-09-08T10:11:15.860Z"
+---
+
+# EmailGate remember-me already ships — email persists, gate skips, saved accounts exist
+
+A feature request to "remember the email on the EmailGate" (2026-09, worktree \`kees-remember-me\`) turned out to be **already shipped in master** — recon before writing code found:
+
+- \`src/lib/stores/email.ts\` — the email persists in \`localStorage\` under \`darts_email\` (raw string, see [[darts-email-localstorage-stores-raw-email]]) and is read at store init
+- \`src/routes/+layout.svelte\` — the EmailGate is **skipped entirely** when an email is present, so returning players go straight into the app
+- \`src/lib/components/EmailGate.svelte\` — already shows a saved-accounts list with one-tap "Welcome back" switching
+
+**Implication:** any "remember me / skip re-entering email" request needs no new code. The only genuine gap is *session-only login* (an explicit "Remember me on this device" checkbox; unchecked = no localStorage write, no saved-account entry, gate reappears next visit).
+
+**Rule of thumb:** before building any auth/gate persistence feature, check these three files first — the whole remember-me flow already routes through them.
+`,
+  "learnings/env-dynamic-private-vitest-split.md": `---
+type: Learning
+title: $env/dynamic/private doesn't resolve in vitest — split the pure logic into its own module
+description: Vitest can't resolve \`$env/dynamic/private\` — importing it in a module under test fails at import time.
+tags: [vitest, sveltekit, testing, gotcha]
+timestamp: "2026-09-08T21:25:12.550Z"
+---
+
+# $env/dynamic/private doesn't resolve in vitest — split the pure logic into its own module
+
+Vitest can't resolve \`$env/dynamic/private\` — importing it in a module under test fails at import time.
+
+Fix pattern (used for the commentary pipeline): split the module. \`src/lib/game/commentary-prompt.ts\` is the **pure** part (prompt building, persona logic — fully unit-tested), while the \`$env\` import stays in the API route/server module that isn't unit-tested. Keeps modules testable without mocking SvelteKit env shims.
+`,
+  "learnings/flipped-labels-negate-radial-offset-on-left-half.md": `---
+type: Learning
+title: "Flipped labels: negate radial offset on left half"
+description: Gotcha
+tags: [svg, risk, labels, docs]
+timestamp: "2026-09-08T23:05:56.892Z"
+---
+
+> **Superseded (2026-09-09):** labels are no longer radial — they are horizontal and centered in each box. See [territory-labels-go-horizontal-centered-in-each](../decisions/territory-labels-go-horizontal-centered-in-each.md). Kept for history.
+
+# Flipped labels: negate radial offset on left half
+
+## Gotcha
+
+When placing radially-oriented SVG labels and **flipping the text rotation on the left half** (so nothing reads upside-down), the rotation flip also mirrors the anchor point: keeping the *positive* radial offset (\`250 + r\`) drops the label onto the **opposite ray** — visually, outside the board on the wrong side.
+
+**Symptom** (observed 2026-09-09 in \`docs/risk/apply-territory-labels.cjs\`): all 20 left-half territory names rendered outside the board; right-half labels were fine. No error — it looks like a "positioning is off" bug, but it's a sign error.
+
+## Fix
+
+The radial offset must flip **with** the rotation: left-half anchors use \`250 − r_in\` (inward), right-half keep \`250 + r0\` (outward). Same bug pattern lives anywhere the labeler math is duplicated (it did in the box-ID script — fix both).
+
+## Verify programmatically, never by eye
+
+For each label, compute the anchor's polar position from its own transform and assert it falls inside its box's radius band (inner 22–115, outer 130–190) **and** its wedge's 18° sector. 40/40 labels checked → 0 misplaced. Eye-checking "looks about right" is exactly how this survived the first pass.
+
+## Related gotchas in the same tooling family
+
+- [[svg-path-parsing-arc-arguments-are-not-points]] — tokenize paths by command, not coordinate-pair regex
+- [[wedge-index-from-a-seg-path-s-m-point-needs-a-9]] — M point needs the +9° half-wedge shift
+- [[risk-board-svg-attribute-order]] — extract attributes element-wise
+
+## Source
+
+- \`docs/risk/apply-territory-labels.cjs\` — the fixed labeler; \`docs/risk/risk-dart-board.svg\` is its output
 `,
   "learnings/godaddy-apex-domain-a-record-to-edge-ip.md": `---
 type: Learning
@@ -3494,16 +4196,82 @@ Railway's TLS cert flow for an apex domain **requires the root to be a CNAME (fl
 `,
   "learnings/index.md": `# Learnings
 
-- [GoDaddy DNS can't serve a Railway apex domain](./godaddy-dns-can-t-serve-a-railway-apex-domain.md) - The gotcha
-- [Miss turns must persist with dartsThrown ≥ 1](./miss-turns-must-persist-with-dartsthrown-1.md) - The turns table / API has a constraint that \`dartsThrown >= 1\`. A miss (all three darts off the board) is still a turn and must be persisted with \`dartsThrown\`
-- [GoDaddy apex domain on Railway: A record to live edge IP, not the documented one](./godaddy-apex-domain-a-record-to-edge-ip.md) - The pattern (snooze.monster / dart.monster, Sep 2026)
-- [Refresh-resume depends on chronological turn order and persisted firstThrowerId](./refresh-resume-needs-chronological-turn-order.md) - Refreshing the browser mid-leg (resume logic in \`src/routes/match/[id]/+page.svelte\`) silently depends on two implicit contracts. Breaking either reproduces the
-- [TS can't narrow $state inside closures — use $derived.by with local capture](./ts-can-t-narrow-state-in-closures.md) - Gotcha
-- [wiki_search misses recently-written concepts — verify with wiki_validate or ls before writing](./wiki-search-misses-recent-concepts.md) - Discovered while recapping the Risk-darts rollback turn: \`wiki_search("risk territory")\` and \`wiki_search("heat economies")\` both returned **no results**, yet \`
-- [OpenCode zen/go LLM endpoint needs x-opencode-session header + custom User-Agent](./opencode-zen-go-needs-session-header.md) - The OpenCode Zen Go chat-completions endpoint (\`https://opencode.ai/zen/go/v1/chat/completions\`) rejects plain requests — it requires BOTH:
-- [Tooltips must use fixed positioning to escape overflow clipping](./tooltips-must-use-fixed-positioning.md) - Gotcha
-- [SSR pages are empty shells — EmailGate gates all rendering client-side](./ssr-pages-are-empty-shells-emailgate.md) - Gotcha
-- [structuredClone can't clone Svelte 5 $state proxies — pass $state.snapshot() at the engine boundary](./structuredclone-can-t-clone-svelte-5-state.md) - Gotcha
+- [$env/dynamic/private doesn't resolve in vitest — split the pure logic into its own module](./env-dynamic-private-vitest-split.md) - Vitest can't resolve \`$env/dynamic/private\` — importing it in a module under test fails at import time.
+- [Windows worktree deletion: kill the process holding the directory first](./windows-worktree-delete-kill-holder-first.md) - Symptom
+- ["Risk" name collision: new game exploration (Sep 2026) is distinct from the Risk-darts proposal that became Trebles & Territories](./risk-name-collision-new-game-exploration.md) - The name **"Risk"** is ambiguous in this project. It historically refers to the rolled-back **Risk-darts proposal** (documented at [[risk-darts-proposed-game-mo
+- [Risk board SVGs: path attribute order varies — extract element-wise, not by regex lookahead](./risk-board-svg-attribute-order.md) - Gotcha
+- [Large browser evaluate returns spill to disk wrapped in [UNTRUSTED_PAGE_CONTENT] markers](./large-browser-evaluate-returns-spill-to-disk.md) - When extracting a large payload (e.g. a 32KB serialized SVG) from a page via the browser, an \`evaluate\` whose return exceeds the inline threshold spills to a di
+- [Patching board SVGs: replace existing attributes, never append duplicates](./patching-board-svgs-replace-existing-attributes.md) - Gotcha
+- [Dartboard SVG paths encode box identity — read (number, ring) from geometry, don't hand-map](./dartboard-svg-paths-encode-box-identity-read.md) - The fact
+- [SVG path parsing: arc arguments are not points — tokenize by command, never by coordinate-pair regex](./svg-path-parsing-arc-arguments-are-not-points.md) - Gotcha
+- [Flipped labels: negate radial offset on left half](./flipped-labels-negate-radial-offset-on-left-half.md) - Gotcha
+- [Top-level return in a CJS script skips the file write — silent no-op](./top-level-return-in-a-cjs-script-skips-the-file.md) - Gotcha
+`,
+  "learnings/large-browser-evaluate-returns-spill-to-disk.md": `---
+type: Learning
+title: "Large browser evaluate returns spill to disk wrapped in [UNTRUSTED_PAGE_CONTENT] markers"
+description: When extracting a large payload (e.g. a 32KB serialized SVG) from a page via the browser, an \`evaluate\` whose return exceeds the inline threshold spills to a di
+tags: [browser, tooling, extraction]
+timestamp: "2026-09-08T22:41:12.559Z"
+---
+
+# Large browser evaluate returns spill to disk wrapped in [UNTRUSTED_PAGE_CONTENT] markers
+
+When extracting a large payload (e.g. a 32KB serialized SVG) from a page via the browser, an \`evaluate\` whose return exceeds the inline threshold spills to a disk file whose content is wrapped in \`[UNTRUSTED_PAGE_CONTENT]\` markers — the page content is **raw between the markers**, so extracting the payload between them recovers it byte-for-byte.
+
+Working recipe (used to lift \`docs/risk/dart-board.svg\` from the rendered \`Dartboard.svelte\`):
+
+1. Open the page, stage the payload once on \`window\` (e.g. \`window.__svg = el.outerHTML\`).
+2. Let the evaluate spillover write it to disk (deterministic, no re-typing).
+3. Read the spillover file and slice between the \`[UNTRUSTED_PAGE_CONTENT]\` markers.
+
+Fallback: fetch in ~4KB chunks that stay inline — larger chunks spill again. Pages can get closed mid-extraction; staging on \`window\` means you must re-stage after reopening.
+`,
+  "learnings/match-api-unauthenticated.md": `---
+type: Learning
+title: Match API is unauthenticated — the share link is the key
+description: The fact
+tags: [security, api, matches, spectator]
+timestamp: "2026-09-08T19:45:57.666Z"
+---
+
+# Match API is unauthenticated — the share link is the key
+
+## The fact
+
+The match REST API under \`src/routes/api/matches/\` is **unauthenticated on read AND write**: \`GET /api/matches/[id]\` returns the full match (players, legs, turns) to anyone holding the UUID, and \`PATCH\`/\`DELETE\` on matches are equally open. There is no account check anywhere in that route.
+
+## The de-facto security model
+
+**The share link is the key.** Match IDs are UUIDs — unguessable in practice — so possession of the URL is the entire access-control story. This is fine for reads (what the TV spectator mode builds on, see [[decisions/tv-mode-url-tab-cast-polling]]) but means anyone with the TV link could also **tamper with or delete the match** via the write API.
+
+## Status
+
+Known and consciously deferred (2026-09-08): hardening the write API is explicitly out of scope for the TV feature PR and deserves its own task. Don't "discover" this as a new bug later — it was a deliberate, flagged acceptance. A silver lining: because reads are open and [[learnings/refresh-resume-needs-chronological-turn-order]] shows full state rebuilds from these same endpoints, a read-only polling spectator needs zero backend work.
+
+## Source
+
+- \`src/routes/api/matches/[id]/+server.ts\` — unauthenticated GET/PATCH/DELETE
+`,
+  "learnings/merged-pr-doesn-t-empty-the-branch.md": `---
+type: Learning
+title: Merged PR doesn't empty the branch
+description: "Master's head can be a "Merge pull request #N" commit for a branch while **later commits pushed to that branch are still unmerged**. PR status or merge commits "
+tags: [git, worktree, pull-request, gotcha]
+timestamp: "2026-09-08T19:44:39.112Z"
+---
+
+# Merged PR doesn't empty the branch
+
+Master's head can be a "Merge pull request #N" commit for a branch while **later commits pushed to that branch are still unmerged**. PR status or merge commits on master are NOT proof a worktree is safe to delete.
+
+## Evidence (2026-09-08)
+
+PR #1 merged \`feature/remember-me\` into master (master head 95811fc = the merge commit), but \`cc9f39b\` ("Show remember option in add-account modal" — the FloatingNav remember checkbox + account-switcher fix) was pushed to the branch and is **not on master**. The \`kees-remember-me\` worktree therefore keeps its "likely active" status in every step-0 check until that commit merges.
+
+## Rule of thumb
+
+The only proof a worktree is removable is \`git log --oneline origin/master..<branch>\` being empty **and** clean \`git status --porcelain\` — per [worktree-feature-loop](../rules/worktree-feature-loop.md). Don't shortcut by reading PR titles or master's merge commits. (Also why the [email store](../pages/entities/email-store-email-ts.md) entity's "review feedback, same PR" lifecycle note was optimistic — that commit was still unmerged.)
 `,
   "learnings/miss-turns-must-persist-with-dartsthrown-1.md": `---
 type: Learning
@@ -3520,6 +4288,18 @@ The turns table / API has a constraint that \`dartsThrown >= 1\`. A miss (all th
 Relevant when posting turns directly to \`POST /api/.../turns\` (E2E helpers, scripts, integrations). Encoded in \`e2e/helpers.ts\` comments.
 
 Also note: the turns API returns turns ordered \`createdAt DESC\` — write order-agnostic assertions in tests.
+`,
+  "learnings/no-top-level-state-var-svelte2tsx.md": `---
+type: Learning
+title: Don't name a top-level Svelte 5 variable \`state\` — svelte2tsx collision
+description: Naming a top-level Svelte 5 component variable \`state\` trips a svelte2tsx collision (the compiler's own \`state\` concept) and fails \`svelte-check\`. The conquest 
+tags: [svelte5, svelte-check, gotcha]
+timestamp: "2026-09-08T21:25:12.550Z"
+---
+
+# Don't name a top-level Svelte 5 variable \`state\` — svelte2tsx collision
+
+Naming a top-level Svelte 5 component variable \`state\` trips a svelte2tsx collision (the compiler's own \`state\` concept) and fails \`svelte-check\`. The conquest page already dodges this by naming its engine variable \`game\`; the TV-view pages hit it and had to rename. Convention for this codebase: **never call a component-level variable \`state\`** — use \`game\`, \`matchState\`, etc.
 `,
   "learnings/opencode-zen-go-needs-session-header.md": `---
 type: Learning
@@ -3538,6 +4318,31 @@ The OpenCode Zen Go chat-completions endpoint (\`https://opencode.ai/zen/go/v1/c
 
 Verified with a live 200 OK test. Auth key lives in \`.env\` under \`OPENCODE_API\`. Used for the Trebles & Territories LLM commentary with model \`glm-5.3-flash\`. Per OpenCode docs (https://opencode.ai/docs/go). If a future call 401/403s despite a valid key, check these two headers first.
 `,
+  "learnings/patching-board-svgs-replace-existing-attributes.md": `---
+type: Learning
+title: "Patching board SVGs: replace existing attributes, never append duplicates"
+description: Gotcha
+timestamp: "2026-09-08T22:49:24.078Z"
+---
+
+# Patching board SVGs: replace existing attributes, never append duplicates
+
+## Gotcha
+
+While patching the gold stroke onto anchor seg paths in \`dart-board-for-map.svg\`, appending a second \`stroke-width="2.5"\` to a \`<path>\` that **already carried** \`stroke-width\` produced invalid XML (duplicate attribute). The browser flags an **XML parse error** and renders only the prefix before the malformed element — the board cut off at wedge 5 with the rest of the file silently dropped.
+
+## Fix
+
+Replace the existing attribute in place instead of appending:
+
+\`\`\`js
+out.replace(/stroke="#A9B1B2"/, 'stroke="#FFD700"').replace(/stroke-width="[\\d.]+"/, 'stroke-width="2.5"')
+\`\`\`
+
+## Rule
+
+When string-patching SVG elements, replace named attributes; check the pristine source (here \`dart-board-orig.svg\`) for attributes it already sets. Same script-editing surface as [[risk-board-svg-attribute-order]] (order-mixing gotcha).
+`,
   "learnings/refresh-resume-needs-chronological-turn-order.md": `---
 type: Learning
 title: Refresh-resume depends on chronological turn order and persisted firstThrowerId
@@ -3554,6 +4359,75 @@ Refreshing the browser mid-leg (resume logic in \`src/routes/match/[id]/+page.sv
 2. **Leg-start alternation must be reconstructed from the leg's persisted \`firstThrowerId\`, not from the current thrower.** Resume used to set \`firstThrowerIndex: currentPlayerIndex\` (the *next* thrower), so after refresh + checkout the client picked the next leg's starter from the wrong index while the DB persisted the correctly-alternated one — the following refresh showed a different thrower than the screen had.
 
 If turns ever come back newest-first again (or a new consumer assumes DESC), refresh-resume breaks with no error — just a wrong thrower. When touching turn ordering or resume, verify the thrower after a mid-leg refresh.
+`,
+  "learnings/risk-board-svg-attribute-order.md": `---
+type: Learning
+title: "Risk board SVGs: path attribute order varies — extract element-wise, not by regex lookahead"
+description: Gotcha
+tags: [svg, risk, regex, docs]
+timestamp: "2026-09-08T22:35:53.223Z"
+---
+
+# Risk board SVGs: path attribute order varies — extract element-wise, not by regex lookahead
+
+## Gotcha
+
+In \`docs/risk/Risk_board.svg\` and the derived \`docs/risk/risk-dart-board.svg\`, \`<path>\` elements **mix attribute order** — some put \`d\` before \`id\`, some after. An extraction regex that assumes one order (e.g. \`id="japan".*?d="([^"]+)"\`) silently grabs the **following** element's path data when the order flips.
+
+Observed 2026-09-08: the grayed-out layer ended up graying **Yakutsk instead of Japan** and **North Africa instead of Madagascar** — labels were right, geometry wrong, and only a browser check against the label points caught it.
+
+## Rule
+
+When scripting edits against these SVGs, **split into elements first** (per \`<path …>\` chunk) and then read attributes by name — never rely on attribute order in a lookahead. Always verify geometry edits visually against the label coordinates, not just that the regex matched.
+`,
+  "learnings/risk-name-collision-new-game-exploration.md": `---
+type: Learning
+title: ""Risk" name collision: new game exploration (Sep 2026) is distinct from the Risk-darts proposal that became Trebles & Territories"
+description: "The name **"Risk"** is ambiguous in this project. It historically refers to the rolled-back **Risk-darts proposal** (documented at [[risk-darts-proposed-game-mo"
+tags: [risk, game-design, naming, glossary-collision, trebles-and-territories]
+timestamp: "2026-09-08T22:05:56.397Z"
+---
+
+# "Risk" name collision: new game exploration (Sep 2026) is distinct from the Risk-darts proposal that became Trebles & Territories
+
+The name **"Risk"** is ambiguous in this project. It historically refers to the rolled-back **Risk-darts proposal** (documented at [[risk-darts-proposed-game-mode]]) which evolved into **Trebles & Territories** ([[conquest-engine-and-live-game]], playable at \`/match/conquest\`).
+
+As of 2026-09-08, a **new, separate game called "Risk"** is being scoped via the grilling/domain-modeling skills. It is NOT Trebles & Territories:
+
+- **T&T**: the dartboard *is* the map.
+- **New Risk (leading candidate, unconfirmed)**: classic world map on screen, but **real dart throws replace the dice** to resolve combat — the board is the randomizer. Working name only; final naming is deferred to the end of the grill (same process as T&T's Question 7).
+
+Process mirrors T&T: grill → locked spec → TDD build in milestones. Design constraints carried over from T&T: same mixed-crowd table (casuals must matter to the end), target ~30–45 min, one shared screen with hot-seat turns, pure TS engine in \`src/lib/game/\`, new route + Fun-tab entry, no network multiplayer (YAGNI).
+
+**Gotcha for future sessions**: grepping "Risk" or reading \`docs/risk/\` reference assets (see [[docs-risk-assets-risk-board-svgs-notes]]) will surface T&T-era material. Check which game a "Risk" discussion belongs to — pre-2026-09 material is T&T's ancestor; the new game has its own spec cycle starting from this date.
+`,
+  "learnings/session-only-logins-not-in-accounts-list.md": `---
+type: Learning
+title: Session-only logins are absent from the saved-accounts list — don't gate account switching on it
+description: Gotcha
+tags: [auth, email, session-only, account-switching, gotcha]
+timestamp: "2026-09-08T12:39:25.043Z"
+---
+
+# Session-only logins are absent from the saved-accounts list — don't gate account switching on it
+
+## Gotcha
+
+The saved-accounts list (\`localStorage\` accounts key, JSON) only contains **remembered** logins. A session-only login (\`remember=false\`, sessionStorage) is never added to it. In \`FloatingNav.svelte\`, the "Other accounts" switcher gated on \`accounts.length > 1\` — so a session-only user whose only other account was remembered once saw a list of length 1 and **zero** switch options rendered.
+
+## Rule
+
+Never infer "other accounts exist" from the saved-accounts list's length or the current user's membership in it. Render switch options as *every account registered on the device, minus the active one* — independent of how the active login was persisted.
+
+## Evidence
+
+Found via review feedback in PR #1 (2026-09-08, worktree \`kees-remember-me\`): the session-only login path exposed the hidden gate. Fixed by listing all registered accounts except the active one in \`FloatingNav.svelte\`.
+
+## Source
+
+- \`.worktrees/kees-remember-me/src/lib/stores/email.ts\` — session logins bypass the saved-accounts list
+- \`.worktrees/kees-remember-me/src/lib/components/ui/FloatingNav.svelte\` — the fixed switcher
+- [[email-store-email-ts]] — storage semantics this follows from
 `,
   "learnings/ssr-pages-are-empty-shells-emailgate.md": `---
 type: Learning
@@ -3616,6 +4490,43 @@ const next = applyDart($state.snapshot(game), segment, multiplier);
 
 - \`src/routes/match/conquest\` wiring fix; engine at \`src/lib/game/conquest-engine.ts\`
 `,
+  "learnings/svg-path-parsing-arc-arguments-are-not-points.md": `---
+type: Learning
+title: "SVG path parsing: arc arguments are not points — tokenize by command, never by coordinate-pair regex"
+description: Gotcha
+tags: [svg, risk, regex, docs]
+timestamp: "2026-09-08T22:55:33.285Z"
+---
+
+# SVG path parsing: arc arguments are not points — tokenize by command, never by coordinate-pair regex
+
+## Gotcha
+
+Parsing an SVG path's \`d\` attribute with an "all coordinate pairs" regex (e.g. matching every \`\\d+ \\d+\` pair) silently treats **arc command arguments as geometry points**. An \`A 207 207 0 0 1 x y\` contributes its radii (207 207), rotation (0), and flags (0 1) as fake points clustered near the bottom-left origin.
+
+**Symptom** (observed 2026-09-08 in the box-label placement pass of \`apply-mapping.cjs\`): every wedge's mean point dragged toward bottom-left → wedge/box detection collapsed onto the left half of the board → labels landed on the wrong boxes. No error thrown; only visual check caught it.
+
+## Fix
+
+Tokenize by **command**, not by coordinates — only M/L points and the **endpoint** (last pair) of each A command are geometry:
+
+\`\`\`js
+const tok = d.match(/[MLAZmlaz]|-?\\d+(?:\\.\\d+)?/g) || [];
+// M/L → take both numbers; A → skip rx ry rot laf sf, take endpoint; Z → nothing
+\`\`\`
+
+As shipped in \`docs/risk/apply-mapping.cjs:45-50\`. Note the arc midpoint is NOT on the arc — bucketing by the M point or the endpoints, not an arc "center".
+
+## Related gotchas in the same tooling family
+
+- [[wedge-index-from-a-seg-path-s-m-point-needs-a-9]] — M point sits on the CCW wedge edge; shift +9° before rounding
+- [[risk-board-svg-attribute-order]] — attribute order varies; extract element-wise, not by regex lookahead
+- [[dartboard-svg-paths-encode-box-identity-read]] — box identity (number, ring) readable from radii + mid-angle
+
+## Source
+
+- \`docs/risk/apply-mapping.cjs\` — the tokenizer + box-label placement that depends on it
+`,
   "learnings/tooltips-must-use-fixed-positioning.md": `---
 type: Learning
 title: Tooltips must use fixed positioning to escape overflow clipping
@@ -3641,6 +4552,33 @@ The shared \`Tooltip\` component (\`src/lib/components/ui/Tooltip.svelte\`) now 
 ## Rule for future floating UI
 
 Any new floating element (dropdown, popover, menu) rendered inside a scroll container must use this same fixed + measured pattern — or a portal — not \`position: absolute\`. Otherwise it will clip the moment it lands in a scrollable wrapper.
+`,
+  "learnings/top-level-return-in-a-cjs-script-skips-the-file.md": `---
+type: Learning
+title: Top-level return in a CJS script skips the file write — silent no-op
+description: Gotcha
+tags: [cjs, scripts, debugging, gotcha]
+timestamp: "2026-09-08T23:15:50.760Z"
+---
+
+# Top-level return in a CJS script skips the file write — silent no-op
+
+## Gotcha
+
+In a one-off CommonJS script (e.g. \`docs/risk/apply-territory-labels.cjs\`), a \`return\` at **module top level** exits the *entire script* — not just "this iteration". Any code after it, like the \`fs.writeFileSync\` that persists the edit, never runs.
+
+## Symptom (why it's sneaky)
+
+The script "succeeds" silently: no error, no output. Re-reading the target file shows the *old* content, which looks like the edit didn't match anything. This cost a full debugging round on the outer-ring label task — the count said the early-return didn't fire, but the write had been skipped and I was re-reading a stale SVG.
+
+## Rule of thumb
+
+- In top-level CJS script loops over items, never early-\`return\` for "skip this item" — restructure with \`if/else\` so the write always executes.
+- After any scripted file mutation, verify it *actually* happened (grep the output / check the marker count), don't just re-read and assume.
+
+## Source
+
+- \`docs/risk/apply-territory-labels.cjs\` — hit while removing background rects from outer-ring territory labels (2026-09).
 `,
   "learnings/ts-can-t-narrow-state-in-closures.md": `---
 type: Learning
@@ -3673,6 +4611,77 @@ Seen in the live scorer when computing the throw rotation (\`leftPlayers\`/\`rig
 
 All Svelte 5 runes components in this repo (\`src/lib/...\`, \`src/routes/...\`). If \`svelte-check\` complains about narrowing inside a closure over \`$state\`, reach for \`$derived.by\` + local capture before casting.
 `,
+  "learnings/vitest-suite-uncommitted-master-has-no-test-runner.md": `---
+type: Learning
+title: Vitest/Playwright suite is uncommitted — master branches have no test runner
+description: "UPDATE 2026-09-08: the suite is committed on feature/trebles-territories (PR #2, 112 unit tests) — master branches still have no test runner until the PR merges"
+tags: [testing, vitest, playwright, master, smoke, gotcha]
+timestamp: "2026-09-08T11:06:38.428Z"
+---
+
+# Vitest/Playwright suite is uncommitted — master branches have no test runner
+
+The 67 Vitest + 14 Playwright tests documented in [[test-suite]] live **uncommitted in the main working tree** — they are NOT committed to master. Any branch cut from master has no test runner at all (\`npm run test:unit\` / \`test:e2e\` don't exist there).
+
+How to verify work on a master branch instead:
+
+- Gate = \`npm run check\` + \`npm run build\` + a small runnable smoke script under \`scripts/\` executed via \`tsx\` (already a dep) — the pattern used by remember-me PR #1 (\`scripts/smoke-email-store.ts\`, 5 assert-based scenarios).
+- \`npm run check\` shows **4 pre-existing errors in \`Dartboard.svelte\` on master** — confirm errors are yours before fixing.
+- Reconciles with [[logic-todos-must-use-tdd-skill]]: TDD applies in the main tree where the runner exists; on a master branch the smoke script is the one runnable check left behind.
+- Fold branch smoke scripts into the Vitest suite once it lands on master.
+
+**Update 2026-09-08** — the suite landed on \`feature/trebles-territories\` (commit \`fa83191\`, PR #2), now grown to **112 unit tests**. The smoke-script guidance above still applies to any branch cut from master until PR #2 merges.
+`,
+  "learnings/webspeech-only-dutch-tts.md": `---
+type: Learning
+title: Only webSpeech TTS speaks Dutch — kokoro is English-only, ElevenLabs is pre-generated clips
+description: Only webSpeech TTS speaks Dutch
+tags: [tts, audio, dutch, caller, i18n]
+timestamp: "2026-09-08T20:19:37.767Z"
+---
+
+# Only webSpeech TTS speaks Dutch
+
+## The fact
+
+The caller (\`src/lib/utils/darts-caller.ts\`) ships three TTS engines behind an \`engine\` setting (\`"elevenlabs" | "kokoro" | "webSpeech" | "none"\`), and their language capabilities differ sharply:
+
+- **elevenlabs** — pre-generated soundboard clips only (\`static/audio/\`); no live API calls.
+- **kokoro** (kokoro-js, in-browser) — English voice bank; can't do Dutch sentences credibly.
+- **webSpeech** — browser SpeechSynthesis; the only engine that can speak \`nl-NL\`. The voice set varies per device/OS (fits a "random vox-pop spectator" vibe, but quality is a per-device lottery — synthetic on some devices, absent on odd TV browsers).
+
+## Why it matters
+
+These facts hold for **browser-side** TTS only. Discovered while speccing the spectator interviews' random Dutch voices (grill Q14, 2026-09-08). The same day, the "must start on webSpeech" guidance was **superseded** by a user directive: the interviews use the **ElevenLabs live API** (Dutch voices, fixed commentator voice \`GiGOaehga8enaTnFQvb4\`) — see [interviews-on-elevenlabs-live-tts-fixed-commentator-voice-ra](../decisions/interviews-elevenlabs-live-tts.md). Dutch no longer *requires* webSpeech anywhere the server can call ElevenLabs; the recap video pipeline can do the same. The engine-abstraction note stays useful: swapping caller engines is a setting, not a rewrite.
+`,
+  "learnings/wedge-index-from-a-seg-path-s-m-point-needs-a-9.md": `---
+type: Learning
+title: Wedge index from a seg path's M point needs a +9° half-wedge shift
+description: Gotcha
+tags: [true]
+timestamp: "2026-09-08T22:49:24.078Z"
+---
+
+# Wedge index from a seg path's M point needs a +9° half-wedge shift
+
+## Gotcha
+
+In \`docs/risk/dart-board-orig.svg\`, each wedge segment path's \`M\` point sits exactly **on the CCW wedge boundary** (±9° from wedge center). Deriving the wedge index with naive \`Math.round(brg / 18)\` therefore lands on exactly ±0.5, and float noise rounds it either way — \`brg=27\` flipped between wedges across runs.
+
+**Symptom**: continent territory counts off by one (10 amber fills vs 9 NA territories; 10 teal fills vs 11 Asia) — one territory silently migrating wedges, no error thrown.
+
+## Fix
+
+Offset by the half-wedge so the boundary lands exactly on an integer before rounding (as shipped in \`fit-map.cjs\`):
+
+\`\`\`js
+const wi = Math.round(((brg + 9) % 360) / 18) % 20; // M point sits on the CCW wedge edge
+\`\`\`
+
+## Rule of thumb
+
+When bucketing an angle (or any float) by rounding, never let the sample sit on a bucket edge — shift by the half-bucket first.
+`,
   "learnings/wiki-search-misses-recent-concepts.md": `---
 type: Learning
 title: wiki_search misses recently-written concepts — verify with wiki_validate or ls before writing
@@ -3687,6 +4696,58 @@ Discovered while recapping the Risk-darts rollback turn: \`wiki_search("risk ter
 
 **Rule of thumb:** before concluding a concept/decision/page is new and writing a duplicate, run \`wiki_validate\` (which walks the actual files) or \`ls docs/wiki/{decisions,rules,learnings,pages/concepts,pages/entities}\` — do not trust a negative \`wiki_search\` alone for recent writes. This session produced exactly this failure: a duplicate Risk-darts concept page that had to be merged and deleted.
 `,
+  "learnings/wikilinks-bare-slug-breaks-cross-folder.md": `---
+type: Learning
+title: "Bare [[slug]] wikilinks in wiki_note_page break cross-folder — use explicit relative paths"
+description: The gotcha
+tags: [wiki, okf, wikilinks, wiki_note_page]
+timestamp: "2026-09-08T20:25:14.527Z"
+---
+
+# Bare [[slug]] wikilinks in wiki_note_page break cross-folder — use explicit relative paths
+
+## The gotcha
+
+\`wiki_note_page\` converts bare \`[[slug]]\` wikilinks to a same-folder \`./slug.md\` href — relative to the **page's own folder**, which is only correct for siblings in the same folder. Cross-folder links (entity → \`../../decisions/…\`, entity → \`../concepts/…\`) end up broken and trip **W4** in \`wiki_validate\`.
+
+Path-style links (\`[[decisions/foo]]\`, \`[[learnings/foo]]\`) resolve correctly — only bare slugs break.
+
+## The rule
+
+In \`wiki_note_page\` bodies:
+
+- Cross-folder references: write explicit relative markdown links — \`../../decisions/<slug>.md\` style, no angle form — or path-style wikilinks (\`[[decisions/foo]]\`) — matching the pre-existing entity pages' style.
+- Same-folder siblings: bare \`[[slug]]\` is fine.
+- Always run \`wiki_validate\` after writing; expect W4 on any page written with bare cross-folder wikilinks, then fix the hrefs directly.
+
+Seen 2026-09-08 on \`pages/entities/spectator-interviews-trebles-territories.md\` (7 broken links from one note_page call). Related: [[wiki-search-misses-recent-concepts]].
+`,
+  "learnings/windows-worktree-delete-kill-holder-first.md": `---
+type: Learning
+title: "Windows worktree deletion: kill the process holding the directory first"
+description: Symptom
+tags: [git, worktree, windows, file-lock, wiki-recap, cleanup]
+timestamp: "2026-09-08T21:59:27.232Z"
+---
+
+# Windows worktree deletion: kill the process holding the directory first
+
+## Symptom
+
+Deleting a worktree directory on Windows fails with \`Invalid argument\` (or the directory silently survives \`rm -rf\` / \`git worktree remove\`). The worktree may even already be **unregistered** — \`git worktree list\` no longer shows it, only the bare directory remains — so git can't help.
+
+## Cause
+
+A running process still holds a handle with its **CWD inside the worktree directory**. In the 2026-09-08 full cleanup this was the *previous session's background wiki-recap node subagent* (PID 8140) — these background agents can outlive their session and keep cwd'ing in the worktree they ran in.
+
+## Fix
+
+1. Don't assume registration: check \`git worktree list\` AND the directory itself.
+2. Find the holder (e.g. \`handle\`/Process Explorer, or spot a \`node\` dev-server process) and verify its task is provably done — here the worktree's branch was merged and deleted, so killing it lost nothing.
+3. Kill the PID, then delete the directory. Done.
+
+Related: the cleanup loop itself is codified in [worktree-feature-loop](../rules/worktree-feature-loop.md) — this gotcha is the step-8 failure mode it doesn't mention.
+`,
   "overview.md": `---
 type: System Overview
 title: Overview
@@ -3700,9 +4761,154 @@ timestamp: "2026-09-07T19:11:02.020Z"
 
 The application code lives in \`src/\`. Game rules are pure TypeScript modules in \`src/lib/game/\` (\`scoring.ts\` for dart math and bust/checkout detection, \`match-engine.ts\` for the leg/set state machine and thrower rotation, \`checkout-suggestions.ts\` for optimal finishes ≤170, \`stats-engine.ts\` for averages/checkout %/180s). The data layer is \`src/lib/db/\` (Drizzle schema + a \`database-service.ts\` service layer) exposed through a REST API under \`src/routes/api/\` (players, matches, legs, turns, stats, insights, settings). Pages cover match setup, a live scorer with an interactive SVG dartboard (\`Dartboard.svelte\`), match history, player profiles with all-time and last-20-legs stats, and a soft-delete archive with restore. Audio is a pre-generated ElevenLabs soundboard (\`static/audio/\`, per-voice score/event clips) plus Kokoro TTS running in-browser for dynamic player names.
 
-Around the app itself sits a full AI-assisted development workspace: \`.opencode/\` holds a large skill library (autoresearch, te9-spec, tdd-workflow, svelte5-best-practices, pocketbase/railway docs, design-taste skills) used to research, spec, and build the app; \`.specs/darts-501-app/\` contains the resulting specification and task breakdown; \`.codebase-graph/\` and \`.llm-docs/\` hold generated codebase knowledge graphs and LLM-oriented docs. \`docs/\` keeps darts-rules research (PDC/WDF turn-taking), E2E gameplay simulations, test results, and a player-metrics tree. Supporting tooling includes \`scripts/generate-soundboard.ts\` (regenerates the caller MP3s), \`drizzle/\` SQL migrations, and a vendored copy of \`godaddy-cli\` (a Go CLI for domain/DNS management, with a prebuilt \`godaddy.exe\`).
+Around the app itself sits a full AI-assisted development workspace: \`.opencode/\` holds a large skill library (autoresearch, te9-spec, tdd-workflow, svelte5-best-practices, pocketbase/railway docs, design-taste skills) used to research, spec, and build the app; \`.specs/darts-501-app/\` contains the resulting specification and task breakdown, and \`.specs/trebles-and-territories/\` holds the HTML implementation spec for the Trebles & Territories conquest mode (a Risk-on-a-dartboard game with LLM commentary and recap videos, playable at \`/match/conquest\`); \`.codebase-graph/\` and \`.llm-docs/\` hold generated codebase knowledge graphs and LLM-oriented docs. \`docs/\` keeps darts-rules research (PDC/WDF turn-taking), E2E gameplay simulations, test results, and a player-metrics tree. Supporting tooling includes \`scripts/generate-soundboard.ts\` (regenerates the caller MP3s), \`drizzle/\` SQL migrations, and a vendored copy of \`godaddy-cli\` (a Go CLI for domain/DNS management, with a prebuilt \`godaddy.exe\`).
 
 Generated/volatile directories round out the tree: \`.svelte-kit/\` (dev-generated code, build output, route \`$types.d.ts\`), \`build/\` (adapter-node production bundle), \`node_modules/\`, and \`.git/\` (plus \`godaddy-cli/.git/\`, since it's a vendored repo with its own history). Most of the ~37k files are audio clips, hashed build chunks, and git objects — the meaningful source is compact: one SvelteKit app, its migrations, its docs, and its agent tooling.
+`,
+  "pages/artifacts/board-preview-and-fit-map.md": `---
+type: Artifact
+title: Board preview & fit-map (docs/risk/fit-map.cjs + board-preview.html)
+description: "The generator + eyeball artifact for the [world map → dartboard territory mapping|world map → dartboard territory mapping]] in [[risk-dart"
+tags: [risk-darts, trebles-territories, board-mapping]
+timestamp: "2026-09-08T22:41:11.321Z"
+---
+
+# Board preview & fit-map (docs/risk/fit-map.cjs + board-preview.html)
+
+> **Archived 2026-09-09** — \`fit-map.cjs\`, \`board-preview.html\`, and siblings moved to \`docs/risk/.archive/\`. The mapping they computed is locked into the \`MAP\` table of \`docs/risk/apply-territory-labels.cjs\`; the live labeled board is [risk-dart-board-mockup-risk-dart-board-svg](./risk-dart-board-mockup-risk-dart-board-svg.md).
+
+The generator + eyeball artifact for the world map → dartboard territory mapping|world map → dartboard territory mapping](../../decisions/board-mapping-azimuthal-hungarian.md) in [risk-darts-proposed-game-mode](../concepts/risk-darts-proposed-game-mode.md) (Trebles & Territories).
+
+## What it documents
+
+- [risk-darts-proposed-game-mode](../concepts/risk-darts-proposed-game-mode.md) — the 40 territory → number-inner/number-outer box assignment the preview renders.
+- [trebles-territories-implementation-spec](./trebles-territories-implementation-spec.md) — the spec this mapping feeds into.
+
+## Details
+
+- **Location**: \`docs/risk/fit-map.cjs\` (generator), \`docs/risk/board-preview.html\` (output, viewed in browser)
+- **Format**: Node script → standalone HTML board preview with the mapping drawn on the dartboard
+- **Regenerate**: \`node docs/risk/fit-map.cjs\`
+- **Inputs**: \`docs/risk/risk-dart-board.svg\` (named territory paths in layer4), \`gen-labels.cjs\` (40 hand-nudged label positions = territory centroids — the precise data the fit runs on), \`centroid.cjs\`
+- **Method**: azimuthal projection from a grid-searched center (bull = Black Sea, 600×340) → Hungarian algorithm for globally-optimal 40×40 assignment, anchors hard-pinned (Iceland=outer-5, South Africa=outer-3)
+- **Tweaks**: pinned overrides are one-line changes in the script; user holds veto rights on specific wedges
+
+## Source
+
+- \`docs/risk/fit-map.cjs\` — regenerates mapping + preview
+- \`docs/risk/board-preview.html\` — the rendered result to eyeball
+- [dart-board-for-map.svg (Risk-mapped dartboard)](./dart-board-for-map-svg-risk-mapped-dartboard.md) — the same mapping patched onto the pristine real-board SVG
+`,
+  "pages/artifacts/dart-board-for-map-svg-risk-mapped-dartboard.md": `---
+type: Artifact
+title: dart-board-for-map.svg (Risk-mapped dartboard)
+description: The pristine production dartboard SVG (\`docs/risk/dart-board-orig.svg\`, a copy of the board extracted from \`Dartboard.svelte\`) patched with the Risk → dartboard
+tags: [true]
+timestamp: "2026-09-08T22:49:24.078Z"
+---
+
+# dart-board-for-map.svg (Risk-mapped dartboard)
+
+> **Archived 2026-09-09** — moved to \`docs/risk/.archive/dart-board-for-map.svg\`. Its labeled-board role now lives on the id-addressable base: [risk-dart-board-mockup-risk-dart-board-svg](./risk-dart-board-mockup-risk-dart-board-svg.md), regenerated by \`apply-territory-labels.cjs\`.
+
+The pristine production dartboard SVG (\`docs/risk/dart-board-orig.svg\`, a copy of the board extracted from \`Dartboard.svelte\`) patched with the Risk → dartboard territory mapping: the "real board" view of [board-mapping-azimuthal-hungarian](../../decisions/board-mapping-azimuthal-hungarian.md) for [risk-darts-proposed-game-mode].
+
+## What it documents
+
+- [board-mapping-azimuthal-hungarian](../../decisions/board-mapping-azimuthal-hungarian.md) — the 40-territory assignment this board paints onto the real dartboard geometry.
+- [board-preview-and-fit-map](./board-preview-and-fit-map.md) — the generator that produces it; \`board-preview.html\` is the schematic sibling view.
+
+## Details
+
+- **Location**: \`docs/risk/dart-board-for-map.svg\` (output), \`docs/risk/dart-board-orig.svg\` (pristine input — never edit directly)
+- **Regenerate**: \`node docs/risk/fit-map.cjs\` (final patch block rewrites the file from orig on every run)
+- **Contents**:
+  - Single-ring segments filled with continent colors (NA \`#FFB703\`, SA \`#8ECAE6\`, EU \`#BB3E03\`, AF \`#219EBC\`, AS \`#126782\`, OC \`#3A6787\`)
+  - Radially-oriented territory labels, flipped on the left half (rotate +180°) so nothing reads upside-down
+  - **Full territory names, word-per-line multi-line tspans, never abbreviated** (user directive 2026-09-09: copy the names from the world-map mockup [risk-dart-board-mockup-risk-dart-board-svg](./risk-dart-board-mockup-risk-dart-board-svg.md) — "Northwest Territory", "Western United States", …; \`apply-mapping.cjs\`'s \`LINES\` map holds the line breaks)
+  - Gold \`#FFD700\` stroke on the two pinned anchors (Iceland, South Africa)
+  - Double ring and treble band kept traditional (untouched)
+- **Editing gotchas**: wedge index needs the +9° half-wedge shift; replace attributes, never append duplicates — see [wedge-index-from-a-seg-path-s-m-point-needs-a-9-half-wedge-shift](../../learnings/wedge-index-from-a-seg-path-s-m-point-needs-a-9.md) and [risk-board-svg-attribute-order](../../learnings/risk-board-svg-attribute-order.md).
+
+## Source
+
+- \`docs/risk/fit-map.cjs\` — patch block (\`--- patch dart-board-for-map.svg from pristine dart-board-orig.svg ---\`)
+`,
+  "pages/artifacts/dart-board-svg-extracted-production-dartboard.md": `---
+type: Artifact
+title: dart-board.svg (extracted production dartboard)
+description: "A clean, static SVG of the standard dartboard extracted directly from the live scorer's rendered \`Dartboard.svelte\` output on a production match page (https://w"
+tags: [risk-darts, asset, svg, dartboard]
+timestamp: "2026-09-08T22:41:12.558Z"
+---
+
+# dart-board.svg (extracted production dartboard)
+
+> **Archived 2026-09-09** — moved to \`docs/risk/.archive/dart-board.svg\`. The clean-base role is now served by [dartboardingame-svg-id-addressable-in-game-board](./dartboardingame-svg-id-addressable-in-game-board.md) (\`DartBoardInGame.svg\`).
+
+A clean, static SVG of the standard dartboard extracted directly from the live scorer's rendered \`Dartboard.svelte\` output on a production match page (https://www.dart.monster/match/...).
+
+## What it documents
+
+- [risk-darts-proposed-game-mode](../concepts/risk-darts-proposed-game-mode.md) — serves as the geometric ground truth for the Risk/Trebles & Territories design work in \`docs/risk/\`
+- \`src/lib/components/ui/Dartboard.svelte\` — the component this asset was lifted from
+
+## Details
+
+- **Location**: \`docs/risk/dart-board.svg\`
+- **Format**: standalone SVG, 31 KB, \`viewBox="0 0 500 500"\` with \`width/height="100%"\` (responsive, like the risk board)
+- **Contents**: 80 path segments (20 sectors × double/treble/single-inner/single-outer rings), bull + outer bull, 5 circles, number ring 20…5
+- **Generated from**: browser-evaluated serialized markup of the rendered board on a live match page; stripped Svelte scoping classes, \`cursor: pointer\`, inline transform/transition styles, and \`<!---->\` comment anchors so it is a clean static asset
+- Distinct from \`Risk_board.svg\` / \`risk-dart-board.svg\` in the same folder (risk-mode board designs); this one is the **unmodified production board geometry**
+`,
+  "pages/artifacts/dartboardingame-svg-id-addressable-in-game-board.md": `---
+type: Artifact
+title: DartBoardInGame.svg (id-addressable in-game board)
+description: A wedge-by-wedge export of the production dartboard geometry (\`Dartboard.svelte\`), rebuilt with self-explanatory, collision-free element ids — the board the Ris
+tags: [risk-42, svg, dartboard]
+timestamp: "2026-09-08T23:00:13.985Z"
+---
+
+# DartBoardInGame.svg (id-addressable in-game board)
+
+A wedge-by-wedge export of the production dartboard geometry (\`Dartboard.svelte\`), rebuilt with self-explanatory, collision-free element ids — the board the Risk 42 game view will paint ownership onto.
+
+## What it documents
+
+- [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md) — the in-game board rendering: territory/ownership state targets segments directly by id (\`#seg-20-inner\`), no path-matching heuristics.
+- [risk-42-territory-mapping-mapping-json](./risk-42-territory-mapping-mapping-json.md) — the ids line up 1:1 with mapping.json keys, so the mapping and the SVG speak the same element vocabulary.
+- [dart-board-for-map-svg-risk-mapped-dartboard](./dart-board-for-map-svg-risk-mapped-dartboard.md) — the static, continent-colored schematic sibling; this file is the clean geometric base.
+
+## Details
+
+- **Location**: \`docs/risk/DartBoardInGame.svg\`
+- **Id scheme**: \`<g id="wedge-N">\` wrapping \`seg-N-double\` / \`seg-N-outer\` / \`seg-N-treble\` / \`seg-N-inner\` plus \`num-N\` text; center is \`bull-25\` (green, r22) and \`bull-50\` (red, r10); decoration ids \`bg-number-ring\`, \`bg-wire-outer\`, \`rim\`. 125 unique ids, zero collisions.
+- **Generated from**: \`docs/risk/gen-dartboard-svg.cjs\` (archived 2026-09-09) — a direct port of \`Dartboard.svelte\`'s constants (\`NUMBERS\`, \`R\`, \`COL\`, \`annularSector\`). One source of truth in code: if the component changes, rerun the generator and the SVG follows. This file is now the maintained clean base for \`apply-territory-labels.cjs\`.
+- **Verified**: all 80 box paths geometrically identical to \`dart-board-orig.svg\` and the live production board export.
+`,
+  "pages/artifacts/docs-risk-assets-risk-board-svgs-notes.md": `---
+type: Artifact
+title: docs/risk/ assets (Risk board SVGs + notes)
+description: "Reference assets for the Risk-style conquest mode ([[risk-darts-proposed-game-mode]] / Trebles & Territories): two classic Risk board SVGs (\`Risk_board.svg\` ~50"
+tags: [risk, trebles-and-territories, assets, design-reference]
+timestamp: "2026-09-08T21:59:27.232Z"
+---
+
+# docs/risk/ assets (Risk board SVGs + notes)
+
+Reference assets for the Risk-style conquest mode ([risk-darts-proposed-game-mode](../concepts/risk-darts-proposed-game-mode.md) / Trebles & Territories): two classic Risk board SVGs (\`risk-board.svg\` (was \`Risk_board.svg\`, renamed) ~507 KB, \`Riskgameboard.svg\` ~38 KB) and \`notes.md\` — Perplexity-sourced research on the classic board's 42 territories / 6 continents and reinforcement math. Input material for mapping the dartboard-conquest design onto real Risk geography.
+
+## What it documents
+
+- [risk-darts-proposed-game-mode](../concepts/risk-darts-proposed-game-mode.md) — the game mode these assets inform
+- [trebles-territories-implementation-spec](./trebles-territories-implementation-spec.md) — the implementation spec that consumed the research
+- [risk-territory-darts-over-heat-economies](../../decisions/risk-territory-darts-over-heat-economies.md) (decision) — chose the territory model these boards illustrate
+
+## Details
+
+- **Location**: \`docs/risk/\` (3 files, ~547 KB total)
+- **Format**: SVG board scans + Markdown research notes
+- **Status (2026-09-08)**: untracked in the main tree — these files existed **only in a git stash** until the full branch/worktree cleanup rescued them out just before the stash was dropped. Slated for the next docs PR to master.
 `,
   "pages/artifacts/index.md": `# Artifacts
 
@@ -3710,18 +4916,86 @@ _Documents, diagrams, and deliverables will be listed here._
 - [Test suite](./test-suite.md) - The automated test layer for dart.monster: 67 Vitest unit tests over the pure game modules, plus 14 Playwright E2E tests (API lifecycle + real-browser UI) that
 - [Trebles & Territories implementation spec](./trebles-territories-implementation-spec.md) - The implementation spec for **Trebles and Territories** — the self-contained HTML design document (built with the html-docs skill) that drives the build. Contai
 - [Trebles and Territories player manual](./trebles-and-territories-player-manual.md) - A single self-contained HTML player manual for [[risk-darts-proposed-game-mode|Trebles and Territories]] — the "uber simple" rules-only distillation of the full
+- [docs/risk/ assets (Risk board SVGs + notes)](./docs-risk-assets-risk-board-svgs-notes.md) - Reference assets for the Risk-style conquest mode ([[risk-darts-proposed-game-mode]] / Trebles & Territories): two classic Risk board SVGs (\`Risk_board.svg\` ~50
+- [Risk dart board mockup (risk-dart-board.svg)](./risk-dart-board-mockup-risk-dart-board-svg.md) - The derived working SVG for the real-Risk-map redesign of the conquest mode: the classic Risk world map relaid out as the dartboard's 42-territory claimable sur
+- [Board preview & fit-map (docs/risk/fit-map.cjs + board-preview.html)](./board-preview-and-fit-map.md) - The generator + eyeball artifact for the [[board-mapping-azimuthal-hungarian|world map → dartboard territory mapping]] in [[risk-dart
+- [dart-board.svg (extracted production dartboard)](./dart-board-svg-extracted-production-dartboard.md) - A clean, static SVG of the standard dartboard extracted directly from the live scorer's rendered \`Dartboard.svelte\` output on a production match page (https://w
+- [dart-board-for-map.svg (Risk-mapped dartboard)](./dart-board-for-map-svg-risk-mapped-dartboard.md) - The pristine production dartboard SVG (\`docs/risk/dart-board-orig.svg\`, a copy of the board extracted from \`Dartboard.svelte\`) patched with the Risk → dartboard
+- [Risk 42 territory mapping (mapping.json)](./risk-42-territory-mapping-mapping-json.md) - Canonical machine-readable game data for [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md): every one of the 40 numbered boxes mapped to \`
+- [DartBoardInGame.svg (id-addressable in-game board)](./dartboardingame-svg-id-addressable-in-game-board.md) - A wedge-by-wedge export of the production dartboard geometry (\`Dartboard.svelte\`), rebuilt with self-explanatory, collision-free element ids — the board the Ris
+`,
+  "pages/artifacts/risk-42-territory-mapping-mapping-json.md": `---
+type: Artifact
+title: Risk 42 territory mapping (mapping.json)
+description: "Canonical machine-readable game data for [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md): every one of the 40 numbered boxes mapped to \`"
+tags: [risk, risk-42, mapping, game-data, json]
+timestamp: "2026-09-08T22:51:10.838Z"
+---
+
+# Risk 42 territory mapping (mapping.json)
+
+Canonical machine-readable game data for [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md): every one of the 40 numbered boxes mapped to \`{number, ring}\`, plus the army-deposit rules, in one lookup table.
+
+## What it documents
+
+- [risk-42-base-mechanic-two-feeder-deposits](../../decisions/risk-42-base-mechanic-two-feeder-deposits.md) — the deposit rules it encodes: \`S → 1 army in the hit box, D → 2 in the outer box, T → 2 in the inner box\`; bulls are \`null\` (parked on Q4)
+- [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md) — the game mode this data will drive; the intended contract is that clicking a box in-game resolves score AND territory from this single lookup
+- [risk-dart-board-mockup-risk-dart-board-svg](./risk-dart-board-mockup-risk-dart-board-svg.md) — the earlier design mockup of the same board
+
+## Details
+
+- **Location**: \`docs/risk/.archive/mapping.json\` (archived 2026-09-09) — the locked mapping now lives as the \`MAP\` table in \`docs/risk/apply-territory-labels.cjs\`, the single regenerator for the current board
+- **Format**: JSON — one entry per territory \`{number, ring}\` + deposit-rule map; bulls \`null\` = TBD
+- **Status**: canonical but awaiting the user's Q6 veto on the mapping itself
+- **Regenerate** (historical): \`node docs/risk/apply-mapping.cjs\` *(archived)* — current regen: \`node docs/risk/apply-territory-labels.cjs\`, reads \`DartBoardInGame.svg\`, writes the labeled \`risk-dart-board.svg\`
+- **Labeled board sibling**: \`dart-board-for-map.svg\` carries all 40 territory labels, radially oriented (flipped on the left half so nothing reads upside-down) and multi-line: full names split word-per-line via the script's \`LINES\` map — no abbreviations (user directive 2026-09-09). Label color is derived from each box's own fill — white on black single boxes, dark on cream boxes — because SVG text defaults to black fill and vanishes on the black boxes. Verified 40/40 against the locked territory table; fills unchanged (labels-only pass, byte-checked)
+
+## Source
+
+- Design conversation 2026-09-09 — labels-only pass requested; mapping data extracted from the board paths' own geometry (radii → ring, mid-angle → number)
+`,
+  "pages/artifacts/risk-dart-board-mockup-risk-dart-board-svg.md": `---
+type: Artifact
+title: Risk dart board mockup (risk-dart-board.svg)
+description: "The canonical labeled design board for the Risk-on-a-dartboard redesign: the id-addressable in-game board cloned with all 40 territory names — full names,"
+tags: [risk, risk-42, svg, board-map, design-mockup]
+timestamp: "2026-09-08T23:05:04.902Z"
+---
+
+# Risk dart board mockup (risk-dart-board.svg)
+
+The canonical labeled design board for the Risk-on-a-dartboard redesign: the id-addressable in-game board ([dartboardingame-svg-id-addressable-in-game-board](./dartboardingame-svg-id-addressable-in-game-board.md)) cloned with all 40 territory names from the world map (\`risk-board.svg\`). One artifact tells the whole story: numbers → score, \`seg-*\` ids → boxes, labels → territories.
+
+## What it documents
+
+- [board-mapping-azimuthal-hungarian](../../decisions/board-mapping-azimuthal-hungarian.md) — the 40-territory assignment the labels paint onto the real dartboard geometry
+- [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md) / [risk-darts-proposed-game-mode](../concepts/risk-darts-proposed-game-mode.md) — the game modes this board informs
+- [risk-42-territory-mapping-mapping-json](./risk-42-territory-mapping-mapping-json.md) — the machine-readable mapping (now the \`MAP\` table inside the regenerator)
+
+## Details
+
+- **Location**: \`docs/risk/risk-dart-board.svg\` (self-contained)
+- **Regenerate**: \`node docs/risk/apply-territory-labels.cjs\` — reads the clean \`DartBoardInGame.svg\`, appends 40 \`<text id="label-N-inner/outer">\` nodes paired 1:1 with the \`seg-N-*\` path ids (shared naming scheme). Idempotent: rebuilds from the clean base every run, so the design paths/fills/ids are never touched
+- **Label styling**: full names, two-line wraps via the script's \`LINES\` table (no abbreviations — user directive 2026-09-09); **horizontal, unrotated, centered in each box** (\`text-anchor=middle\` at the wedge mid-angle; inner names r=98, outer r=166), matching the archived \`_board-inline.html\` reference — 2026-09-09 pivot, see [territory-labels-go-horizontal-centered-in-each](../../decisions/territory-labels-go-horizontal-centered-in-each.md); white-on-black / dark-on-cream from each box's own fill. Verified: 40/40 labels inside their own radius band + wedge sector
+- **Lineage**: supersedes two earlier artifacts, both now in \`docs/risk/.archive/\` — the world-map-relaid-on-dartboard mockup (old \`risk-dart-board.svg\`) and \`dart-board-for-map.svg\`. The filename was reused for this labeled board
+- **Editing gotcha**: never hand-edit the output — see [board-svgs-are-generated](../../rules/board-svgs-are-generated.md)
+
+## Source
+
+- \`docs/risk/apply-territory-labels.cjs\` — generator + locked 40-territory \`MAP\` table + \`LINES\` wraps
+- \`docs/risk/_labeled-render.png\` — rendered proof
 `,
   "pages/artifacts/test-suite.md": `---
 type: Artifact
 title: Test suite
-description: "The automated test layer for dart.monster: 67 Vitest unit tests over the pure game modules, plus 14 Playwright E2E tests (API lifecycle + real-browser UI) that "
+description: "The automated test layer for dart.monster: 112 Vitest unit tests over the pure game modules, plus 14 Playwright E2E tests (API lifecycle + real-browser UI) that"
 tags: [testing, vitest, playwright, e2e]
 timestamp: "2026-09-07T19:58:54.367Z"
 ---
 
 # Test suite
 
-The automated test layer for dart.monster: 67 Vitest unit tests over the pure game modules, plus 14 Playwright E2E tests (API lifecycle + real-browser UI) that boot the dev server against the real PostgreSQL DB.
+The automated test layer for dart.monster: 112 Vitest unit tests over the pure game modules, plus 14 Playwright E2E tests (API lifecycle + real-browser UI) that boot the dev server against the real PostgreSQL DB. As of 2026-09-08 the suite lives on \`feature/trebles-territories\` (PR #2) — master has no test runner until that merges.
 
 ## Details
 
@@ -3735,6 +5009,8 @@ The automated test layer for dart.monster: 67 Vitest unit tests over the pure ga
 - **match-engine.test.ts** — turn rotation, bust revert-and-pass, leg/set/match majority wins, first-thrower alternation, abandon, immutability
 - **checkout-suggestions.test.ts** — every option sums correctly and ends on a double; impossible finishes
 - **stats-engine.test.ts** — 180/140+/100+ counting, checkout %, 3-dart average, last-20-legs window
+- **conquest-engine.test.ts** — Trebles & Territories rules: claiming, sieging, Bull Altar resurrection, duels, win conditions (Clock/Domination)
+- **conquest-setup.test.ts** — Fun-tab setup logic: preset validation, duration estimates, seat shuffling
 - **full-match.test.ts** — full 501 best-of-3×best-of-3 simulation mirroring \`docs/gameplay-e2e.md\`
 - **e2e/pages.spec.ts** — every page renders behind the email gate; 404 fallback
 - **e2e/api-match-flow.spec.ts** — full match lifecycle via API, bust persistence, archive/restore, validation, 404s
@@ -3752,7 +5028,8 @@ E2E creates data under unique \`e2e-*@test.local\` accounts and archives test pl
 
 ## Lifecycle
 
-- First added: 2026-09 — initial suite built in one pass; component-level Svelte tests deliberately skipped (logic covered by unit, UI by E2E)
+- First added: 2026-09 — initial suite (67 unit tests) built in one pass; component-level Svelte tests deliberately skipped (logic covered by unit, UI by E2E)
+- 2026-09-08 — conquest tests added (67 → 112); whole suite committed on \`feature/trebles-territories\` as PR #2. E2E specs deliberately contain no conquest references (clean split).
 `,
   "pages/artifacts/trebles-and-territories-player-manual.md": `---
 type: Artifact
@@ -3822,6 +5099,51 @@ The implementation spec for **Trebles and Territories** — the self-contained H
 
 _Abstract ideas and definitions will be listed here._
 - [Risk Darts (proposed game mode)](./risk-darts-proposed-game-mode.md) - What is it?
+- [Risk 42 (proposed game mode)](./risk-42-proposed-game-mode.md) - Risk 42 (proposed game mode)
+`,
+  "pages/concepts/risk-42-proposed-game-mode.md": `---
+type: Concept
+title: Risk 42 (proposed game mode)
+description: Risk 42 (proposed game mode)
+tags: [game-mode, design, proposal, risk]
+timestamp: "2026-09-08T22:21:19.786Z"
+---
+
+# Risk 42 (proposed game mode)
+
+# Risk 42 (proposed game mode)
+
+## What is it?
+
+A proposed **second** conquest game mode: actual Risk transplanted onto the dartboard via the exact **42 = 42 mapping** — a dartboard has 42 claimable areas (20 inner singles + 20 outer singles + outer bull + bullseye), matching the classic Risk board's 42 territories. Unlike [risk-darts-proposed-game-mode](./risk-darts-proposed-game-mode.md) (Trebles & Territories: Risk-*flavored* darts — 20 wedge-territories, HP sieges, no armies, timed sprint), this is the full Risk structure: armies, income, the classic conquest economy. Status: **brainstorm, base game locked** — two-feeder deposits ([decision](../../decisions/risk-42-base-mechanic-two-feeder-deposits.md)) plus the mirror-damage attack rule ([decision](../../decisions/risk-42-attack-rule-mirror-damage.md)) are both user-locked; bonuses/special events (Q4, bulls) are the open frontier.
+
+## Why does it matter?
+
+It resolves the name collision: "Risk" legitimately belongs to this mode; Trebles & Territories keeps its own identity as Risk-*flavored*. The two coexist as **sprint vs marathon** — T&T for short timed games, Risk 42 for the long arc (income, build-ups, big pushes). It also makes the *whole* board matter (inner + outer singles + both bulls are claimable) — no lava zones, unlike T&T's bull-as-altar.
+
+## Key rules / properties (current proposal state)
+
+- **42 claimable areas**: 20 inner singles, 20 outer singles, outer bull (25), bullseye (50).
+- **Base mechanic — two-feeder army deposits (user-declared):** turn = 3 darts; any dart into a **blank** territory claims it; any dart into **own** territory = **+1 defensive army**; **treble = +2 armies to that wedge's inner box**; **double = +2 armies to that wedge's outer box**. Bulls are plain territories with no ring feeders (parked for the bonuses talk). Every box has exactly two feeders — a +1 direct hit and a +2 ring hit — so army income per box is identical across the whole board, **balanced by construction**.
+- **Two assumptions pending user veto:** (1) *claim-via-ring* — a treble into a blank inner box claims it with 2 armies (a deposit is a deposit); (2) *no cap* — armies stack without limit, classic-Risk style.
+- **Attack rule — mirror damage (Q3, LOCKED):** a dart into enemy territory subtracts its value (direct −1, ring −2); box at 0 → flips to attacker with 1 army. One rule now covers every dart: the value goes in the box — up on blank/own, down on enemy. Emergent: **mid-turn flips chain** — capture with an early dart, deposit into the fresh conquest with the rest of the turn.
+- **Superseded earlier proposal:** armies as raw dart multiplier (S/D/T = 1/2/3 armies wherever the dart lands) and the round-robin one-dart-each claiming phase — replaced by the feeder model and any-dart claiming during play (whether a separate claiming phase survives is unconfirmed).
+- **Q4 (open) — what the bulls do:** 25/50 are the only territories with no ring feeder (dead-end boxes, design gift). Options: **A** one-shot strikes (hit 50 = strike any territory), **B** perk-while-owned (assistant recommendation — own bullseye → trebles deal 3 not 2; own outer bull → doubles deal 3 not 2; keeps 42 = 42, anti-shark geometry), **C** card economy, **D** plain. Unanswered.
+- **Previewed but unanswered:** income phase (Risk's ⌊territories/3⌋ + continent bonuses, paid in darts), caps/inflation if stacking runs away, game end.
+- Design stakes: without armies this collapses back into T&T-with-more-segments; with them you get the Risk arc T&T deliberately skipped. Fat stacks concentrate where everyone is watching — the table shoots the leader.
+
+## Relationships
+
+- [risk-darts-proposed-game-mode](./risk-darts-proposed-game-mode.md) — sibling mode (Trebles & Territories): the Risk-*flavored* sprint; the "Risk" name belongs to this 42-territory mode
+- [risk-42-base-mechanic-two-feeder-deposits](../../decisions/risk-42-base-mechanic-two-feeder-deposits.md) — the user-locked base mechanic ruling
+- [risk-42-attack-rule-mirror-damage](../../decisions/risk-42-attack-rule-mirror-damage.md) — the attack-rule ruling that completes the base game
+- [docs-risk-assets-risk-board-svgs-notes](../artifacts/docs-risk-assets-risk-board-svgs-notes.md) — research source: notes on the classic board's 42 territories / 6 continents and reinforcement math
+- [conquest-engine-and-live-game](../entities/conquest-engine-and-live-game.md) — T&T's shipped engine; likely reuse candidate for board geometry / turn plumbing if this mode gets built
+
+## Source
+
+- \`docs/risk/notes.md\` — Risk board research notes (42 territories, 6 continents) that seeded the 42=42 mapping
+- Design conversation 2026-09-08 — base mechanic declared, assumptions + Q3 (attack rule) posed; attack rule locked (Q3 = B), Q4 (bulls) posed
 `,
   "pages/concepts/risk-darts-proposed-game-mode.md": `---
 type: Concept
@@ -3835,7 +5157,7 @@ timestamp: "2026-09-07T21:24:50.813Z"
 
 ## What is it?
 
-A proposed (brainstorm-stage, no code) game mode that adapts Risk-style territory conquest to the dartboard: **the board IS the map** — wedges are territories, darts are the dice, trebles are artillery. Final name **Trebles and Territories** (resolved from working title "Conquest" — see Question 7). Designed for a mixed crowd (one shark + casuals) where **everyone must matter until the end**.
+A game mode that adapts Risk-style territory conquest to the dartboard: **the board IS the map** — wedges are territories, darts are the dice, trebles are artillery. Final name **Trebles and Territories** (resolved from working title "Conquest" — see Question 7). Designed for a mixed crowd (one shark + casuals) where **everyone must matter until the end**. No longer proposed-only: the spec is locked and milestones M1–M2 are shipped (see [conquest engine](../entities/conquest-engine-and-live-game.md)); M3 persistence and beyond are pending.
 
 ## Standing baseline
 
@@ -3860,11 +5182,13 @@ Treble-frontier founding (see baseline): all 20 wedges start blank; only a trebl
 - One veto pass over the full read-back (treble-frontier consequences, turns-clock 170/301/501 mappings, concrete continent groupings, domination trigger).
 - **Name the game — RESOLVED:** **Trebles and Territories** (chosen in the spec turn). The [implementation spec](../artifacts/trebles-territories-implementation-spec.md) The [implementation spec](../artifacts/trebles-territories-implementation-spec.md) then fixed the preset ladder (201→5001 band, since [re-banded to 51–1501 in steps of 50](../../decisions/preset-ladder-51-1501-steps-of-50.md), **301 the default**), each preset labeled with estimated play duration, plus the [LLM commentary](../entities/llm-commentary-trebles-territories.md) tab.
 
-### Pending sharpenings from the Last Stand turn (vetoable, not yet ruled)
+### Pending sharpenings from the Last Stand turn — RULED (spec §02, shipped)
 
-- Any bull counts for attacker and defender (would drop the Bull Altar 25/50 tier: 25 = steal at 1 HP, 50 = steal at full 3 HP).
-- Defender's save is one dart, thrown immediately (standoff on the spot, not next turn).
-- Skip dead players when finding "the next" victim; attacker picks which of the defender's territories.
+All three were locked in the [implementation spec](../artifacts/trebles-territories-implementation-spec.md) §02 ("the complete ruleset as locked") and implemented in the [conquest engine](../entities/conquest-engine-and-live-game.md):
+
+- Any bull counts (outer 25 or inner 50 — one tier, no 25/50 split) for both the attacker's resurrection hit and the victim's save dart.
+- The defender's save is one free dart, thrown immediately on the spot — it never counts against the dart budget.
+- "Next player" skips other dead players (the victim must own ≥1 territory); the attacker picks which territory. Duels never chain — a dead victim can't be robbed.
 
 ## Discard pile (rolled back — re-proposable, NOT standing)
 
@@ -3889,11 +5213,11 @@ It targets the mixed-skill-table problem without artificial handicap mechanics: 
 - [Shanghai feat grants +1 dart the next turn](../../decisions/shanghai-feat-grants-1-dart-the-next-turn.md) — the momentum reward, distilled into a named feat: S+D+T of one wedge in a turn buys an extra dart next turn
 - [Timed War default endgame, fixed continents, no elimination](../../decisions/timed-war-default-endgame-fixed-continents.md) — locks the end mode and continents (its insurgent clause is superseded by the Bull Altar decision; its default-21 budget clause is amended by the turns-clock decision)
 - [Risk-territory darts over heat economies](../../decisions/risk-territory-darts-over-heat-economies.md) — the rollback anchor decision
-- Would reuse the scoring/event core of the existing 501 match engine (\`src/lib/game/match-engine.ts\`) and the interactive \`Dartboard.svelte\`, but with wedge-based territory state instead of leg/set scoring.
+- [Conquest engine (conquest-engine.ts + live conquest game)](../entities/conquest-engine-and-live-game.md) — the shipped implementation: its own pure reducer (modelled on \`match-engine.ts\`), reusing \`Dartboard.svelte\` segment geometry; wedge-based territory state instead of leg/set scoring.
 
 ## Source
 
-- Design brainstorm from a product discussion (no source file yet); founding locked in the Treble-frontier decision, clock amended by the turns-clock decision, combat and death rulings in the Bull Altar decision, theft rules amended by the Last Stand decision, momentum via the Shanghai bonus decision.
+- \`.specs/trebles-and-territories/spec.html\` — the locked implementation spec (§02 rules, §03 presets, §06 engine/API/milestones); founding locked in the Treble-frontier decision, clock amended by the turns-clock decision, combat and death rulings in the Bull Altar decision, theft rules amended by the Last Stand decision, momentum via the Shanghai bonus decision.
 `,
   "pages/entities/conquest-engine-and-live-game.md": `---
 type: Entity
@@ -4032,6 +5356,38 @@ timestamp: "2026-09-07T19:59:06.906Z"
 
 - First added: 2026-09, alongside the initial E2E suite
 `,
+  "pages/entities/email-store-email-ts.md": `---
+type: Entity
+title: Email store (email.ts)
+description: \`src/lib/stores/email.ts\` — the single source of truth for the signed-in player identity. All routes read through it (no route reads \`darts_email\` directly); th
+tags: [email, auth, storage, stores]
+timestamp: "2026-09-08T11:06:45.079Z"
+---
+
+# Email store (email.ts)
+
+\`src/lib/stores/email.ts\` — the single source of truth for the signed-in player identity. All routes read through it (no route reads \`darts_email\` directly); the EmailGate and the FloatingNav add-account modal are the only UIs writing through it (both via the same remember checkbox semantics), and \`+layout.svelte\` skips the gate entirely when an email is present.
+
+## Details
+
+- **Location**: \`src/lib/stores/email.ts\`; writing UIs: \`src/lib/components/EmailGate.svelte\` (gate) and \`src/lib/components/ui/FloatingNav.svelte\` (add-account modal)
+- **Interface**: \`getEmail()\`; \`setEmail(email, remember)\` — \`remember=true\` persists a remembered login to \`localStorage['darts_email']\` (raw string, see [darts-email-localstorage-stores-raw-email](../../learnings/darts-email-localstorage-stores-raw-email.md)); \`remember=false\` stores a **session-only login** in \`sessionStorage\` (never localStorage, never the saved-accounts list)
+- **Semantics** (per the remember-me decision(../../decisions/remember-me-session-only-login.md)): a live session login shadows the remembered one; a remembered login clears stale session keys; sign-out wipes both storages
+- **Saved accounts**: separate key, stored as JSON — differs from the raw-string \`darts_email\` key
+
+## Relationships
+
+- [emailgate-remember-me-already-ships](../../learnings/emailgate-remember-me-already-ships.md) — recon that identified the session-only gap this store now closes
+- [ssr-pages-are-empty-shells-emailgate](../../learnings/ssr-pages-are-empty-shells-emailgate.md) — the gate renders client-side only
+- the uncommitted-suite learning(../../learnings/vitest-suite-uncommitted-master-has-no-test-runner.md) — why its checks live in \`scripts/smoke-email-store.ts\`
+
+## Lifecycle
+
+- First added: with the EmailGate — localStorage persistence + saved-accounts list
+- 2026-09-08: remember/session semantics added via PR #1 (\`feature/remember-me\`, pending merge) — see the remember-me decision(../../decisions/remember-me-session-only-login.md)
+- 2026-09-08 (review feedback, same PR): remember checkbox added to the FloatingNav add-account modal too; account switching now always lists every device-registered account except the active one — see [session-only-logins-not-in-accounts-list](../../learnings/session-only-logins-not-in-accounts-list.md)
+- Status note (2026-09-08): that review-feedback commit (\`cc9f39b\`, FloatingNav remember checkbox + switcher fix) is pushed to \`feature/remember-me\` but **still not on master** — PR #1's merge predates it. See [merged-pr-doesn-t-empty-the-branch](../../learnings/merged-pr-doesn-t-empty-the-branch.md)
+`,
   "pages/entities/index.md": `# Entities
 
 _Concrete named things will be listed here._
@@ -4044,6 +5400,9 @@ _Concrete named things will be listed here._
 - [Recap Video Pipeline (Trebles & Territories)](./recap-video-pipeline-trebles-territories.md) - The planned **Morning-After recap** feature for [[risk-darts-proposed-game-mode|Trebles & Territories]]: the day after a game, each match gets an LLM-generated
 - [Conquest setup (Fun tab + conquest-setup.ts)](./conquest-setup-fun-tab-conquest-setup-ts.md) - The first shipped code for [[risk-darts-proposed-game-mode]] (Trebles and Territories): the **Fun tab** on the match setup page plus the pure setup-logic module
 - [Conquest engine (conquest-engine.ts + live conquest game)](./conquest-engine-and-live-game.md) - The playable implementation of [[risk-darts-proposed-game-mode]] (Trebles & Territories): a pure, TDD'd game engine plus the board component and live game route
+- [Email store (email.ts)](./email-store-email-ts.md) - \`src/lib/stores/email.ts\` — the single source of truth for the signed-in player identity. All routes read through it (no route reads \`darts_email\` directly); th
+- [Spectator Interviews (Trebles & Territories)](./spectator-interviews-trebles-territories.md) - The planned mid-game **spectator interview** feature: an LLM generates a short interview — a commentator asks a question, a random spectator persona answers — i
+- [TV second screen (cast views)](./tv-second-screen-cast-views.md) - Read-only big-screen views of a live match, meant for tab-casting to a TV in the room: one route for classic matches, one for conquest. The scorer pages carry c
 `,
   "pages/entities/live-match-page.md": `---
 type: Entity
@@ -4204,6 +5563,75 @@ The planned **Morning-After recap** feature for [Trebles & Territories](../conce
 
 - First added: specced as §07 ("Recap Videos / Morning-After"); implementation pending green light on M1.
 `,
+  "pages/entities/spectator-interviews-trebles-territories.md": `---
+type: Entity
+title: Spectator Interviews (Trebles & Territories)
+description: "The planned mid-game **spectator interview** feature: an LLM generates a short interview — a commentator asks a question, a random spectator persona answers — i"
+tags: [conquest, interviews, trebles-and-territories, llm, tv]
+timestamp: "2026-09-08T20:24:37.445Z"
+---
+
+# Spectator Interviews (Trebles & Territories)
+
+The planned mid-game **spectator interview** feature: an LLM generates a short interview — a commentator asks a question, a random spectator persona answers — in **Dutch**, voiced and subtitled on the TV second screen. Originally conquest-only; **round 4 (2026-09-08) extended it to ALL match types** (classic 301/501 + conquest).
+
+## Details
+
+- **Scope (settled round 4)**: **all match types** — supersedes the earlier conquest-only proposal. See [commentary-gated-on-open-2nd-screen-pause-button-all-match-t](../../decisions/commentary-gated-on-2nd-screen.md).
+- **Gating (settled round 4)**: generated **only while a 2nd screen is open and not paused**; a pause button on the TV stops all generation, including audio spend. "Active" = the TV tab is polling.
+- **Cadence (settled round 4)**: every **N turns**, default 2, adjustable — N is also the LLM aggregation window (N=4 → last 4 turns' events). Control lives on the TV view, persisted per match.
+- **Failure (settled round 4)**: dismissible toast on the TV, auto-hides after 30 s; the game never waits on commentary.
+- **Settled (Q13)**: the question pool is **per-player 1–2 curated options** (sensible or game-heating), randomly surfaced — see [interview-questions-per-player-curated](../../decisions/interview-questions-per-player-curated.md).
+- **Settled (Q14)**: voices are **ElevenLabs live TTS, now** — commentator = fixed voice \`GiGOaehga8enaTnFQvb4\`; spectators = a random **Dutch voice, never the commentator's**; \`ELEVENLABS_KEY\` already in \`.env\` — see [interviews-elevenlabs-live-tts](../../decisions/interviews-elevenlabs-live-tts.md). Kokoro ruled out (English-only — [webspeech-only-dutch-tts](../../learnings/webspeech-only-dutch-tts.md)).
+- **Pipeline (from Q15, folded into round 4)**: TV calls the commentary endpoint, which generates once and **caches in the DB with match state** (refreshes/late joiners replay, never regenerate or re-bill); text from \`OPENCODE_API\` in Dutch; audio file/blob-cached; **subtitles on the 2nd screen** while it speaks.
+- Ships as **PR 2** of the two-PR split (PR 1 = 2nd screen + [conquest-state-server-persisted](../../decisions/conquest-state-server-persisted.md)).
+
+## Relationships
+
+- [risk-darts-proposed-game-mode](../concepts/risk-darts-proposed-game-mode.md) — the game mode it started in (now all match types)
+- [llm-commentary-trebles-territories](./llm-commentary-trebles-territories.md) — sibling LLM broadcast layer; the interview format is converging with the commentary feed
+- [tv-mode-url-tab-cast-polling](../../decisions/tv-mode-url-tab-cast-polling.md) — the 2nd screen where the voice + subtitles play, and whose polling gates generation
+- [recap-video-pipeline-trebles-territories](./recap-video-pipeline-trebles-territories.md) — sibling planned day-after content pipeline
+
+## Lifecycle
+
+- First added: spec'd during the 2026-09-08 grill interview round 2 (not yet implemented in code).
+- 2026-09-08 (round 3): Q14 settled on ElevenLabs live TTS; Q15 pipeline mechanics proposed.
+- 2026-09-08 (round 4): scope extended to all match types; gating + pause button, N-turn cadence, 30 s toast settled; acceptance criteria drafted (Q16).
+- 2026-09-08 (final): Q16 confirmed — full spec in TODO-54d2879c; implementation starting on branch \`feature/2nd-tv-screen-cast-realtime\`.
+`,
+  "pages/entities/tv-second-screen-cast-views.md": `---
+type: Entity
+title: TV second screen (cast views)
+description: "Read-only big-screen views of a live match, meant for tab-casting to a TV in the room: one route for classic matches, one for conquest. The scorer pages carry c"
+tags: [tv, cast, entity, live-match]
+timestamp: "2026-09-08T21:25:12.550Z"
+---
+
+# TV second screen (cast views)
+
+Read-only big-screen views of a live match, meant for tab-casting to a TV in the room: one route for classic matches, one for conquest. The scorer pages carry cast buttons (header \`IconCast\`, aria-label, no native title per house rule) that open the TV route in a new tab.
+
+## Details
+
+- **Routes**: \`src/routes/match/[id]/tv/+page.svelte\` (classic) and \`src/routes/match/conquest/[id]/tv/+page.svelte\` (conquest — rolling turn log + map)
+- **Transport**: polls the existing REST API (~1s), no websockets; winner-freeze stops updates; zero caller audio (the scorer keeps the sound)
+- **Auth**: public-by-link — conquest access rides the unguessable \`conquest_games.id\` uuid
+- **Conquest state**: reads the server-persisted [write-through conquest state](../../decisions/conquest-state-server-persisted.md) (\`conquest_games\` jsonb)
+- **Component**: [spectator-interviews TvCommentary component](./spectator-interviews-trebles-territories.md) (\`src/lib/components/tv/TvCommentary.svelte\`) — interview cadence, pause, generation, playback queue, subtitles
+- **Tests**: cast-button specs in match-ui + conquest E2E; TV pages driven in fake-commentary mode
+
+## Relationships
+
+- [tv-mode-url-tab-cast-polling](../../decisions/tv-mode-url-tab-cast-polling.md) — the architecture this implements
+- [spectator-interviews-trebles-territories](./spectator-interviews-trebles-territories.md) — the commentary that plays on it
+- [conquest-engine-and-live-game](./conquest-engine-and-live-game.md) — whose state the conquest TV renders
+
+## Lifecycle
+
+- First added: 2026-09-08 — built on \`feature/2nd-tv-screen-cast-realtime\`, stacked on the Trebles & Territories branch
+- Significant changes: 2026-09-08 — merged to master via **PR #7** (\`f0c28b5\`), deploying to Railway production (cast buttons on both scorers + \`/match/[id]/tv\` route)
+`,
   "pages/index.md": `# Pages
 
 Knowledge graph: concepts, entities, and artifacts that make up this project.
@@ -4224,6 +5652,17 @@ Knowledge graph: concepts, entities, and artifacts that make up this project.
 - [Trebles and Territories player manual](./artifacts/trebles-and-territories-player-manual.md) — A single self-contained HTML player manual for [[risk-darts-proposed-game-mode|Trebles and Territories]] — the "uber simple" rules-only distillation of the full
 - [Conquest setup (Fun tab + conquest-setup.ts)](./entities/conquest-setup-fun-tab-conquest-setup-ts.md) — The first shipped code for [[risk-darts-proposed-game-mode]] (Trebles and Territories): the **Fun tab** on the match setup page plus the pure setup-logic module
 - [Conquest engine (conquest-engine.ts + live conquest game)](./entities/conquest-engine-and-live-game.md) — The playable implementation of [[risk-darts-proposed-game-mode]] (Trebles & Territories): a pure, TDD'd game engine plus the board component and live game route
+- [Email store (email.ts)](./entities/email-store-email-ts.md) — \`src/lib/stores/email.ts\` — the single source of truth for the signed-in player identity. All routes read through it (no route reads \`darts_email\` directly); th
+- [Spectator Interviews (Trebles & Territories)](./entities/spectator-interviews-trebles-territories.md) — Spectator Interviews (Trebles & Territories)
+- [TV second screen (cast views)](./entities/tv-second-screen-cast-views.md) — Read-only big-screen views of a live match, meant for tab-casting to a TV in the room: one route for classic matches, one for conquest. The scorer pages carry c
+- [docs/risk/ assets (Risk board SVGs + notes)](./artifacts/docs-risk-assets-risk-board-svgs-notes.md) — Reference assets for the Risk-style conquest mode ([[risk-darts-proposed-game-mode]] / Trebles & Territories): two classic Risk board SVGs (\`Risk_board.svg\` ~50
+- [Risk 42 (proposed game mode)](./concepts/risk-42-proposed-game-mode.md) — What is it?
+- [Risk dart board mockup (risk-dart-board.svg)](./artifacts/risk-dart-board-mockup-risk-dart-board-svg.md) — The derived working SVG for the real-Risk-map redesign of the conquest mode: the classic Risk world map relaid out as the dartboard's 42-territory claimable sur
+- [Board preview & fit-map (docs/risk/fit-map.cjs + board-preview.html)](./artifacts/board-preview-fit-map-docs-risk-fit-map-cjs-board-preview-ht.md) — The generator + eyeball artifact for the [[world-map-dartboard-mapping-via-azimuthal-projection-hungari|world map → dartboard territory mapping]] in [[risk-dart
+- [dart-board.svg (extracted production dartboard)](./artifacts/dart-board-svg-extracted-production-dartboard.md) — A clean, static SVG of the standard dartboard extracted directly from the live scorer's rendered \`Dartboard.svelte\` output on a production match page (https://w
+- [dart-board-for-map.svg (Risk-mapped dartboard)](./artifacts/dart-board-for-map-svg-risk-mapped-dartboard.md) — The pristine production dartboard SVG (\`docs/risk/dart-board-orig.svg\`, a copy of the board extracted from \`Dartboard.svelte\`) patched with the Risk → dartboard
+- [Risk 42 territory mapping (mapping.json)](./artifacts/risk-42-territory-mapping-mapping-json.md) — Canonical machine-readable game data for [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md): every one of the 40 numbered boxes mapped to \`
+- [DartBoardInGame.svg (id-addressable in-game board)](./artifacts/dartboardingame-svg-id-addressable-in-game-board.md) — A wedge-by-wedge export of the production dartboard geometry (\`Dartboard.svelte\`), rebuilt with self-explanatory, collision-free element ids — the board the Ris
 `,
   "pages/TEMPLATES.md": `---
 type: Concept
@@ -4297,12 +5736,65 @@ a stable structure so pages are consistent, skimmable, and well-linked.
 - Generated from: [what data, process, or session produced it]
 \`\`\`
 `,
+  "preferences/ask-design-questions-one-by-one-never-batched.md": `---
+type: Preference
+title: Ask design questions one-by-one, never batched
+description: During grilling/interview sessions (and design Q&A generally), the user wants questions **one at a time**, not the grilling skill's default "ask the whole front
+tags: [grilling, interview-style, interaction]
+timestamp: "2026-09-08T22:05:39.435Z"
+---
+
+# Ask design questions one-by-one, never batched
+
+During grilling/interview sessions (and design Q&A generally), the user wants questions **one at a time**, not the grilling skill's default "ask the whole frontier in one numbered round". Ask one question, give the recommended answer, wait for the reply, then ask the next.
+`,
+  "preferences/index.md": `# Preferences
+
+- [Ask design questions one-by-one, never batched](./ask-design-questions-one-by-one-never-batched.md) - During grilling/interview sessions (and design Q&A generally), the user wants questions **one at a time**, not the grilling skill's default "ask the whole front
+`,
+  "rules/board-svgs-are-generated.md": `---
+type: Rule
+title: Board SVGs are generated — edit the regenerator, never the output
+description: Guideline
+tags: [risk, svg, tooling, docs-risk]
+timestamp: "2026-09-08T23:05:36.180Z"
+---
+
+# Board SVGs are generated — edit the regenerator, never the output
+
+## Guideline
+
+Every board SVG in \`docs/risk/\` that carries generated content (territory labels, mapping colors) is the **output of a regenerator script**, rebuilt from a pristine base on every run:
+
+- \`risk-dart-board.svg\` ← \`node docs/risk/apply-territory-labels.cjs\` (reads clean \`DartBoardInGame.svg\`, appends \`label-N-inner/outer\` text nodes)
+- \`DartBoardInGame.svg\` itself was generated the same way (port of \`Dartboard.svelte\` constants)
+
+Hand-edits to these outputs are **silently lost on the next regeneration**.
+
+## When it applies
+
+Any change to labels, territory names, line wraps, colors, or the 40-territory mapping on the design boards: edit the script's \`MAP\` / \`LINES\` tables (or the geometry port) and rerun — never open the SVG in an editor and nudge it.
+
+## Rationale
+
+- The 2026-09-09 consolidation archived all hand-patched intermediates (\`dart-board-for-map.svg\`, \`apply-mapping.cjs\`, old mockups) and converged on exactly this shape: one clean base + one regenerator + one labeled output, idempotent per run.
+- Keeps design paths/fills/ids byte-identical to the production board — the labeled pass is append-only (\`pointer-events="none"\` text), so the id contract for the future game view ([[dartboardingame-svg-id-addressable-in-game-board]]) can't drift.
+- Micro-level string-patching gotchas live in [[patching-board-svgs-replace-existing-attributes]] and [[risk-board-svg-attribute-order]]; this rule is the macro-level fix — don't string-patch at all, regenerate.
+
+## Source
+
+- \`docs/risk/apply-territory-labels.cjs\` — the pattern in action
+- [[risk-dart-board-mockup-risk-dart-board-svg]] — the artifact it maintains
+`,
   "rules/index.md": `# Rules
 
 - [Never hardcode player slots in match UI](./never-hardcode-player-slots-in-match-ui.md) - Guideline
 - [Use the Tooltip component, not native title attributes](./use-tooltip-not-native-title.md) - Guideline
 - [All code/logic todos must use the TDD skill (red→green→refactor)](./logic-todos-must-use-tdd-skill.md) - The rule
 - [Use $app/stores $page for page state — house style](./use-app-stores-page-for-page-state-house-style.md) - Rule
+- [Worktree feature loop: PR-only master, worktrees in .worktrees/, user merges](./worktree-feature-loop.md) - The rule
+- [Ask clarifying questions one at a time — user preference](./one-question-at-a-time.md) - The rule
+- [Board SVGs are generated — edit the regenerator, never the output](./board-svgs-are-generated.md) - Guideline
 `,
   "rules/logic-todos-must-use-tdd-skill.md": `---
 type: Rule
@@ -4367,6 +5859,31 @@ The match engine (\`src/lib/game/match-engine.ts\`) and thrower rotation are ful
 
 Roster can be 1–6 players (see the match player limit decision); UI must render correctly for every size, using condensed [[playerpanel]] cards for 3+ (see the cards-around-the-board decision).
 `,
+  "rules/one-question-at-a-time.md": `---
+type: Rule
+title: Ask clarifying questions one at a time — user preference
+description: The rule
+tags: [communication, user-preference, interviews]
+timestamp: "2026-09-08T22:06:11.810Z"
+---
+
+# Ask clarifying questions one at a time — user preference
+
+## The rule
+
+When clarification or requirements gathering is needed with this user, ask questions **one at a time** — a single question per reply, wait for the answer before the next. Do not batch a numbered list of questions in one message.
+
+Stated explicitly by the user on 2026-09-08 ("ask all questions 1-by-1") during the Risk game-mode scoping discussion.
+
+## When it applies
+
+- Spec/PRD interviews, game-design scoping, and any clarification loop with the user.
+- Applies to the interaction style, not to in-app UX copy (in-app forms can still batch fields).
+
+## Rationale
+
+Batched questions get partial answers and are easy to skip; one-at-a-time keeps decisions crisp and reviewable — especially important here since this project's feature work (e.g. [[risk-darts-proposed-game-mode]]) has repeatedly hinged on precise rule wording.
+`,
   "rules/use-app-stores-page-for-page-state-house-style.md": `---
 type: Rule
 title: Use $app/stores $page for page state — house style
@@ -4417,6 +5934,40 @@ Any hover/focus explanatory hint in Svelte components: table headers, stat label
 
 - Stats tab header tooltips in the match scorer UI (turn 2026-09-07).
 `,
+  "rules/worktree-feature-loop.md": `---
+type: Rule
+title: "Worktree feature loop: PR-only master, worktrees in E:/worktrees/, user merges"
+description: House workflow for all feature work — PR-only master, worktrees under E:/worktrees/ (locked while active), provably-lossless cleanup only, and the user is the only one who merges.
+tags: [git, workflow, worktree, pull-request]
+timestamp: "2026-09-08T19:44:39.112Z"
+---
+
+# Worktree feature loop: PR-only master, worktrees in E:/worktrees/, user merges
+
+## The rule
+
+All feature work in this repo runs through the **worktree feature loop** the user defined (2026-09-08; location + locking hardened same day). Hard constraints:
+
+- **Never push to or merge into master directly** — every master change goes through a PR. No exceptions, also not for "small" fixes.
+- **Worktrees always live in \`E:/worktrees/kees-<slug>\`** (branch \`feature/<slug>\`), created from a freshly synced master (\`git switch master && git pull --ff-only origin master\` first). Never at repo root or a sibling directory. (Convention changed 2026-09-08 from \`.worktrees/\` inside the repo — a legacy \`.worktrees/kees-remember-me\` may still exist until cleaned.)
+- **Lock the worktree immediately** after creating it: \`git worktree lock --reason "active task: <slug>" E:/worktrees/kees-<slug>\` — so another session's step-0 cleanup can't remove it mid-task. \`npm install\` before locking.
+- **Stale-worktree check before each new task** — a non-main worktree is removable **only if provably lossless**: \`git -C <path> status --porcelain\` empty AND \`git log --oneline origin/master..<branch>\` empty. Skip anything marked \`(locked)\` — it's another session's in-flight task. Never \`--force\`, never \`-D\`. A dirty or unmerged-commits worktree is a possibly-active parallel task: leave untouched and note it. A merged PR is NOT proof — see [merged-pr-doesn-t-empty-the-branch](../learnings/merged-pr-doesn-t-empty-the-branch.md).
+- **Clarify before coding** — if the task is ambiguous, ask what it must achieve + acceptance criteria, record in a todo, and wait for approval. No implementation on assumptions.
+- **\`cleanup\` argument** — skip straight to cleanup (step 8, only if the user already merged the PR) then re-sync master (step 9) and report.
+- **Never merge — the user merges.** No \`gh pr merge\`, no auto-merge, no clicking. End the report with the clickable PR URL and wait for merge confirmation.
+- **Review fixes stay on the same branch/worktree** (commit + push again). If master moved: \`git fetch origin && git rebase origin/master\`, resolve, \`git push --force-with-lease\`.
+- **Task summary (what we did / what it changes / why it matters) goes to three places**: the first block of the final commit message, appended to the task todo, and the end-of-work report.
+- **Cleanup only after the user confirms the merge**: \`git worktree unlock E:/worktrees/kees-<slug>\` (ignore "not locked"), \`git worktree remove\`, \`git branch -d feature/<slug>\`, \`git fetch --prune\`; then re-sync master.
+
+## Why
+
+The user runs this loop deliberately: master stays deployable (**Railway auto-deploys from master — a worktree-branch push deploys nothing**), merge decisions stay in human hands, and parallel sessions on one machine can't destroy each other's in-flight worktrees (locking + lossless-only cleanup).
+
+## Evidence
+
+- remember-me task (2026-09-08): steps 0–3 ran; loop correctly paused at step 3 to clarify scope before coding.
+- 2nd-tv-screen-cast-realtime task (2026-09-08): step 0 correctly left \`kees-remember-me\` untouched (unmerged commit \`cc9f39b\` despite merged PR #1); new worktree created at \`E:/worktrees/kees-2nd-tv-screen-cast-realtime\`, deps installed, locked; paused at step 3 awaiting the user's scope answers.
+`,
 };
 
 var WIKI_PAGES = [
@@ -4429,51 +5980,100 @@ var WIKI_PAGES = [
   { path: "decisions/cap-match-rosters-at-6-players.md", label: "Cap match rosters at 6 players, enforced client and server", group: "Decisions" },
   { path: "decisions/cards-around-the-board.md", label: "Cards around the board for all roster sizes (condensed panels for 3–6)", group: "Decisions" },
   { path: "decisions/claim-based-territory-ownership.md", label: "Claim-based territory ownership replaces the damage-flip model in Risk darts", group: "Decisions" },
+  { path: "decisions/commentary-gated-on-2nd-screen.md", label: "Commentary gated on open 2nd screen + pause button; all match types; every-N-turns cadence", group: "Decisions" },
+  { path: "decisions/conquest-state-server-persisted.md", label: "Conquest state persists server-side: write-through per dart, own table + uuid", group: "Decisions" },
   { path: "decisions/index.md", label: "Decisions", group: "Decisions" },
   { path: "decisions/dual-layout-match-view.md", label: "Dual-layout live match view: standings strip for 3+ players", group: "Decisions" },
   { path: "decisions/heat-momentum-core-balancing-mechanic.md", label: "Heat momentum as the core balancing mechanic for the Risk-style conquest darts mode", group: "Decisions" },
+  { path: "decisions/interview-questions-per-player-curated.md", label: "Interview questions: per-player 1–2 curated options, randomly surfaced", group: "Decisions" },
+  { path: "decisions/interviews-elevenlabs-live-tts.md", label: "Interviews on ElevenLabs live TTS: fixed commentator voice, random Dutch spectators", group: "Decisions" },
   { path: "decisions/last-stand-amendment-blank-first-resurrection.md", label: "Last Stand amendment: blank-first resurrection, next-player robbery, defender bull save", group: "Decisions" },
   { path: "decisions/preset-ladder-51-1501-steps-of-50.md", label: "Preset ladder re-banded to 51–1501 in steps of 50 (301 default)", group: "Decisions" },
+  { path: "decisions/real-risk-world-map-draft.md", label: "Real Risk world map on the board — 40 territories via inner/outer boxes, Japan & Madagascar cut", group: "Decisions" },
   { path: "decisions/recap-videos-via-hyperframes.md", label: "Recap videos via HyperFrames for day-after match reminders", group: "Decisions" },
+  { path: "decisions/remember-me-session-only-login.md", label: "Remember-me: session-only login shadows remembered login", group: "Decisions" },
+  { path: "decisions/risk-42-attack-rule-mirror-damage.md", label: "Risk 42 attack rule locked: mirror damage — deposit down on enemy land, reduce-to-zero capture", group: "Decisions" },
+  { path: "decisions/risk-42-base-mechanic-two-feeder-deposits.md", label: "Risk 42 base mechanic: two-feeder army deposits (any-dart claims, treble feeds inner +2, double feeds outer +2)", group: "Decisions" },
   { path: "decisions/risk-territory-darts-over-heat-economies.md", label: "Risk-territory darts over heat economies", group: "Decisions" },
   { path: "decisions/shanghai-feat-grants-1-dart-the-next-turn.md", label: "Shanghai feat grants +1 dart the next turn", group: "Decisions" },
+  { path: "decisions/territory-labels-go-horizontal-centered-in-each.md", label: "Territory labels go horizontal: centered in each box, no rotation", group: "Decisions" },
   { path: "decisions/timed-war-clock-in-turns-per-player.md", label: "Timed War clock measured in turns per player, branded 170/301/501 (default 301)", group: "Decisions" },
   { path: "decisions/timed-war-default-endgame-fixed-continents.md", label: "Timed War default endgame, fixed continents, no elimination for Risk darts", group: "Decisions" },
   { path: "decisions/treble-frontier-founding-requires-treble.md", label: "Treble-frontier founding: blank territories require a treble to claim", group: "Decisions" },
   { path: "decisions/trebles-territories-board-palette-coolors.md", label: "Trebles & Territories board palette locked (Coolors 10-color band)", group: "Decisions" },
+  { path: "decisions/tv-mode-url-tab-cast-polling.md", label: "TV spectator mode: URL + tab-cast, 1s polling, public-by-link, room-first", group: "Decisions" },
+  { path: "decisions/board-mapping-azimuthal-hungarian.md", label: "World map → dartboard mapping via azimuthal projection + Hungarian assignment (bull = Black Sea)", group: "Decisions" },
+  { path: "learnings/risk-name-collision-new-game-exploration.md", label: "\"Risk\" name collision: new game exploration (Sep 2026) is distinct from the Risk-darts proposal that became Trebles & Territories", group: "Learnings" },
+  { path: "learnings/env-dynamic-private-vitest-split.md", label: "$env/dynamic/private doesn't resolve in vitest — split the pure logic into its own module", group: "Learnings" },
+  { path: "learnings/wikilinks-bare-slug-breaks-cross-folder.md", label: "Bare [[slug]] wikilinks in wiki_note_page break cross-folder — use explicit relative paths", group: "Learnings" },
+  { path: "learnings/conquest-state-client-side-only.md", label: "Conquest state is client-side only — nothing for a 2nd screen to poll", group: "Learnings" },
+  { path: "learnings/dartboard-svg-paths-encode-box-identity-read.md", label: "Dartboard SVG paths encode box identity — read (number, ring) from geometry, don't hand-map", group: "Learnings" },
   { path: "learnings/darts-email-localstorage-stores-raw-email.md", label: "darts_email localStorage key stores the email raw, not JSON", group: "Learnings" },
+  { path: "learnings/db-push-ignores-darts-schema.md", label: "db:push ignores the darts schema — migrations are file-as-record, applied directly", group: "Learnings" },
+  { path: "learnings/no-top-level-state-var-svelte2tsx.md", label: "Don't name a top-level Svelte 5 variable `state` — svelte2tsx collision", group: "Learnings" },
+  { path: "learnings/emailgate-remember-me-already-ships.md", label: "EmailGate remember-me already ships — email persists, gate skips, saved accounts exist", group: "Learnings" },
+  { path: "learnings/flipped-labels-negate-radial-offset-on-left-half.md", label: "Flipped labels: negate radial offset on left half", group: "Learnings" },
   { path: "learnings/godaddy-apex-domain-a-record-to-edge-ip.md", label: "GoDaddy apex domain on Railway: A record to live edge IP, not the documented one", group: "Learnings" },
   { path: "learnings/godaddy-dns-can-t-serve-a-railway-apex-domain.md", label: "GoDaddy DNS can't serve a Railway apex domain", group: "Learnings" },
+  { path: "learnings/large-browser-evaluate-returns-spill-to-disk.md", label: "Large browser evaluate returns spill to disk wrapped in [UNTRUSTED_PAGE_CONTENT] markers", group: "Learnings" },
   { path: "learnings/index.md", label: "Learnings", group: "Learnings" },
+  { path: "learnings/match-api-unauthenticated.md", label: "Match API is unauthenticated — the share link is the key", group: "Learnings" },
+  { path: "learnings/merged-pr-doesn-t-empty-the-branch.md", label: "Merged PR doesn't empty the branch", group: "Learnings" },
   { path: "learnings/miss-turns-must-persist-with-dartsthrown-1.md", label: "Miss turns must persist with dartsThrown ≥ 1", group: "Learnings" },
+  { path: "learnings/webspeech-only-dutch-tts.md", label: "Only webSpeech TTS speaks Dutch — kokoro is English-only, ElevenLabs is pre-generated clips", group: "Learnings" },
   { path: "learnings/opencode-zen-go-needs-session-header.md", label: "OpenCode zen/go LLM endpoint needs x-opencode-session header + custom User-Agent", group: "Learnings" },
+  { path: "learnings/patching-board-svgs-replace-existing-attributes.md", label: "Patching board SVGs: replace existing attributes, never append duplicates", group: "Learnings" },
   { path: "learnings/refresh-resume-needs-chronological-turn-order.md", label: "Refresh-resume depends on chronological turn order and persisted firstThrowerId", group: "Learnings" },
+  { path: "learnings/risk-board-svg-attribute-order.md", label: "Risk board SVGs: path attribute order varies — extract element-wise, not by regex lookahead", group: "Learnings" },
+  { path: "learnings/session-only-logins-not-in-accounts-list.md", label: "Session-only logins are absent from the saved-accounts list — don't gate account switching on it", group: "Learnings" },
   { path: "learnings/ssr-pages-are-empty-shells-emailgate.md", label: "SSR pages are empty shells — EmailGate gates all rendering client-side", group: "Learnings" },
   { path: "learnings/structuredclone-can-t-clone-svelte-5-state.md", label: "structuredClone can't clone Svelte 5 $state proxies — pass $state.snapshot() at the engine boundary", group: "Learnings" },
+  { path: "learnings/svg-path-parsing-arc-arguments-are-not-points.md", label: "SVG path parsing: arc arguments are not points — tokenize by command, never by coordinate-pair regex", group: "Learnings" },
   { path: "learnings/tooltips-must-use-fixed-positioning.md", label: "Tooltips must use fixed positioning to escape overflow clipping", group: "Learnings" },
+  { path: "learnings/top-level-return-in-a-cjs-script-skips-the-file.md", label: "Top-level return in a CJS script skips the file write — silent no-op", group: "Learnings" },
+  { path: "learnings/conquest-build-untracked-in-working-tree.md", label: "Trebles & Territories build was untracked in the working tree — now landed on feature/trebles-territories (PR #2)", group: "Learnings" },
   { path: "learnings/ts-can-t-narrow-state-in-closures.md", label: "TS can't narrow $state inside closures — use $derived.by with local capture", group: "Learnings" },
+  { path: "learnings/vitest-suite-uncommitted-master-has-no-test-runner.md", label: "Vitest/Playwright suite is uncommitted — master branches have no test runner", group: "Learnings" },
+  { path: "learnings/wedge-index-from-a-seg-path-s-m-point-needs-a-9.md", label: "Wedge index from a seg path's M point needs a +9° half-wedge shift", group: "Learnings" },
   { path: "learnings/wiki-search-misses-recent-concepts.md", label: "wiki_search misses recently-written concepts — verify with wiki_validate or ls before writing", group: "Learnings" },
+  { path: "learnings/windows-worktree-delete-kill-holder-first.md", label: "Windows worktree deletion: kill the process holding the directory first", group: "Learnings" },
   { path: "pages/TEMPLATES.md", label: "Page Templates", group: "Pages" },
   { path: "pages/index.md", label: "Pages", group: "Pages" },
   { path: "pages/artifacts/index.md", label: "Artifacts", group: "Pages / Artifacts" },
+  { path: "pages/artifacts/board-preview-and-fit-map.md", label: "Board preview & fit-map (docs/risk/fit-map.cjs + board-preview.html)", group: "Pages / Artifacts" },
+  { path: "pages/artifacts/dart-board-for-map-svg-risk-mapped-dartboard.md", label: "dart-board-for-map.svg (Risk-mapped dartboard)", group: "Pages / Artifacts" },
+  { path: "pages/artifacts/dart-board-svg-extracted-production-dartboard.md", label: "dart-board.svg (extracted production dartboard)", group: "Pages / Artifacts" },
+  { path: "pages/artifacts/dartboardingame-svg-id-addressable-in-game-board.md", label: "DartBoardInGame.svg (id-addressable in-game board)", group: "Pages / Artifacts" },
+  { path: "pages/artifacts/docs-risk-assets-risk-board-svgs-notes.md", label: "docs/risk/ assets (Risk board SVGs + notes)", group: "Pages / Artifacts" },
+  { path: "pages/artifacts/risk-42-territory-mapping-mapping-json.md", label: "Risk 42 territory mapping (mapping.json)", group: "Pages / Artifacts" },
+  { path: "pages/artifacts/risk-dart-board-mockup-risk-dart-board-svg.md", label: "Risk dart board mockup (risk-dart-board.svg)", group: "Pages / Artifacts" },
   { path: "pages/artifacts/test-suite.md", label: "Test suite", group: "Pages / Artifacts" },
   { path: "pages/artifacts/trebles-territories-implementation-spec.md", label: "Trebles & Territories implementation spec", group: "Pages / Artifacts" },
   { path: "pages/artifacts/trebles-and-territories-player-manual.md", label: "Trebles and Territories player manual", group: "Pages / Artifacts" },
   { path: "pages/concepts/index.md", label: "Concepts", group: "Pages / Concepts" },
+  { path: "pages/concepts/risk-42-proposed-game-mode.md", label: "Risk 42 (proposed game mode)", group: "Pages / Concepts" },
   { path: "pages/concepts/risk-darts-proposed-game-mode.md", label: "Risk Darts (proposed game mode)", group: "Pages / Concepts" },
   { path: "pages/entities/conquest-engine-and-live-game.md", label: "Conquest engine (conquest-engine.ts + live conquest game)", group: "Pages / Entities" },
   { path: "pages/entities/conquest-setup-fun-tab-conquest-setup-ts.md", label: "Conquest setup (Fun tab + conquest-setup.ts)", group: "Pages / Entities" },
   { path: "pages/entities/dart-monster-dns-railway-domain-setup.md", label: "dart.monster DNS & Railway domain setup", group: "Pages / Entities" },
   { path: "pages/entities/e2e-helpers.md", label: "E2E helpers", group: "Pages / Entities" },
+  { path: "pages/entities/email-store-email-ts.md", label: "Email store (email.ts)", group: "Pages / Entities" },
   { path: "pages/entities/index.md", label: "Entities", group: "Pages / Entities" },
   { path: "pages/entities/live-match-page.md", label: "Live Match Page", group: "Pages / Entities" },
   { path: "pages/entities/llm-commentary-trebles-territories.md", label: "LLM Commentary (Trebles & Territories)", group: "Pages / Entities" },
   { path: "pages/entities/match-stats-tab.md", label: "Match Stats Tab", group: "Pages / Entities" },
   { path: "pages/entities/playerpanel.md", label: "PlayerPanel", group: "Pages / Entities" },
   { path: "pages/entities/recap-video-pipeline-trebles-territories.md", label: "Recap Video Pipeline (Trebles & Territories)", group: "Pages / Entities" },
+  { path: "pages/entities/spectator-interviews-trebles-territories.md", label: "Spectator Interviews (Trebles & Territories)", group: "Pages / Entities" },
+  { path: "pages/entities/tv-second-screen-cast-views.md", label: "TV second screen (cast views)", group: "Pages / Entities" },
+  { path: "preferences/ask-design-questions-one-by-one-never-batched.md", label: "Ask design questions one-by-one, never batched", group: "Preferences" },
+  { path: "preferences/index.md", label: "Preferences", group: "Preferences" },
   { path: "rules/logic-todos-must-use-tdd-skill.md", label: "All code/logic todos must use the TDD skill (red→green→refactor)", group: "Rules" },
+  { path: "rules/one-question-at-a-time.md", label: "Ask clarifying questions one at a time — user preference", group: "Rules" },
+  { path: "rules/board-svgs-are-generated.md", label: "Board SVGs are generated — edit the regenerator, never the output", group: "Rules" },
   { path: "rules/never-hardcode-player-slots-in-match-ui.md", label: "Never hardcode player slots in match UI", group: "Rules" },
   { path: "rules/index.md", label: "Rules", group: "Rules" },
   { path: "rules/use-app-stores-page-for-page-state-house-style.md", label: "Use $app/stores $page for page state — house style", group: "Rules" },
-  { path: "rules/use-tooltip-not-native-title.md", label: "Use the Tooltip component, not native title attributes", group: "Rules" }
+  { path: "rules/use-tooltip-not-native-title.md", label: "Use the Tooltip component, not native title attributes", group: "Rules" },
+  { path: "rules/worktree-feature-loop.md", label: "Worktree feature loop: PR-only master, worktrees in E:/worktrees/, user merges", group: "Rules" }
 ];

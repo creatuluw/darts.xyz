@@ -13,3 +13,7 @@ build/
 __pycache__/
 .DS_Store
 .svelte-kit/
+
+# Scratch duplicates of generated Risk boards (Windows explorer copies, superseded experiments)
+docs/risk/risk-dart-board - Copy.svg
+docs/risk/risk-dart-board - Copy (2).svg

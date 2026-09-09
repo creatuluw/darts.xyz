@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Risk 42 — Implementation Spec · dart.monster</title>
+<style>
+  :root { --bg:#14181d; --panel:#1c2229; --ink:#e8e4da; --dim:#9aa3ad; --accent:#e8843c; --ok:#7fb069; --warn:#d9a441; --line:#2c333b; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 system-ui, sans-serif; }
+  main { max-width:880px; margin:0 auto; padding:40px 24px 96px; }
+  h1,h2,h3 { line-height:1.25; }
+  h1 { font-size:34px; margin:0; }
+  h1 span { color:var(--accent); }
+  h2 { font-size:24px; margin-top:56px; border-bottom:2px solid var(--line); padding-bottom:8px; }
+  h3 { font-size:18px; margin-top:32px; color:var(--accent); }
+  p.lead { font-size:18px; color:var(--dim); }
+  .tag { display:inline-block; background:var(--panel); border:1px solid var(--line); border-radius:99px; padding:2px 12px; font-size:13px; color:var(--dim); margin-right:6px; }
+  table { width:100%; border-collapse:collapse; margin:16px 0; font-size:14px; }
+  th,td { border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--dim); font-weight:600; }
+  tr:nth-child(even) td { background:#181e24; }
+  code { background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:1px 6px; font-size:13px; }
+  .rule { background:var(--panel); border-left:4px solid var(--accent); padding:14px 18px; margin:16px 0; border-radius:0 8px 8px 0; }
+  .rule b { color:var(--accent); }
+  .req { border-left-color:var(--warn); }
+  .req b { color:var(--warn); }
+  .veto { border-left-color:var(--ok); }
+  .veto b { color:var(--ok); }
+  ul { padding-left:22px; }
+  li { margin:5px 0; }
+  .small { font-size:13px; color:var(--dim); }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:700px){ .cols{grid-template-columns:1fr} }
+  header.meta { color:var(--dim); font-size:14px; margin-bottom:28px; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>RISK <span>42</span> <span class="tag">fun-tab game</span><span class="tag">spec v1 · LOCKED (read-back veto open)</span></h1>
+<p class="lead">Classic Risk, dealt onto a dartboard. 40 single boxes are 40 territories, darts are the dice, the bull is the arsenal.</p>
+
+<header class="meta">
+  dart.monster · fun-tab game mode · spec date 2026-09-09 ·
+  sibling of Trebles &amp; Territories (sprint ↔ marathon) ·
+  board artifacts committed at <code>docs/risk/</code>
+</header>
+
+<h2>The Game</h2>
+<p><b>Risk 42</b> translates the full classic Risk arc — random deal, army build-up,
+continent income, conquest — onto the standard dartboard. Where T&amp;T is a timed
+sprint over 20 wedge-territories with no armies, Risk 42 is the marathon: 40
+box-territories, army stacks, a continent economy, and two endgames.</p>
+
+<h3>The premise: 42 = 42 → 40 + 2</h3>
+<p>The classic board has 42 territories. Excluding <b>Japan</b> and <b>Madagascar</b>
+(the two single-connection islands) leaves exactly <b>40</b> — matching the board's
+40 single boxes (20 inner + 20 outer). The two bulls are not territories; they are
+<b>the Arsenal</b>. The world was fitted onto the board by proximity projection
+(bull = the Black Sea) with hard anchors Iceland → outer-5 and South Africa →
+outer-3.</p>
+
+<h3>The crowd</h3>
+<p>Same mixed table as T&amp;T: one shark, casuals, everyone must matter until the
+end. Balancing remains social — the leader's fat stacks sit on famous wedges and
+the table guns for them. Design guardrail: <i>dead players keep playing</i> (see
+Exile).</p>
+
+<h3>Differentiation from T&amp;T</h3>
+<table>
+<tr><th></th><th>Trebles &amp; Territories</th><th>Risk 42</th></tr>
+<tr><td>Territories</td><td>20 wedges</td><td>40 boxes (inner/outer singles)</td></tr>
+<tr><td>Armies</td><td>none (3 HP siege)</td><td>unbounded stacks</td></tr>
+<tr><td>Setup</td><td>blank board, treble-founding</td><td>random deal, 2 armies each</td></tr>
+<tr><td>Death</td><td>Bull Altar resurrection</td><td>Exile &amp; clawback (no ritual)</td></tr>
+<tr><td>Bulls</td><td>the Altar</td><td>the Arsenal (turn charge)</td></tr>
+<tr><td>Default end</td><td>Clock (170/301/501)</td><td><b>Domination</b> (clock as alt)</td></tr>
+</table>
+
+<h2>Rules of Play</h2>
+
+<div class="rule"><b>The Deal.</b> The app shuffles all 40 boxes and deals them
+<i>exactly equally</i> — 2p: 20/20 · 3p: 13 each (1 blank) · 4p: 10 each · 5p: 8 each ·
+6p: 6 each (4 blanks). Every dealt box starts with <b>2 armies</b> owned by its player.
+Leftover boxes stay <b>blank</b> and are claimable in-game by the normal deposit rules
+(single claims with 1, a treble/double founds its fed box with 2) — the blanks are the
+opening land-rush. <b>Who starts: the players decide</b> — no app mechanism; setup takes
+turn order as input.</div>
+
+<div class="rule"><b>Deposits (the base verb).</b> A turn is <b>3 darts</b> (plus
+continent income). Every dart deposits armies:
+<ul>
+<li><b>Single</b> (inner or outer fat box): <b>±1</b> into the box it lands in</li>
+<li><b>Treble</b>: <b>±2</b> into that wedge's <b>inner</b> box (the supply line runs inward)</li>
+<li><b>Double</b>: <b>±2</b> into that wedge's <b>outer</b> box</li>
+</ul>
+Plus on blank/own boxes (claim bigger / reinforce), minus on enemy boxes (damage).
+Every box has exactly two feeders — one +1 direct, one +2 ring — income per box is
+identical across the board by construction.</div>
+
+<div class="rule"><b>Combat — mirror damage.</b> Your dart's value goes in the box:
+up if it's yours or blank, <b>down if it's theirs</b>. A box reduced to <b>0 flips to
+the attacker with 1 army</b>. Mid-turn flips chain: capture with one dart, reinforce
+your conquest with the next. Overkill is wasted (a treble into a 1-army box flips it;
+the extra damage evaporates). There are no caps, no dice, no defender throws.</div>
+
+<div class="rule"><b>Exile &amp; clawback.</b> Zero boxes ≠ dead. An exiled player keeps
+the full 3-dart turn every round — pure offense (nothing of theirs to reinforce) — and
+any box they knock to 0 becomes theirs again at 1 army. Death costs defensive income,
+not the seat. Works identically in both end modes.</div>
+
+<div class="rule"><b>The Arsenal (bull charge).</b> A bull dart <i>charges the rest of
+your turn</i>: single bull (25) = <b>+1</b>, double bull (50) = <b>+2</b> to every dart
+thrown <i>after</i> it, this turn only. Charges stack additively (25 then 50 = +3 on the
+last dart). A charged dart deposits/removes its ring value plus the charge. A bull with
+no darts left behind it fizzles. Load, then fire — aiming bull first telegraphs the raid.</div>
+
+<div class="rule"><b>Continent income.</b> While you hold <b>every box of a continent</b>,
+you get <b>+1 dart per turn</b>. Asia pays <b>+2</b> (11 boxes — superpower money).
+Armies ≈ darts is the honest Risk translation of reinforcement income.</div>
+
+<div class="rule req"><b>UI REQUIREMENT — pre-turn dart budget.</b> The scorer must show
+the player their exact dart count for the upcoming turn <i>before the turn starts</i>,
+with its sources (base 3 · +1 SA · +2 Asia · …). Never let the budget be discovered
+mid-throw.</div>
+
+<div class="rule"><b>Endgames.</b>
+<ul>
+<li><b>Domination (headline default)</b> — hold <b>all 40 boxes</b> (blanks must be
+claimed too). The classic coronation; exile rules keep the last hold-out fighting.</li>
+<li><b>Clock (alt)</b> — equal turns per player, branded <b>170 / 301 / 501</b>.
+At the horn: <b>1 pt per box</b> + continent bonuses (defaults below). Full ranking,
+tiebreak = one sudden-death dart each, nearest bull.</li>
+</ul></div>
+
+<div class="rule veto"><b>Assumption locks — veto on read-back.</b>
+<table>
+<tr><th>#</th><th>Assumption</th><th>Default</th></tr>
+<tr><td>1</td><td>Stack cap</td><td>none — armies unbounded</td></tr>
+<tr><td>2</td><td>Overkill</td><td>wasted</td></tr>
+<tr><td>3</td><td>Roster</td><td>2–6 players (app-wide cap)</td></tr>
+<tr><td>4</td><td>Feats</td><td>no Shanghai-style bonus in v1 (parked)</td></tr>
+<tr><td>5</td><td>Arsenal ordering</td><td>bull-first only, additive, turn-scoped</td></tr>
+<tr><td>6</td><td>Misses</td><td>off-board = nothing</td></tr>
+<tr><td>7</td><td>Clock continent points</td><td>NA 2 · SA 3 · EU 3 · AF 3 · AS 5 · OC 3 (playtest knob)</td></tr>
+</table></div>
+
+<h2>The Board</h2>
+
+<h3>Mapping (locked fit — bull = Black Sea)</h3>
+<table>
+<tr><th>Wedge</th><th>Inner box</th><th>Outer box</th><th>Wedge</th><th>Inner box</th><th>Outer box</th></tr>
+<tr><td>20</td><td>N Europe</td><td>Scandinavia</td><td>2</td><td>Middle East</td><td>W Australia</td></tr>
+<tr><td>1</td><td>Ukraine</td><td>Siberia</td><td>17</td><td>Congo</td><td>East Africa</td></tr>
+<tr><td>18</td><td>Ural</td><td>Yakutsk</td><td>3</td><td>Egypt</td><td>South Africa ★</td></tr>
+<tr><td>4</td><td>Afghanistan</td><td>Irkutsk</td><td>19</td><td>N Africa</td><td>Argentina</td></tr>
+<tr><td>13</td><td>Mongolia</td><td>Kamchatka</td><td>7</td><td>S Europe</td><td>Brazil</td></tr>
+<tr><td>6</td><td>Siam</td><td>China</td><td>16</td><td>Venezuela</td><td>Peru</td></tr>
+<tr><td>10</td><td>India</td><td>New Guinea</td><td>8</td><td>W Europe</td><td>Central America</td></tr>
+<tr><td>15</td><td>Indonesia</td><td>E Australia</td><td>11</td><td>E United States</td><td>W United States</td></tr>
+<tr><td>12</td><td>Great Britain</td><td>NW Territory</td><td>14</td><td>Ontario</td><td>Alberta</td></tr>
+<tr><td>5</td><td>Greenland</td><td>Iceland ★</td><td>9</td><td>Quebec</td><td>Alaska</td></tr>
+</table>
+<p class="small">★ = fit anchors. Continents: NA 9 boxes · SA 4 · EU 7 · AF 5 · AS 11 · OC 4 = 40.
+Inner ring = Old World core, outer ring = frontier.</p>
+
+<h3>Artifacts &amp; ids (all committed)</h3>
+<ul>
+<li><code>docs/risk/DartBoardInGame.svg</code> — clean id-addressable board:
+<code>wedge-N</code> groups, <code>seg-N-inner/outer/treble/double</code> paths,
+<code>bull-25</code>, <code>bull-50</code>. Generated from
+<code>Dartboard.svelte</code> constants — geometry is production-identical.</li>
+<li><code>docs/risk/risk-dart-board.svg</code> — same board + 40 territory labels
+(7 px, inner r≈98 / outer r≈166, adaptive text color). Regenerate:
+<code>node docs/risk/apply-territory-labels.cjs</code> (also carries the locked
+mapping table).</li>
+<li><code>docs/risk/risk-territory-board.svg</code> / <code>risk-board.svg</code> —
+the labeled Risk world map (TV-view source; 35 fill-paths, 22 territory shades).</li>
+<li><code>docs/risk/.archive/</code> — superseded derivation scripts and boards
+(<code>fit-map.cjs</code> = the Hungarian-assignment proximity fit, kept as record).</li>
+</ul>
+
+<h2>Screens &amp; UI</h2>
+
+<h3>Scorer — first screen (the dartboard)</h3>
+<div class="rule req"><b>Board.</b> The match UI shows the dartboard as
+<code>risk-dart-board.svg</code>: numbers, labels, wires — with the 40 single boxes
+tinted <b>in the same colors as their territories on the world map</b>
+(<code>risk-territory-board.svg</code> palette). Build step: join the map's fill-layer
+shades to named territories by centroid containment → emit a
+<code>territory→fill</code> palette JSON; the board component consumes it. Doubles/trebles
+stay traditional red/green (supply lines), bull stays bull.</div>
+<div class="rule req"><b>Avatars.</b> Small avatar chips (player color + initials/emoji)
+mark <b>who owns each box</b>, with the army count. Positioned at box centers
+(inner r≈68 / outer r≈160 polar positions — same math as the labels).</div>
+<div class="rule req"><b>Turn chrome.</b> Pre-turn budget banner (sources listed),
+Arsenal charge indicator (⚡ +1/+2 while active), war log feed, standings strip,
+exile badge for landless players.</div>
+
+<h3>TV — second screen (the world map)</h3>
+<div class="rule req"><b>Cast view.</b> The second screen renders
+<code>risk-territory-board.svg</code> — the actual Risk map — with live ownership
+tinting and the same avatar chips per territory, current player highlight, continent
+control summary. URL + tab-cast + ~1 s polling, public-by-link — same pattern as the
+existing TV spectator mode. State source: the server-persisted game record
+(write-through per dart, own table + uuid — the conquest persistence pattern).</div>
+
+<h2>Implementation</h2>
+
+<h3>Engine (M1)</h3>
+<p>Pure TypeScript at <code>src/lib/game/risk-engine.ts</code> — no Svelte imports,
+modelled on <code>conquest-engine.ts</code>. TDD-first (red → green → refactor, the
+house rule).</p>
+<ul>
+<li><code>createGame(playerIds, { mode: 'domination' | 'clock', clockTurns? })</code> —
+shuffles the deal (equal split, blanks, 2 armies), seeds RNG for reproducible tests</li>
+<li><code>applyDart(state, segment, multiplier)</code> — one dart: Arsenal charge
+register (bull-first, additive, turn-scoped) · deposit/claim/reinforce/mirror-damage ·
+capture-at-0 flips 1 · mid-turn chains · turn lifecycle (budget = 3 + continent bonus)</li>
+<li><code>standings(state)</code> — boxes, continents held, army totals, score (clock
+mode)</li>
+<li>Win detection: all-40 owned (Domination) · horn + ranking + nearest-bull tiebreak
+(Clock)</li>
+<li>Acceptance: unit suite + seeded multi-game invariant sweep (both modes, 2–6 players),
+like T&amp;T's 40-game sweep</li>
+</ul>
+
+<h3>Milestones</h3>
+<table>
+<tr><th>M</th><th>Scope</th><th>Acceptance</th></tr>
+<tr><td>M1</td><td>Engine, TDD</td><td>Full unit suite + invariant sweep green</td></tr>
+<tr><td>M2</td><td>Board + scorer + Fun-tab entry + palette build step + avatars + budget UI</td><td>Headless-Chromium walkthrough: deal → deposits → capture → Arsenal → continent bonus → Domination win; zero console errors</td></tr>
+<tr><td>M3</td><td>Persistence (own table, uuid, write-through per dart) + TV route</td><td>Refresh-resume mid-game; TV polls live ownership</td></tr>
+<tr><td>M4</td><td>Caller audio + commentary hooks (reuse T&amp;T pipeline)</td><td>Score calls + event clips wired</td></tr>
+<tr><td>M5</td><td>Parked: recap videos, interviews</td><td>—</td></tr>
+</table>
+
+<h2>Parked knobs (deliberately out of v1)</h2>
+<ul>
+<li><b>Bull events</b> — artillery strikes / wildcard deposits / earthquake were
+alternatives to the Arsenal; the bulls now have a job, but the socket exists if
+playtests want an event valve.</li>
+<li><b>Shanghai-style feat</b> — T&amp;T momentum reward; not ported yet.</li>
+<li><b>Continent income sizing</b> — flat +1 (Asia +2) is the default; per-continent
+tables if it plays flat.</li>
+<li><b>Clock scoring values</b> — assumption lock #7.</li>
+<li><b>Final name</b> — working title "Risk 42" (the 42-territory premise). Naming pass
+comes last, per house tradition.</li>
+</ul>
+
+<h2>Read-back</h2>
+<p>One veto pass over this document — especially the assumption locks, the clock
+scoring table, and the Domination = all-40 definition. Silence is consent; speak now
+or it ships in the spec.</p>
+
+<p class="small">Risk 42 · spec v1 · 2026-09-09 · dart.monster ·
+source artifacts in <code>docs/risk/</code> · sibling spec
+<code>.specs/trebles-and-territories/spec.html</code></p>
+
+</main>
+</body>
+</html>

@@ -27,9 +27,9 @@ As shipped in `docs/risk/apply-mapping.cjs:45-50`. Note the arc midpoint is NOT 
 
 ## Related gotchas in the same tooling family
 
-- [[wedge-index-from-a-seg-path-s-m-point-needs-a-9-half-wedge-s]] — M point sits on the CCW wedge edge; shift +9° before rounding
+- [[wedge-index-from-a-seg-path-s-m-point-needs-a-9]] — M point sits on the CCW wedge edge; shift +9° before rounding
 - [[risk-board-svg-attribute-order]] — attribute order varies; extract element-wise, not by regex lookahead
-- [[dartboard-svg-paths-encode-box-identity-read-number-ring-fro]] — box identity (number, ring) readable from radii + mid-angle
+- [[dartboard-svg-paths-encode-box-identity-read]] — box identity (number, ring) readable from radii + mid-angle
 
 ## Source
 

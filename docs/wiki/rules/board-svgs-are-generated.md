@@ -25,7 +25,7 @@ Any change to labels, territory names, line wraps, colors, or the 40-territory m
 
 - The 2026-09-09 consolidation archived all hand-patched intermediates (`dart-board-for-map.svg`, `apply-mapping.cjs`, old mockups) and converged on exactly this shape: one clean base + one regenerator + one labeled output, idempotent per run.
 - Keeps design paths/fills/ids byte-identical to the production board — the labeled pass is append-only (`pointer-events="none"` text), so the id contract for the future game view ([[dartboardingame-svg-id-addressable-in-game-board]]) can't drift.
-- Micro-level string-patching gotchas live in [[patching-board-svgs-replace-existing-attributes-never-append]] and [[risk-board-svg-attribute-order]]; this rule is the macro-level fix — don't string-patch at all, regenerate.
+- Micro-level string-patching gotchas live in [[patching-board-svgs-replace-existing-attributes]] and [[risk-board-svg-attribute-order]]; this rule is the macro-level fix — don't string-patch at all, regenerate.
 
 ## Source
 
