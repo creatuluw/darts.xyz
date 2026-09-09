@@ -1,23 +1,22 @@
 /**
  * ElevenLabs TTS client — server-side only (ELEVENLABS_KEY).
- * Commentator: fixed voice (Arno Drost). Spectators: random Dutch voice
- * from the workspace pool, never the commentator. Pure logic lives in
+ * Commentators: Leo + Theodore. Spectators: random Dutch voice
+ * from the workspace pool, never either commentator. Pure logic lives in
  * $lib/game/elevenlabs-voices.
  */
 import { env } from "$env/dynamic/private";
 import {
-	COMMENTATOR_VOICE_ID,
+	COMMENTATOR_VOICE_IDS,
 	FALLBACK_DUTCH_VOICE_IDS,
 	isDutchVoice,
 	type DutchVoice
 } from "$lib/game/elevenlabs-voices";
 
-export { COMMENTATOR_VOICE_ID };
 export type { DutchVoice };
 
 let voiceCache: DutchVoice[] | null = null;
 
-/** Dutch workspace voices excluding the commentator. Cached per process. */
+/** Dutch workspace voices excluding the commentators. Cached per process. */
 export async function getDutchVoices(): Promise<DutchVoice[]> {
 	if (voiceCache) return voiceCache;
 	try {
@@ -29,7 +28,7 @@ export async function getDutchVoices(): Promise<DutchVoice[]> {
 		voiceCache = (data.voices as any[])
 			.filter(
 				(v) =>
-					v.voice_id !== COMMENTATOR_VOICE_ID &&
+					!COMMENTATOR_VOICE_IDS.includes(v.voice_id) &&
 					isDutchVoice(v.name ?? "", v.labels?.language)
 			)
 			.map((v) => ({ voice_id: v.voice_id, name: v.name }));

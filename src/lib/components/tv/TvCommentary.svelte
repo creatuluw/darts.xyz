@@ -5,6 +5,11 @@
         DEFAULT_COMMENTARY_CADENCE,
         newBoundaries,
     } from "$lib/game/commentary-cadence";
+    import { COMMENTATORS } from "$lib/game/elevenlabs-voices";
+
+    function commentatorName(voiceId: string | null | undefined): string {
+        return COMMENTATORS.find((c) => c.voiceId === voiceId)?.name ?? "Commentator";
+    }
 
     let {
         matchRef,
@@ -41,9 +46,15 @@
     interface Playing {
         question: string;
         answer: string;
+        analysis: string;
+        outlook: string;
         spectatorName: string;
+        askerName: string;
+        analystName: string;
         audioQuestion: string | null;
         audioAnswer: string | null;
+        audioAnalysis: string | null;
+        audioOutlook: string | null;
     }
     let playing = $state<Playing | null>(null);
     let subtitle = $state("");
@@ -66,8 +77,15 @@
 
     async function play(interview: Playing) {
         playing = interview;
-        await playBase64(interview.audioQuestion, interview.question, "Commentator");
+        await playBase64(interview.audioQuestion, interview.question, interview.askerName);
         await playBase64(interview.audioAnswer, interview.answer, interview.spectatorName);
+        // analyst segments — skip silently on cached rows from before the 4-segment format
+        if (interview.analysis) {
+            await playBase64(interview.audioAnalysis, interview.analysis, interview.analystName);
+        }
+        if (interview.outlook) {
+            await playBase64(interview.audioOutlook, interview.outlook, interview.analystName);
+        }
         playing = null;
         subtitle = "";
         speaker = "";
@@ -85,6 +103,8 @@
                     kind,
                     players,
                     turnLines: turnLines.slice(-n),
+                    // earlier turns: comparison context for the analyst
+                    priorLines: turnLines.slice(-(n + 8), -n),
                 }),
             });
             if (!res.ok) {
@@ -95,9 +115,15 @@
             await play({
                 question: data.question,
                 answer: data.answer,
+                analysis: data.analysis ?? "",
+                outlook: data.outlook ?? "",
                 spectatorName: data.spectatorName,
+                askerName: commentatorName(data.commentatorVoice),
+                analystName: commentatorName(data.analystVoice),
                 audioQuestion: data.audioQuestion,
                 audioAnswer: data.audioAnswer,
+                audioAnalysis: data.audioAnalysis,
+                audioOutlook: data.audioOutlook,
             });
         } catch {
             addToast("Commentaar mislukt — even geen interview", "error", 30_000);

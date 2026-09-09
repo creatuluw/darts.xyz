@@ -29,6 +29,11 @@ export interface InterviewInput {
 	players: string[];
 	turnLines: string[];
 	persona: SpectatorPersona;
+	/** Commentator names — who asks (interview) and who analyses. */
+	asker?: string;
+	analyst?: string;
+	/** Earlier turn lines, offered to the analyst for comparison. */
+	priorLines?: string[];
 }
 
 /** Builds the full Dutch interview prompt; response must be strict JSON. */
@@ -37,18 +42,31 @@ export function buildInterviewPrompt(input: InterviewInput): string {
 		input.kind === 'conquest'
 			? 'Trebles & Territories (Risk-darts op het bord)'
 			: 'een klassieke x01-dartwedstrijd';
-	return [
+	const asker = input.asker ?? 'Leo';
+	const analyst = input.analyst ?? 'Theodore';
+	const hasPrior = (input.priorLines?.length ?? 0) > 0;
+	const priorBlock = hasPrior
+		? ['', 'Eerdere context (alleen ter vergelijking voor de analyse):', ...(input.priorLines ?? []).map((l) => `- ${l}`)]
+		: [];
+	const lines = [
 		`Je bent een dartcommentator bij ${game}.`,
+		`Commentatoren: ${asker} (interviewer) en ${analyst} (analyticus).`,
 		`Spelers: ${input.players.join(', ')}.`,
 		'',
 		'Laatste beurten (nieuwste onderaan):',
 		...input.turnLines.map((l) => `- ${l}`),
+		...priorBlock
+	];
+	lines.push(
 		'',
-		`Taak 1: Stel als commentator één scherpe, gevatte vraag in het Nederlands over deze beurten.`,
+		`Taak 1: Stel als commentator ${asker} één scherpe, gevatte vraag in het Nederlands over deze beurten.`,
 		`Taak 2: Beantwoord die vraag als toeschouwer ${input.persona.name} — toon: ${input.persona.tone.trim()}, stijl: ${input.persona.style}. Geef een eerlijke, kleurrijke mening in het Nederlands.`,
-		'Houd beide teksten kort (max 3 zinnen elk).',
+		`Taak 3: Geef daarna als commentator ${analyst} jouw eigen deskundige analyse in het Nederlands, vanuit eigen ervaring en expertise. Dit is een improvisatieslot: je mag vergelijken met eerdere beurten${hasPrior ? ' (Eerdere context)' : ''} of met andere spelers om het spannender te maken.`,
+		`Taak 4: Sluit af als commentator ${analyst} met wat je hoopt dat er hierna gebeurt, en eindig met een leuke, spannende cliffhanger in het Nederlands.`,
+		'Houd alle vier de teksten kort (max 3 zinnen elk).',
 		'',
 		'Antwoord ALLEEN met geldige JSON, zonder markdown:',
-		'{"question": "<vraag van de commentator>", "answer": "<antwoord van de toeschouwer>"}'
-	].join('\n');
+		'{"question": "<vraag van de commentator>", "answer": "<antwoord van de toeschouwer>", "analysis": "<analyse van de commentator>", "outlook": "<vooruitblik met cliffhanger>"}'
+	);
+	return lines.join('\n');
 }

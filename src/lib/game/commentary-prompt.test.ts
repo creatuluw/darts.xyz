@@ -52,5 +52,69 @@ describe('buildInterviewPrompt', () => {
 		expect(prompt).toContain('Nederlands');
 		expect(prompt).toContain('"question"');
 		expect(prompt).toContain('"answer"');
+		expect(prompt).toContain('"analysis"');
+		expect(prompt).toContain('"outlook"');
+	});
+
+	it('instructs the commentator to analyse after the spectator answer, with license to compare prior turns and other players', () => {
+		const prompt = buildInterviewPrompt({
+			kind: 'classic',
+			players: ['Ada', 'Ben'],
+			turnLines: turns,
+			persona: pickPersona(() => 0)
+		});
+		// Taak 3: analyst slot — own expertise, may compare earlier turns / players
+		expect(prompt).toContain('Taak 3');
+		expect(prompt.toLowerCase()).toContain('analys');
+		expect(prompt.toLowerCase()).toContain('expert');
+		expect(prompt.toLowerCase()).toContain('vergelijk');
+	});
+
+	it('instructs the commentator to close with hopes for what happens next plus a cliffhanger', () => {
+		const prompt = buildInterviewPrompt({
+			kind: 'classic',
+			players: ['Ada'],
+			turnLines: turns,
+			persona: pickPersona(() => 0)
+		});
+		// Taak 4: outlook slot — what he hopes happens next + cliffhanger
+		expect(prompt).toContain('Taak 4');
+		expect(prompt.toLowerCase()).toContain('cliffhanger');
+	});
+
+	it('feeds prior turn lines as comparison context when provided', () => {
+		const prior = ['beurt 0: Ada — 60 57 60 = 177', 'beurt -1: Ben — miss, miss, miss'];
+		const prompt = buildInterviewPrompt({
+			kind: 'classic',
+			players: ['Ada', 'Ben'],
+			turnLines: turns,
+		priorLines: prior,
+			persona: pickPersona(() => 0)
+		});
+		expect(prompt).toContain(prior[0]);
+		expect(prompt).toContain(prior[1]);
+	});
+
+	it('omits the prior-context block when no priorLines are given', () => {
+		const prompt = buildInterviewPrompt({
+			kind: 'classic',
+			players: ['Ada'],
+			turnLines: turns,
+			persona: pickPersona(() => 0)
+		});
+		expect(prompt).not.toContain('Eerdere context');
+	});
+
+	it('names the asker and the analyst commentator', () => {
+		const prompt = buildInterviewPrompt({
+			kind: 'classic',
+			players: ['Ada', 'Ben'],
+			turnLines: turns,
+			asker: 'Leo',
+			analyst: 'Theodore',
+			persona: pickPersona(() => 0)
+		});
+		expect(prompt).toContain('Leo');
+		expect(prompt).toContain('Theodore');
 	});
 });
