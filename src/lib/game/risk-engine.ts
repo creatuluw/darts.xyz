@@ -50,7 +50,26 @@ export interface DartHit {
 }
 
 // Locked proximity fit (docs/risk/apply-territory-labels.cjs carries the same table)
-const BOARD: Array<[number, Ring, string, Continent]> = [
+/** Classic Risk continent palette (from docs/risk/risk-board.svg, the reference map). */
+export const CONTINENT_COLORS: Record<Continent, string> = {
+	NA: '#dadd23', // North America — yellow
+	SA: '#ea4224', // South America — red-orange
+	EU: '#47c1dc', // Europe — cyan-blue
+	AF: '#9d7902', // Africa — golden brown
+	AS: '#48c74c', // Asia — green
+	OC: '#bb10bf', // Oceania — purple
+};
+/** Darker companion shades — inner borders on the reference map. */
+export const CONTINENT_DARK: Record<Continent, string> = {
+	NA: '#b5b81d',
+	SA: '#9c240f',
+	EU: '#2293ac',
+	AF: '#785c05',
+	AS: '#2f8a33',
+	OC: '#7b147d',
+};
+
+export const BOARD: Array<[number, Ring, string, Continent]> = [
     [20, 'inner', 'Northern Europe', 'EU'], [20, 'outer', 'Scandinavia', 'EU'],
     [1, 'inner', 'Ukraine', 'EU'], [1, 'outer', 'Siberia', 'AS'],
     [18, 'inner', 'Ural', 'AS'], [18, 'outer', 'Yakutsk', 'AS'],

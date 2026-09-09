@@ -109,6 +109,7 @@
                     const { state } = await res.json();
                     const g = state?.game;
                     if (g && Array.isArray(g.boxes) && g.turn && g.winner === null) {
+                        gameId = savedId;
                         game = g;
                         players = (state.players ?? []).map((p: { id: string; name: string }, i: number) => ({ id: p.id, name: p.name, color: PLAYER_COLORS[i % PLAYER_COLORS.length] }));
                         gate = true; gateFor = g.turn.playerId; lastTurnIndex = g.turn.index;
@@ -200,20 +201,6 @@
                         <h1 class="font-display text-xl font-bold">⏰ Horn — tied: {game.tie.map((p) => setup.name(p)).join(" vs ")}</h1>
                         <button class="mt-3 px-4 py-2 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm" onclick={breakTie}>Tiebreak (boxes, then armies)</button>
                     </div>
-                {:else if gate}
-                    {@const b = budget!}
-                    <div class="rounded-2xl ring-1 ring-black/10 dark:ring-white/15 p-6 mb-4 bg-white dark:bg-zinc-900">
-                        <p class="text-xs uppercase tracking-wider text-zinc-400 font-bold">Next up</p>
-                        <h1 class="font-display text-2xl font-bold" style="color:{setup.color(gateFor)}">{setup.name(gateFor)}</h1>
-                        <p class="mt-2 text-sm">
-                            <span class="font-bold text-lg">{b.total}</span> darts
-                            <span class="text-zinc-400">— base {b.base}{#each b.sources as s}&nbsp;· +{s.darts} {s.continent}{/each}</span>
-                        </p>
-                        {#if isExiled(game, gateFor)}
-                            <p class="mt-1 text-xs text-amber-600 dark:text-amber-400 font-semibold">In exile — capture any box at 0 armies to claw back</p>
-                        {/if}
-                        <button class="mt-4 px-5 py-2.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm" onclick={() => (gate = false)}>Start turn</button>
-                    </div>
                 {:else}
                     <div class="rounded-2xl ring-1 ring-black/10 dark:ring-white/15 p-4 mb-4 bg-white dark:bg-zinc-900 flex items-center justify-between">
                         <div class="flex items-center gap-3">
@@ -232,7 +219,7 @@
                 {/if}
 
                 <div class="rounded-2xl bg-white dark:bg-zinc-900 ring-1 ring-black/10 dark:ring-white/15 p-4">
-                    <RiskBoard state={game} playerColor={Object.fromEntries(players.map((p) => [p.id, p.color]))} playerInitials={Object.fromEntries(players.map((p) => [p.id, initialsOf(p.name)]))} onHit={throwDart} disabled={boardDisabled} />
+                    <RiskBoard state={game} onHit={throwDart} disabled={boardDisabled} />
                     <div class="mt-3 flex items-center justify-between">
                         <p class="text-xs text-zinc-400">Treble feeds the inner box · double feeds the outer · bull charges the Arsenal</p>
                         {#if !boardDisabled}
@@ -243,6 +230,21 @@
             </div>
 
             <div class="space-y-4">
+                {#if gate && !game.winner && !game.tie}
+                    {@const b = budget!}
+                    <div class="rounded-2xl ring-1 ring-black/10 dark:ring-white/15 p-4 bg-white dark:bg-zinc-900">
+                        <p class="text-xs uppercase tracking-wider text-zinc-400 font-bold">Next up</p>
+                        <h2 class="font-display text-xl font-bold" style="color:{setup.color(gateFor)}">{setup.name(gateFor)}</h2>
+                        <p class="mt-1 text-sm">
+                            <span class="font-bold text-base">{b.total}</span> darts
+                            <span class="text-zinc-400">— base {b.base}{#each b.sources as s}&nbsp;· +{s.darts} {s.continent}{/each}</span>
+                        </p>
+                        {#if isExiled(game, gateFor)}
+                            <p class="mt-1 text-xs text-amber-600 dark:text-amber-400 font-semibold">In exile — capture any box at 0 armies to claw back</p>
+                        {/if}
+                        <button class="mt-3 w-full px-5 py-2 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm" onclick={() => (gate = false)}>Start turn</button>
+                    </div>
+                {/if}
                 <div class="rounded-2xl bg-white dark:bg-zinc-900 ring-1 ring-black/10 dark:ring-white/15 p-4">
                     <h2 class="font-display font-bold mb-3">Standings</h2>
                     <table class="w-full text-sm">

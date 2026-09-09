@@ -1,22 +1,20 @@
 <script lang="ts">
-    // Fixed 16:9 design canvas, stretched to FILL its host box edge-to-edge.
-    // On a true 16:9 viewport (fullscreen/cast) this is pixel-perfect 1:1;
-    // on chrome'd landscape screens it stretches a few % instead of letterboxing.
+    // Fixed 16:9 design canvas, scaled UNIFORMLY to fit its host box (centered).
+    // Circles stay circles: an off-16:9 viewport letterboxes instead of stretching
+    // (the bars fall away visually — host and page roots share bg-zinc-950).
     // Measures the host (clientWidth excludes the global scrollbar-gutter),
     // not window.innerWidth — the app reserves a stable gutter.
-    // ponytail: non-uniform scale distorts on far-off aspects (portrait phones) — cover-crop if TV pages ever need portrait.
     import type { Snippet } from "svelte";
 
     let { children }: { children: Snippet } = $props();
 
     let host = $state<HTMLElement | null>(null);
-    let sx = $state(1);
-    let sy = $state(1);
+    let s = $state(1);
     $effect(() => {
         if (!host) return;
+        const el = host;
         const fit = () => {
-            sx = host.clientWidth / 1920;
-            sy = host.clientHeight / 1080;
+            s = Math.min(el.clientWidth / 1920, el.clientHeight / 1080);
         };
         fit();
         const ro = new ResizeObserver(fit);
@@ -26,7 +24,7 @@
 </script>
 
 <div bind:this={host} class="h-dvh w-full bg-zinc-950 overflow-hidden flex items-center justify-center">
-    <div class="w-[1920px] h-[1080px] shrink-0" style="transform: scale({sx}, {sy})">
+    <div class="w-[1920px] h-[1080px] shrink-0" style="transform: scale({s})">
         {@render children()}
     </div>
 </div>

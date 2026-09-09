@@ -3,7 +3,8 @@
     import { page as pageStore } from "$app/stores";
     import { IconLink } from "@tabler/icons-svelte";
     import TvStage from "$lib/components/tv/TvStage.svelte";
-    import RiskBoard from "$lib/components/risk/RiskBoard.svelte";
+    import TvCommentary from "$lib/components/tv/TvCommentary.svelte";
+    import RiskWorldMap from "$lib/components/risk/RiskWorldMap.svelte";
     import {
         budgetWithSources,
         isExiled,
@@ -28,6 +29,28 @@
     let missing = $state(false);
     let frozen = $state(false);
 
+    // rolling turn summaries for the commentary LLM (built from poll diffs —
+    // the risk state carries no dart log, so summarize standings per turn)
+    let turnLog = $state<string[]>([]);
+    let seenTurn = -1;
+    let lastThrower: string | null = null;
+    function logTurn(g: RiskGameState) {
+        if (g.turn.index === seenTurn) return;
+        if (lastThrower !== null) {
+            const counts = g.players
+                .map(
+                    (p) =>
+                        `${p}: ${g.boxes.filter((b) => b.owner === p).length} gebieden, ${g.boxes
+                            .filter((b) => b.owner === p)
+                            .reduce((s, b) => s + b.armies, 0)} legers`,
+                )
+                .join(", ");
+            turnLog = [...turnLog.slice(-40), `beurt ${seenTurn} — ${lastThrower} gooide (stand: ${counts})`];
+        }
+        seenTurn = g.turn.index;
+        lastThrower = nameOf(g.turn.playerId);
+    }
+
     const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? "?";
     const colorOf = (id: string) => players.find((p) => p.id === id)?.color ?? "#52525b";
 
@@ -47,6 +70,7 @@
             const data = await res.json();
             const g = data.state?.game as RiskGameState | undefined;
             if (!g || !Array.isArray(g.boxes) || !g.turn) return;
+            logTurn(g);
             game = g;
             players = (data.state.players ?? []).map(
                 (p: { id: string; name: string }, i: number) => ({
@@ -77,107 +101,108 @@
 <svelte:head><title>TV — Risk 42</title></svelte:head>
 
 <TvStage>
-    <div class="h-full w-full bg-zinc-950 text-white p-8 flex flex-col select-none">
+    <div class="relative h-full w-full bg-zinc-950 text-white select-none overflow-hidden">
         {#if missing}
-            <div class="flex-1 flex items-center justify-center">
+            <div class="absolute inset-0 flex items-center justify-center">
                 <p class="text-zinc-400 text-2xl">Spel niet gevonden.</p>
             </div>
         {:else if !game}
-            <div class="flex-1 flex items-center justify-center">
+            <div class="absolute inset-0 flex items-center justify-center">
                 <p class="text-zinc-500 text-2xl animate-pulse">Laden…</p>
             </div>
         {:else}
-            <header class="flex items-center justify-between mb-6">
+            <!-- full-bleed map: fills the entire 1920x1080 stage; landmass spans
+                 roughly x 228-1703 / y 39-1007 in stage coords, so overlays below
+                 are pinned to the margins and never cover a territory -->
+            <div class="absolute inset-0">
+                <RiskWorldMap
+                    game={game}
+                    playerColor={Object.fromEntries(players.map((p) => [p.id, p.color]))}
+                    playerInitials={Object.fromEntries(players.map((p) => [p.id, p.initials]))}
+                    activePlayerId={game.winner || game.tie ? null : game.turn.playerId}
+                />
+            </div>
+
+            <!-- top bar: arctic ocean band -->
+            <div class="absolute top-0 inset-x-0 h-9 px-6 flex items-center justify-between bg-zinc-950/60 backdrop-blur-sm border-b border-zinc-800/60">
                 <div class="flex items-baseline gap-4">
-                    <span class="font-display font-black text-3xl tracking-tight">RISK 42</span>
-                    <span class="text-zinc-500 text-xl">
-                        {game.mode === "clock" ? `Klok · ${game.clockTurns} beurten per speler` : "Domination"}
+                    <span class="font-display font-black text-xl tracking-tight">RISK 42</span>
+                    <span class="text-zinc-400 text-sm">
+                        {game.mode === "clock" ? `Klok · ${game.clockTurns} beurten` : "Domination"}
                     </span>
-                    <span class="text-zinc-500 text-xl">Beurt {game.turn.index}</span>
+                    <span class="text-zinc-500 text-sm">Beurt {game.turn.index}</span>
                 </div>
                 <div class="flex items-center gap-4">
                     {#if !frozen}
-                        <span class="flex items-center gap-2 text-emerald-400 text-lg">
-                            <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span> LIVE
+                        <span class="flex items-center gap-2 text-emerald-400 text-sm">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span> LIVE
                         </span>
                     {/if}
                     <button
-                        class="flex items-center gap-2 text-zinc-400 hover:text-white border border-zinc-700 rounded-lg px-3 py-2 text-sm transition-colors"
+                        class="flex items-center gap-1.5 text-zinc-400 hover:text-white border border-zinc-700 rounded-lg px-2.5 py-1 text-xs transition-colors"
                         onclick={copyLink}
                     >
-                        <IconLink class="w-5 h-5" /> Link kopiëren
+                        <IconLink class="w-4 h-4" /> Link kopiëren
                     </button>
                 </div>
-            </header>
-
-            <!-- phase banner -->
-            <div class="rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3 mb-6 flex items-center justify-between gap-4">
-                <p class="text-2xl font-bold {game.winner || game.tie ? 'text-zinc-500' : 'text-emerald-300'}">
-                    {phaseText}
-                </p>
-                {#if !game.winner && !game.tie}
-                    <div class="flex items-center gap-4 text-xl">
-                        {#if game.turn.charge > 0}
-                            <span class="text-amber-300 font-bold">⚡ +{game.turn.charge}</span>
-                        {/if}
-                        {#each Array(game.turn.dartsLeft) as _}
-                            <span class="inline-block w-2.5 h-8 rounded-full bg-zinc-200"></span>
-                        {/each}
-                        <span class="text-zinc-400">{budgetWithSources(game).total} darts</span>
-                    </div>
-                {/if}
             </div>
 
-            <div class="flex-1 min-h-0 grid grid-cols-[1fr_26rem] gap-6 items-center justify-items-center">
-                <div class="self-stretch h-full aspect-square max-w-full flex items-center justify-center">
-                    <RiskBoard
-                        state={game}
-                        playerColor={Object.fromEntries(players.map((p) => [p.id, p.color]))}
-                        playerInitials={Object.fromEntries(players.map((p) => [p.id, p.initials]))}
-                        onHit={() => {}}
-                        disabled={true}
-                    />
-                </div>
-                <div class="w-full space-y-4">
-                    <div class="rounded-xl bg-zinc-900/60 border border-zinc-800 p-5">
-                        <table class="w-full text-xl">
-                            <thead>
-                                <tr class="text-zinc-500 text-sm uppercase tracking-wider text-left">
-                                    <th></th><th>Speler</th><th class="text-right">Boxes</th><th class="text-right">Armies</th><th class="text-right">Score</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {#each standings(game) as row (row.playerId)}
-                                    <tr class="{row.playerId === game.turn.playerId && !game.winner ? 'font-bold text-white' : 'text-zinc-300'} {isExiled(game, row.playerId) ? 'opacity-50' : ''}">
-                                        <td class="py-2"><span class="inline-block w-3.5 h-3.5 rounded-full" style="background: {colorOf(row.playerId)}"></span></td>
-                                        <td class="py-2">{nameOf(row.playerId)}{isExiled(game, row.playerId) ? " (ballingschap)" : ""}</td>
-                                        <td class="py-2 text-right tabular-nums">{row.boxes}</td>
-                                        <td class="py-2 text-right tabular-nums">{row.armies}</td>
-                                        <td class="py-2 text-right tabular-nums">{row.score}</td>
-                                    </tr>
-                                {/each}
-                            </tbody>
-                        </table>
-                        {#if standings(game).some((r) => r.continents.length)}
-                            <div class="mt-4 pt-4 border-t border-zinc-800 space-y-2">
-                                {#each standings(game).filter((r) => r.continents.length) as row (row.playerId)}
-                                    <p class="text-lg">
-                                        <span class="text-zinc-400">{nameOf(row.playerId)}:</span>
-                                        {#each row.continents as c (c)}
-                                            <span class="inline-block bg-zinc-800 rounded-lg px-2.5 py-0.5 mx-1 text-emerald-300">{c}</span>
-                                        {/each}
-                                    </p>
+            <!-- left panel: standings (west of the map, over letterbox + Pacific) -->
+            <div class="absolute left-4 top-1/2 -translate-y-1/2 w-52 rounded-2xl bg-zinc-900/70 backdrop-blur border border-zinc-800 p-4 space-y-3">
+                {#each standings(game) as row (row.playerId)}
+                    <div class="{row.playerId === game.turn.playerId && !game.winner ? 'bg-zinc-800/60 rounded-xl p-2 -m-2' : 'p-2 -m-2'} {isExiled(game, row.playerId) ? 'opacity-50' : ''}">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full shrink-0" style="background: {colorOf(row.playerId)}"></span>
+                            <span class="font-semibold truncate">{nameOf(row.playerId)}</span>
+                            <span class="ml-auto text-zinc-400 tabular-nums">{row.score}pt</span>
+                        </div>
+                        <div class="mt-0.5 pl-5 flex gap-3 text-sm text-zinc-400 tabular-nums">
+                            <span>{row.boxes} box</span>
+                            <span>{row.armies} arm</span>
+                        </div>
+                        {#if row.continents.length}
+                            <div class="mt-1 pl-5 flex flex-wrap gap-1">
+                                {#each row.continents as c (c)}
+                                    <span class="bg-zinc-800 rounded px-1.5 py-0.5 text-xs text-emerald-300">{c}</span>
                                 {/each}
                             </div>
                         {/if}
+                        {#if isExiled(game, row.playerId)}
+                            <p class="pl-5 text-xs text-amber-400">ballingschap</p>
+                        {/if}
                     </div>
-                    <p class="text-zinc-500 text-sm text-center">Treble voedt de binnenbox · double de buitenbox · bull laadt het Arsenaal</p>
-                </div>
+                {/each}
+            </div>
+
+            <!-- right panel: whose turn + dart budget (east of the map) -->
+            <div class="absolute right-6 top-1/2 -translate-y-1/2 w-44 rounded-2xl bg-zinc-900/70 backdrop-blur border border-zinc-800 p-4 text-center space-y-3">
+                <p class="text-xs uppercase tracking-wider text-zinc-500 font-bold">Aan de beurt</p>
+                <p class="font-display font-black text-2xl leading-tight truncate" style="color: {colorOf(game.turn.playerId)}">{nameOf(game.turn.playerId)}</p>
+                {#if !game.winner && !game.tie}
+                    <div class="flex items-center justify-center gap-1.5">
+                        {#each Array(game.turn.dartsLeft) as _}
+                            <span class="inline-block w-2 h-7 rounded-full bg-zinc-200"></span>
+                        {/each}
+                    </div>
+                    <p class="text-sm text-zinc-400">{budgetWithSources(game).total} darts</p>
+                    {#if game.turn.charge > 0}
+                        <p class="text-amber-300 font-bold text-lg">⚡ +{game.turn.charge}</p>
+                    {/if}
+                {:else}
+                    <p class="text-sm {game.winner || game.tie ? 'text-zinc-500' : 'text-emerald-300'}">{phaseText}</p>
+                {/if}
+            </div>
+
+            <!-- bottom hint: southern ocean band -->
+            <div class="absolute bottom-0 inset-x-0 h-14 pointer-events-none flex items-end justify-center pb-2">
+                <p class="text-zinc-400 text-sm bg-zinc-950/60 backdrop-blur-sm border border-zinc-800/60 rounded-full px-4 py-1.5">
+                    Treble voedt de binnenbox · double de buitenbox · bull laadt het Arsenaal
+                </p>
             </div>
 
             <!-- winner card -->
             {#if frozen && game.winner}
-                <div class="fixed inset-0 z-10 bg-zinc-950/95 flex flex-col items-center justify-center text-center">
+                <div class="absolute inset-0 z-10 bg-zinc-950/95 flex flex-col items-center justify-center text-center">
                     <p class="text-emerald-400 text-2xl mb-2">Kampioen</p>
                     <p class="font-display font-black text-8xl mb-6">{nameOf(game.winner)}</p>
                     <div class="space-y-1 text-xl text-zinc-400">
@@ -188,7 +213,17 @@
                 </div>
             {/if}
 
-            <!-- ponytail: TvCommentary (kind="risk") not built yet — spec M-step; add when commentary gets risk support -->
+            <!-- TV commentary: same every-N-turns broadcast as the other modes -->
+            {#if game && !missing}
+                <TvCommentary
+                    matchRef={`risk:${gameId}`}
+                    kind="risk"
+                    turnCount={game.turn.index}
+                    turnLines={turnLog}
+                    players={players.map((p) => p.name)}
+                    done={frozen}
+                />
+            {/if}
         {/if}
     </div>
 </TvStage>

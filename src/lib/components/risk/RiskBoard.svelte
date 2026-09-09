@@ -1,18 +1,15 @@
 <script lang="ts">
+    import { CONTINENT_COLORS, CONTINENT_DARK } from "$lib/game/risk-engine";
     import type { DartHit, RiskGameState } from "$lib/game/risk-engine";
 
     let {
         state,
         onHit,
         disabled = false,
-        playerColor,
-        playerInitials = {},
     }: {
         state: RiskGameState;
         onHit: (hit: DartHit) => void;
         disabled?: boolean;
-        playerColor: Record<string, string>;
-        playerInitials: Record<string, string>;
     } = $props();
 
     const CX = 250,
@@ -56,6 +53,8 @@
         "Eastern Australia": ["Eastern", "Australia"],
     };
 
+    const boxOf = (id: string) => state.boxes.find((b) => b.id === id);
+
     const segAngle = (2 * Math.PI) / 20;
     const polarToXY = (r: number, angle: number) => ({ x: CX + r * Math.sin(angle), y: CY - r * Math.cos(angle) });
     function annularSector(r1: number, r2: number, startAngle: number, endAngle: number): string {
@@ -70,7 +69,11 @@
             const a1 = center - segAngle / 2,
                 a2 = center + segAngle / 2;
             const ringColor = idx % 2 === 0 ? COL.red : COL.green;
-            const singleColor = idx % 2 === 0 ? COL.black : COL.cream;
+            // classic Risk continent colors: outer box = body shade, inner box = darker companion
+            const outerColor =
+                CONTINENT_COLORS[boxOf(`${num}-outer`)?.continent ?? "NA"] ?? COL.cream;
+            const singleColor =
+                CONTINENT_DARK[boxOf(`${num}-inner`)?.continent ?? "NA"] ?? COL.black;
             const labelPos = polarToXY(R.numberMid, center);
             return {
                 num,
@@ -80,16 +83,16 @@
                 inner: annularSector(R.bull, R.innerSingle, a1, a2),
                 ringColor,
                 singleColor,
+                outerColor,
                 labelPos,
             };
         }),
     );
 
-    const boxOf = (id: string) => state.boxes.find((b) => b.id === id);
-
-    function ownedFill(id: string, base: string): string {
-        const box = boxOf(id);
-        return box?.owner && playerColor[box.owner] ? playerColor[box.owner] : base;
+    // classic Risk look, same as the map: territories wear their continent color;
+    // ownership lives on the TV map badges (removed from the dartboard).
+    function ownedFill(_id: string, base: string): string {
+        return base;
     }
 
     // label colors: white on dark fills, dark on light ones
@@ -106,15 +109,6 @@
     };
     const innerLabelPos = labelPos("inner");
     const outerLabelPos = labelPos("outer");
-    const badgePos = (ring: "inner" | "outer") => {
-        // outer badges sit in the wedge corner (clockwise wire side, near the double ring),
-        // clear of the centered territory label; inner badges pulled toward the bull
-        const r = ring === "inner" ? 58 : 170;
-        const skew = ring === "inner" ? 0 : segAngle / 2 - (4 * Math.PI) / 180;
-        return (idx: number) => polarToXY(r, idx * segAngle + skew);
-    };
-    const innerBadge = badgePos("inner");
-    const outerBadge = badgePos("outer");
 
     function hit(seg: number, mult: 1 | 2 | 3, ring?: "inner" | "outer") {
         if (!disabled) onHit({ segment: seg, multiplier: mult, singleRing: ring });
@@ -141,7 +135,7 @@
                 id="seg-{w.num}-outer"
                 class="seg cursor-pointer transition-opacity hover:opacity-80"
                 d={w.outer}
-                fill={ownedFill(`${w.num}-outer`, w.singleColor)}
+                fill={ownedFill(`${w.num}-outer`, w.outerColor)}
                 stroke={COL.wire}
                 stroke-width="1.5"
                 stroke-linejoin="round"
@@ -170,7 +164,7 @@
 
             {#if boxOf(`${w.num}-outer`)?.territory}
                 {@const p = outerLabelPos(idx)}
-                {@const fill = ownedFill(`${w.num}-outer`, w.singleColor)}
+                {@const fill = ownedFill(`${w.num}-outer`, w.outerColor)}
                 {@const lines = LINES[boxOf(`${w.num}-outer`)!.territory] ?? [boxOf(`${w.num}-outer`)!.territory]}
                 <text
                     x={p.x}
@@ -205,26 +199,7 @@
                 </text>
             {/if}
 
-            {#if boxOf(`${w.num}-outer`)?.owner}
-                {@const p = outerBadge(idx)}
-                {@const box = boxOf(`${w.num}-outer`)!}
-                {@const ini = playerInitials[box.owner!] ?? ""}
-                <circle cx={p.x} cy={p.y} r={10} fill={ownedFill(`${w.num}-outer`, "#888")} stroke="#fff" stroke-width="1.2" pointer-events="none" />
-                <text x={p.x} text-anchor="middle" font-weight="700" fill={textOn(ownedFill(`${w.num}-outer`, w.singleColor))} pointer-events="none">
-                    <tspan x={p.x} y={p.y - 3.6} dominant-baseline="central" font-size="6.5">{ini}</tspan>
-                    <tspan x={p.x} y={p.y + 4.8} dominant-baseline="central" font-size="9.5" font-weight="800">{box.armies}</tspan>
-                </text>
-            {/if}
-            {#if boxOf(`${w.num}-inner`)?.owner}
-                {@const p = innerBadge(idx)}
-                {@const box = boxOf(`${w.num}-inner`)!}
-                {@const ini = playerInitials[box.owner!] ?? ""}
-                <circle cx={p.x} cy={p.y} r={7.5} fill={ownedFill(`${w.num}-inner`, "#888")} stroke="#fff" stroke-width="1.2" pointer-events="none" />
-                <text x={p.x} text-anchor="middle" font-weight="700" fill={textOn(ownedFill(`${w.num}-inner`, w.singleColor))} pointer-events="none">
-                    <tspan x={p.x} y={p.y - 2.6} dominant-baseline="central" font-size="5">{ini}</tspan>
-                    <tspan x={p.x} y={p.y + 3.4} dominant-baseline="central" font-size="8" font-weight="800">{box.armies}</tspan>
-                </text>
-            {/if}
+
 
             <text
                 x={w.labelPos.x}

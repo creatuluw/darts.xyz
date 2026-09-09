@@ -27,18 +27,21 @@ test.describe('TV view — risk', () => {
 		await expect(page.getByText('E2E Ben').first()).toBeVisible();
 		await expect(page.getByText('E2E Ada gooit')).toBeVisible();
 
-		// TvStage canvas fills the visible area edge-to-edge (no letterbox pillars;
-		// measured against clientWidth — the app reserves a scrollbar-gutter)
+		// TvStage canvas keeps its 16:9 design ratio (circles stay circles — no
+		// oval stretch), fits the viewport, and is centered; the letterbox bars
+		// blend into the shared bg-zinc-950.
 		const stage = page.locator('div[style*="scale"]');
 		const stageBox = await stage.boundingBox();
 		const view = await page.evaluate(() => ({
 			w: document.documentElement.clientWidth,
 			h: document.documentElement.clientHeight
 		}));
-		expect(Math.abs(stageBox!.x)).toBeLessThan(2);
-		expect(Math.abs(stageBox!.y)).toBeLessThan(2);
-		expect(Math.abs(stageBox!.width - view.w)).toBeLessThan(2);
-		expect(Math.abs(stageBox!.height - view.h)).toBeLessThan(2);
+		expect(Math.abs(stageBox!.width / stageBox!.height - 16 / 9)).toBeLessThan(0.01);
+		expect(stageBox!.width).toBeLessThanOrEqual(view.w + 2);
+		expect(stageBox!.height).toBeLessThanOrEqual(view.h + 2);
+		expect(Math.abs(stageBox!.width - view.w)).toBeLessThan(2); // fills the limiting axis
+		expect(Math.abs(stageBox!.x + stageBox!.width / 2 - view.w / 2)).toBeLessThan(2);
+		expect(Math.abs(stageBox!.y + stageBox!.height / 2 - view.h / 2)).toBeLessThan(2);
 
 		// server state advances → TV follows within 2s (turn passes to Ben)
 		const next: RiskGameState = JSON.parse(JSON.stringify(game));
