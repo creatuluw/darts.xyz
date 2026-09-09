@@ -13,6 +13,12 @@
         estimateDuration,
         validateConquestSetup,
     } from "$lib/game/conquest-setup";
+    import {
+        RISK_CLOCK_PRESETS,
+        RISK_DEFAULT_MODE,
+        estimateRiskDuration,
+        validateRiskSetup,
+    } from "$lib/game/risk-setup";
 
     let players = $state<any[]>([]);
     let selectedPlayers = $state<any[]>([]);
@@ -29,9 +35,25 @@
     // Conquest setup
     let conquestMode = $state<"clock" | "domination">("clock");
     let conquestPreset = $state(CONQUEST_DEFAULT_PRESET);
+    // Fun-tab game format picker: Trebles & Territories | Risk 42
+    let funGame = $state<"tnt" | "risk42">("tnt");
+    let riskMode = $state<"domination" | "clock">(RISK_DEFAULT_MODE);
+    let riskPreset = $state<(typeof RISK_CLOCK_PRESETS)[number]>(301);
 
     const conquestErrors = $derived(
         tab === "fun" ? validateConquestSetup(selectedPlayers) : [],
+    );
+    const riskErrors = $derived(
+        tab === "fun" && funGame === "risk42"
+            ? validateRiskSetup({ players: selectedPlayers, mode: riskMode, clockPreset: riskPreset })
+            : [],
+    );
+    const riskEstimate = $derived(
+        estimateRiskDuration({
+            mode: riskMode,
+            clockPreset: riskPreset,
+            players: Math.max(selectedPlayers.length, 2),
+        }),
     );
     const estimate = $derived(
         estimateDuration(
@@ -86,6 +108,20 @@
         );
         sessionStorage.removeItem("conquest_state");
         goto("/match/conquest");
+    }
+
+    function startRisk() {
+        if (riskErrors.length) return;
+        sessionStorage.setItem(
+            "risk42_setup",
+            JSON.stringify({
+                mode: riskMode,
+                clockPreset: riskMode === "clock" ? riskPreset : undefined,
+                players: selectedPlayers.map((p) => ({ id: p.id, name: p.name })),
+            }),
+        );
+        sessionStorage.removeItem("risk42_state");
+        goto("/match/risk");
     }
 
     async function startMatch() {
@@ -152,8 +188,7 @@
 
     {#if tab === "fun"}
         <p class="text-zinc-400 text-sm mb-6 -mt-3">
-            Trebles &amp; Territories — conquer the board, one treble at a
-            time.
+            Pick a game — territories, darts and dice.
         </p>
     {/if}
 
@@ -315,11 +350,36 @@
             {/if}
         </DoubleBezel>
     {:else}
-        <!-- Step 2: Configure (Trebles & Territories) -->
+        <!-- Step 2: Configure (Fun games) -->
         <DoubleBezel class="mb-4">
-            <h2 class="font-display font-bold text-lg mb-4">
-                Conquest Format
-            </h2>
+            <h2 class="font-display font-bold text-lg mb-4">Game Format</h2>
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <button
+                    onclick={() => (funGame = "tnt")}
+                    aria-pressed={funGame === "tnt"}
+                    class="text-left rounded-xl p-4 ring-1 transition-all {funGame ===
+                    'tnt'
+                        ? 'ring-zinc-900 dark:ring-white bg-zinc-100 dark:bg-white/10'
+                        : 'ring-black/10 dark:ring-white/15'}"
+                >
+                    <p class="font-bold">Trebles &amp; Territories</p>
+                    <p class="text-xs text-zinc-400 mt-1">Sprint — 20 wedges, treble-founding, clock by default</p>
+                </button>
+                <button
+                    onclick={() => (funGame = "risk42")}
+                    aria-pressed={funGame === "risk42"}
+                    class="text-left rounded-xl p-4 ring-1 transition-all {funGame ===
+                    'risk42'
+                        ? 'ring-zinc-900 dark:ring-white bg-zinc-100 dark:bg-white/10'
+                        : 'ring-black/10 dark:ring-white/15'}"
+                >
+                    <p class="font-bold">Risk 42</p>
+                    <p class="text-xs text-zinc-400 mt-1">Marathon — 40 territories, armies, Arsenal at the bull</p>
+                </button>
+            </div>
+
+            {#if funGame === "tnt"}
+            <h2 class="font-display font-bold text-lg mb-4">Conquest Format</h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
@@ -411,6 +471,78 @@
                     </p>
                 </div>
             </div>
+            {:else}
+            <!-- Risk 42 -->
+            <h2 class="font-display font-bold text-lg mb-4">Risk Format</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <p class="text-xs text-zinc-400 uppercase tracking-wider mb-2">Win Condition</p>
+                    <div class="flex gap-1.5 flex-wrap">
+                        <button
+                            onclick={() => (riskMode = "domination")}
+                            aria-pressed={riskMode === "domination"}
+                            class="rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-300 {riskMode ===
+                            'domination'
+                                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                                : 'bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-400 ring-1 ring-black/6 dark:ring-white/10'}"
+                        >
+                            Domination
+                        </button>
+                        <button
+                            onclick={() => (riskMode = "clock")}
+                            aria-pressed={riskMode === "clock"}
+                            class="rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-300 {riskMode ===
+                            'clock'
+                                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                                : 'bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-400 ring-1 ring-black/6 dark:ring-white/10'}"
+                        >
+                            Clock
+                        </button>
+                    </div>
+                    <p class="text-xs text-zinc-400 mt-2">
+                        {riskMode === "domination"
+                            ? "Hold all 40 territories to win. The table deals, the shuffle decides, exiles claw back."
+                            : "Equal turns each — 1 pt per territory, continents pay bonus points. Nearest bull breaks ties."}
+                    </p>
+                </div>
+                {#if riskMode === "clock"}
+                <div>
+                    <p class="text-xs text-zinc-400 uppercase tracking-wider mb-2">Clock Length</p>
+                    <div class="flex gap-1.5 flex-wrap">
+                        {#each RISK_CLOCK_PRESETS as opt}
+                            <button
+                                onclick={() => (riskPreset = opt)}
+                                aria-pressed={riskPreset === opt}
+                                class="rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-300 {riskPreset ===
+                                opt
+                                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                                    : 'bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-400 ring-1 ring-black/6 dark:ring-white/10'}"
+                            >
+                                {opt}
+                            </button>
+                        {/each}
+                    </div>
+                </div>
+                {/if}
+            </div>
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 border-t border-black/6 dark:border-white/10 pt-4">
+                <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                    Estimated match time:
+                    <span class="font-semibold text-zinc-900 dark:text-white">{riskEstimate}</span>
+                    <span class="text-zinc-400 text-xs">({Math.max(selectedPlayers.length, 2)} players — 40 territories dealt at random, 2 armies each)</span>
+                </p>
+                <div class="flex flex-col items-end">
+                    <PillButton onclick={startRisk} disabled={riskErrors.length > 0}>Start Risk</PillButton>
+                    <p class="text-zinc-400 text-xs mt-1.5 text-right">
+                        {#if riskErrors.length}
+                            {riskErrors[0]}
+                        {:else}
+                            Darts are the dice — trebles feed the homeland
+                        {/if}
+                    </p>
+                </div>
+            </div>
+            {/if}
         </DoubleBezel>
     {/if}
 </div>
