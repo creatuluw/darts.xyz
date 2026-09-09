@@ -41,6 +41,13 @@ export interface CreateGameOptions {
     starterPlayerId?: PlayerId; // players decide this themselves — plain input
 }
 
+/** One dart as thrown. Singles carry their ring — inner and outer are different territories. */
+export interface DartHit {
+    segment: number; // 1..20
+    multiplier: 1 | 2 | 3;
+    singleRing?: Ring; // required when multiplier === 1
+}
+
 // Locked proximity fit (docs/risk/apply-territory-labels.cjs carries the same table)
 const BOARD: Array<[number, Ring, string, Continent]> = [
     [20, 'inner', 'Northern Europe', 'EU'], [20, 'outer', 'Scandinavia', 'EU'],
@@ -119,4 +126,45 @@ export function createGame(playerIds: PlayerId[], opts: CreateGameOptions = {}):
         turn: { playerId: starter, dartsLeft: BASE_DARTS, charge: 0, index: 1 },
         winner: null,
     };
+}
+
+const RING_VALUE: Record<1 | 2 | 3, number> = { 1: 1, 2: 2, 3: 2 };
+
+/** Which box a dart deposits into: S → the hit box; T → the wedge's inner; D → the wedge's outer. */
+function targetBoxId(hit: DartHit): string {
+    if (hit.multiplier === 1) {
+        if (!hit.singleRing) throw new Error('singles must carry singleRing (inner/outer)');
+        return `${hit.segment}-${hit.singleRing}`;
+    }
+    return `${hit.segment}-${hit.multiplier === 3 ? 'inner' : 'outer'}`;
+}
+
+export function applyDart(state: RiskGameState, hit: DartHit): RiskGameState {
+    if (state.winner !== null) throw new Error('game is over');
+    if (state.turn.dartsLeft <= 0) throw new Error('no darts left this turn');
+    if (hit.segment < 1 || hit.segment > 20) throw new Error(`segment out of range: ${hit.segment}`);
+
+    const box = state.boxes.find((b) => b.id === targetBoxId(hit));
+    if (!box) throw new Error(`no box for hit ${JSON.stringify(hit)}`);
+
+    const value = RING_VALUE[hit.multiplier] + state.turn.charge; // charge stays 0 until M1.3 wires the Arsenal
+    const me = state.turn.playerId;
+
+    if (box.owner === null) {
+        // claim blank land with the full deposit
+        box.owner = me;
+        box.armies = value;
+    } else if (box.owner === me) {
+        box.armies += value; // reinforce, uncapped
+    } else {
+        // mirror damage on enemy land; at 0 the box flips to the attacker with 1 army (overkill wasted)
+        box.armies -= value;
+        if (box.armies <= 0) {
+            box.owner = me;
+            box.armies = 1;
+        }
+    }
+
+    state.turn.dartsLeft -= 1;
+    return state;
 }
