@@ -3,6 +3,7 @@
     import { page as pageStore } from "$app/stores";
     import { IconLink } from "@tabler/icons-svelte";
     import TvCommentary from "$lib/components/tv/TvCommentary.svelte";
+    import TvStage from "$lib/components/tv/TvStage.svelte";
     import ConquestBoard from "$lib/components/conquest/ConquestBoard.svelte";
     import ConquestScoreboard from "$lib/components/conquest/ConquestScoreboard.svelte";
     import { curatedOptions } from "$lib/game/conquest-options";
@@ -47,7 +48,7 @@
         if (!game) return "";
         const active = nameOf(game.players[game.activeSeat]?.id ?? null);
         switch (game.phase) {
-            case "turn": return `${active} gooiet`;
+            case "turn": return `${active} gooit`;
             case "resurrect_pick": return `${active} kiest een blanke wig — herleving`;
             case "duel_pick": return `${active} kiest een doelwit om te roven`;
             case "duel_save": return `${nameOf(game.pendingDuel?.defender ?? null)} verdedigt — raak de bull`;
@@ -113,7 +114,8 @@
 
 <svelte:head><title>TV — Trebles &amp; Territories</title></svelte:head>
 
-<div class="min-h-dvh bg-zinc-950 text-white p-4 md:p-8 flex flex-col select-none">
+<TvStage>
+    <div class="h-full w-full bg-zinc-950 text-white p-8 flex flex-col select-none">
     {#if missing}
         <div class="flex-1 flex items-center justify-center">
             <p class="text-zinc-400 text-2xl">Spel niet gevonden.</p>
@@ -123,11 +125,11 @@
             <p class="text-zinc-500 text-2xl animate-pulse">Laden…</p>
         </div>
     {:else}
-        <header class="flex items-center justify-between mb-4 md:mb-6">
+        <header class="flex items-center justify-between mb-6">
             <div class="flex items-baseline gap-4">
-                <span class="font-display font-black text-2xl md:text-3xl tracking-tight">TREBLES &amp; TERRITORIES</span>
+                <span class="font-display font-black text-3xl tracking-tight">TREBLES &amp; TERRITORIES</span>
                 {#if clockMode}
-                    <span class="text-zinc-500 text-lg md:text-xl">
+                    <span class="text-zinc-500 text-xl">
                         {game.preset} darten per speler
                     </span>
                 {/if}
@@ -148,20 +150,22 @@
         </header>
 
         <!-- phase banner -->
-        <div class="rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-2 md:py-3 mb-4 md:mb-6 flex items-center justify-between gap-4">
-            <p class="text-xl md:text-2xl font-bold {game.phase === 'finished' ? 'text-zinc-500' : 'text-emerald-300'}">
+        <div class="rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3 mb-6 flex items-center justify-between gap-4">
+            <p class="text-2xl font-bold {game.phase === 'finished' ? 'text-zinc-500' : 'text-emerald-300'}">
                 {phaseText}
             </p>
             {#if visitLabels.length}
-                <p class="text-zinc-300 text-lg md:text-xl">
+                <p class="text-zinc-300 text-xl">
                     {#each visitLabels as l}<span class="inline-block bg-zinc-800 rounded-lg px-2.5 py-1 mx-1">{l}</span>{/each}
                 </p>
             {/if}
         </div>
 
-        <div class="flex-1 grid lg:grid-cols-[1fr_auto] gap-4 md:gap-6 items-center justify-items-center">
-            <ConquestBoard state={game} {players} onHit={() => {}} disabled={true} />
-            <div class="w-full lg:w-[26rem] space-y-4">
+        <div class="flex-1 min-h-0 grid grid-cols-[1fr_auto] gap-6 items-center justify-items-center">
+            <div class="self-stretch h-full aspect-square max-w-full flex items-center justify-center">
+                <ConquestBoard state={game} {players} onHit={() => {}} disabled={true} />
+            </div>
+            <div class="w-[26rem] space-y-4">
                 <ConquestScoreboard state={game} {players} />
                 {#if clockMode}
                     <div class="rounded-xl bg-zinc-900/60 border border-zinc-800 p-3 space-y-2">
@@ -184,7 +188,7 @@
 
         <!-- curated options strip -->
         {#if options.length}
-            <footer class="mt-4 md:mt-6 grid gap-2 {options.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-3'}">
+            <footer class="mt-6 grid grid-cols-3 gap-2">
                 {#each options as po (po.playerId)}
                     {#each po.options as opt, i (opt.kind + opt.wedge)}
                         {#if i === 0}
@@ -204,7 +208,7 @@
         {#if frozen && game.winner}
             <div class="fixed inset-0 z-10 bg-zinc-950/95 flex flex-col items-center justify-center text-center">
                 <p class="text-emerald-400 text-2xl mb-2">Kampioen</p>
-                <p class="font-display font-black text-6xl md:text-8xl mb-6">{nameOf(game.winner)}</p>
+                <p class="font-display font-black text-8xl mb-6">{nameOf(game.winner)}</p>
                 {#if game.standings}
                     <div class="space-y-1 text-xl text-zinc-400">
                         {#each game.standings.slice(0, 3) as st, i (st.playerId)}
@@ -225,3 +229,4 @@
         />
     {/if}
 </div>
+</TvStage>

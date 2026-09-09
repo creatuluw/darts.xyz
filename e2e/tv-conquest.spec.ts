@@ -24,7 +24,7 @@ test.describe('TV view — conquest', () => {
 		// board + names render without email gate
 		await expect(page.getByText('Ada TV', { exact: true }).first()).toBeVisible({ timeout: 10_000 });
 		await expect(page.getByText('Ben TV', { exact: true }).first()).toBeVisible();
-		await expect(page.getByText('Ada TV gooiet')).toBeVisible();
+		await expect(page.getByText('Ada TV gooit')).toBeVisible();
 
 		// server state advances → TV follows within 2s (turn passes to Ben)
 		state = applyDart(state, { segment: 0, multiplier: 1 }).state; // miss
@@ -32,7 +32,7 @@ test.describe('TV view — conquest', () => {
 		state = applyDart(state, { segment: 0, multiplier: 1 }).state;
 		expect(state.activeSeat).toBe(1);
 		await request.patch(`/api/conquest/${id}`, { data: { state } });
-		await expect(page.getByText('Ben TV gooiet')).toBeVisible({ timeout: 2_000 });
+		await expect(page.getByText('Ben TV gooit')).toBeVisible({ timeout: 2_000 });
 
 		// game finishes → frozen champion card, polling stops
 		state.phase = 'finished';
