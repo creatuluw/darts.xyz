@@ -7,3 +7,5 @@
 - [Worktree feature loop: PR-only master, worktrees in .worktrees/, user merges](./worktree-feature-loop.md) - The rule
 - [Ask clarifying questions one at a time — user preference](./one-question-at-a-time.md) - The rule
 - [Board SVGs are generated — edit the regenerator, never the output](./board-svgs-are-generated.md) - Guideline
+- [Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets](./engine-invariant-sweeps-plain-asserts-assert-theorems-not-em.md) - The guideline
+- [New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board](./new-game-modes-follow-the-conquest-cut-pure-setup-module-fun.md) - The rule

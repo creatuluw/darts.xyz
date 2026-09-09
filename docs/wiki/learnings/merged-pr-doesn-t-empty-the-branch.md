@@ -17,3 +17,5 @@ PR #1 merged `feature/remember-me` into master (master head 95811fc = the merge 
 ## Rule of thumb
 
 The only proof a worktree is removable is `git log --oneline origin/master..<branch>` being empty **and** clean `git status --porcelain` — per [worktree-feature-loop](../rules/worktree-feature-loop.md). Don't shortcut by reading PR titles or master's merge commits. (Also why the [email store](../pages/entities/email-store-email-ts.md) entity's "review feedback, same PR" lifecycle note was optimistic — that commit was still unmerged.)
+
+**Update 2026-09-09 — the inverse also holds**: remaining commits can hide a *completed squash merge*; `git cherry` patch-equivalence + merged-PR state is the other half of the proof — see [squash-merged-branch-commit-ahead-unmerged-prove-with-git-ch](squash-merged-branch-commit-ahead-unmerged-prove-with-git-ch.md).

@@ -35,3 +35,9 @@
 - [Risk 42 deal amended: exactly equal deal, 2 armies each, blank leftovers claimable, players pick starter](./risk-42-deal-final-equal-2-armies-blanks.md) - Context
 - [Risk 42 two-screen identity: dartboard to play, world map to spectate](./risk-42-two-screen-identity-dartboard-to-play-world-map-to-s.md) - Context
 - [Risk 42 applyDart seam: DartHit carries singleRing for singles](./risk-42-applydart-seam-darthit-carries-singlering-for-single.md) - Context
+- [Risk 42 v1 persists to sessionStorage (stopgap) — server write-through lands at M3](./risk-42-v1-persists-to-sessionstorage-stopgap-server-write-t.md) - Context
+- [Commentary becomes a 4-segment broadcast with Leo & Theodore swapping roles](./commentary-becomes-a-4-segment-broadcast-with-leo-theodore-s.md) - Context
+- [Risk 42 server persistence rides conquest_games + /api/conquest — sessionStorage stopgap superseded](./risk-42-server-persistence-rides-conquest-games-api-conquest.md) - Context
+- [TV cast pages render on a fixed 1920×1080 TvStage canvas, scaled to fit — no viewport breakpoints](./tv-cast-pages-render-on-a-fixed-1920-1080-tvstage-canvas-sca.md) - Context
+- [TvStage fills the viewport (independent x/y scale) — letterboxing dropped](./tvstage-fills-the-viewport-independent-x-y-scale-letterboxin.md) - Context
+- [Risk 42 wears the classic Risk continent palette everywhere](./risk-42-wears-the-classic-risk-continent-palette-everywhere.md) - Context
