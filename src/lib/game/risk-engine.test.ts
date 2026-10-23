@@ -1,5 +1,241 @@
 import { describe, expect, it } from 'vitest';
-import { applyDart, applyTiebreak, budgetWithSources, createGame, endTurnSaving, isExiled, standings } from './risk-engine';
+import { ADJACENT_TERRITORIES, applyDart, applyTiebreak, BOARD, budgetWithSources, cashSet, createGame, endTurnSaving, isExiled, isReachable, reachableBoxIds, setPayout, standings } from './risk-engine';
+
+describe('Risk 42 — territory cards (2026-10-23: conquest earns a card, sets cash in for darts)', () => {
+    const setup = () => {
+        const g = createGame(['a', 'b'], { seed: 42 });
+        const box = (id: string) => g.boxes.find((x) => x.id === id)!;
+        return { g, box };
+    };
+    const card = (face: string, i: number) => ({ id: `t-${face}-${i}`, face } as never);
+
+    it('the deck: 42 cards — 40 territory cards + 2 jokers, deterministic per seed', () => {
+        const g = createGame(['a', 'b'], { seed: 7 });
+        expect(g.deck.length).toBe(42);
+        expect(g.deck.filter((c) => c.face === 'joker').length).toBe(2);
+        expect(g.deck.filter((c) => c.face !== 'joker').length).toBe(40);
+        expect(new Set(g.deck.filter((c) => c.territory).map((c) => c.territory)).size).toBe(40);
+        const faces = ['infanterie', 'cavalerie', 'artillerie', 'joker'];
+        for (const c of g.deck) expect(faces).toContain(c.face);
+        const again = createGame(['a', 'b'], { seed: 7 });
+        expect(again.deck.map((c) => c.id)).toEqual(g.deck.map((c) => c.id));
+    });
+
+    it('every capture draws the top card — blank claim AND enemy flip, multiple per turn', () => {
+        const { g, box } = setup();
+        const me = g.turn.playerId;
+        const foe = g.players.find((p) => p !== me)!;
+        g.boxes.forEach((b) => { if (b.id === '17-inner') { b.owner = me; b.armies = 2; } }); // my Congo
+        const hand0 = g.hands[me].length;
+        const deck0 = g.deck.length;
+        box('17-outer').owner = null; box('17-outer').armies = 0; // blank, same wedge as my Congo → claimable
+        applyDart(g, { segment: 17, multiplier: 1, singleRing: 'outer' }); // claim
+        expect(g.hands[me].length).toBe(hand0 + 1);
+        expect(g.deck.length).toBe(deck0 - 1);
+        applyDart(g, { segment: 17, multiplier: 1, singleRing: 'inner' }); // reinforce own Congo — no card
+        expect(g.hands[me].length).toBe(hand0 + 1);
+        box('3-outer').owner = foe; box('3-outer').armies = 1; // South Africa — borders my Congo
+        applyDart(g, { segment: 3, multiplier: 2 }); // capture flip
+        expect(box('3-outer').owner).toBe(me);
+        expect(g.hands[me].length).toBe(hand0 + 2);
+    });
+
+    it('an empty deck pays no cards (endgame dampener, like real Risk)', () => {
+        const { g, box } = setup();
+        const me = g.turn.playerId;
+        g.deck.length = 0;
+        g.boxes.forEach((b) => { if (b.id === '17-inner') { b.owner = me; b.armies = 2; } });
+        box('17-outer').owner = null; box('17-outer').armies = 0;
+        applyDart(g, { segment: 17, multiplier: 1, singleRing: 'outer' }); // claim with empty deck
+        expect(g.hands[me].length).toBe(0);
+    });
+
+    it('cashSet: triple artillerie pays +5 into the live pool, cards leave the hand', () => {
+        const { g } = setup();
+        const me = g.turn.playerId;
+        g.hands[me] = [card('artillerie', 1), card('artillerie', 2), card('artillerie', 3)];
+        const before = g.turn.dartsLeft;
+        cashSet(g, ['t-artillerie-1', 't-artillerie-2', 't-artillerie-3']);
+        expect(g.turn.dartsLeft).toBe(before + 5);
+        expect(g.hands[me].length).toBe(0);
+        expect(g.setsCashed[me]).toBe(1);
+    });
+
+    it('payouts: 3×Inf +3, 3×Cav +4, mixed +6; joker completes the BEST combo', () => {
+        const { g } = setup();
+        const me = g.turn.playerId;
+        const pay = (hand: ReturnType<typeof card>[]) => {
+            g.hands[me] = hand as never;
+            g.setsCashed[me] = 0; // base payouts here — escalation has its own test
+            const before = g.turn.dartsLeft;
+            cashSet(g, hand.map((c) => (c as { id: string }).id));
+            return g.turn.dartsLeft - before;
+        };
+        expect(pay([card('infanterie', 1), card('infanterie', 2), card('infanterie', 3)])).toBe(3);
+        expect(pay([card('cavalerie', 1), card('cavalerie', 2), card('cavalerie', 3)])).toBe(4);
+        expect(pay([card('infanterie', 1), card('cavalerie', 2), card('artillerie', 3)])).toBe(6);
+        expect(pay([card('infanterie', 1), card('infanterie', 2), card('joker', 9)])).toBe(3); // completes the triple
+        expect(pay([card('infanterie', 1), card('cavalerie', 2), card('joker', 9)])).toBe(6); // completes the mix
+        expect(pay([card('joker', 8), card('joker', 9), card('artillerie', 3)])).toBe(6); // mix beats triple
+    });
+
+    it('escalation: the second set you cash pays +1, the third +2', () => {
+        const { g } = setup();
+        const me = g.turn.playerId;
+        g.hands[me] = [card('infanterie', 1), card('infanterie', 2), card('infanterie', 3)];
+        cashSet(g, ['t-infanterie-1', 't-infanterie-2', 't-infanterie-3']); // +3
+        g.hands[me] = [card('cavalerie', 1), card('cavalerie', 2), card('cavalerie', 3)];
+        const before = g.turn.dartsLeft;
+        cashSet(g, ['t-cavalerie-1', 't-cavalerie-2', 't-cavalerie-3']); // 4 + 1 escalation
+        expect(g.turn.dartsLeft - before).toBe(5);
+        expect(g.setsCashed[me]).toBe(2);
+    });
+
+    it('invalid sets are refused: two-of-a-kind, 2 cards, cards not in hand, not your turn', () => {
+        const { g } = setup();
+        const me = g.turn.playerId;
+        const foe = g.players.find((p) => p !== me)!;
+        g.hands[me] = [card('infanterie', 1), card('infanterie', 2), card('cavalerie', 3)];
+        expect(() => cashSet(g, ['t-infanterie-1', 't-infanterie-2', 't-cavalerie-3'])).toThrow(); // no trio, no mix
+        expect(() => cashSet(g, ['t-infanterie-1', 't-infanterie-2'])).toThrow(); // too few
+        expect(() => cashSet(g, ['t-infanterie-1', 't-infanterie-2', 't-ghost-99'])).toThrow(); // not in hand
+        g.hands[foe] = [card('artillerie', 1), card('artillerie', 2), card('artillerie', 3)];
+        g.turn = { playerId: foe, dartsLeft: 3, carried: 0, index: g.turn.index };
+        expect(() => cashSet(g, ['t-infanterie-1', 't-infanterie-2', 't-cavalerie-3'])).toThrow(); // wrong turn
+    });
+
+    it('hoarding is unlimited — no forced cash, hands may grow past 5', () => {
+        const { g } = setup();
+        const me = g.turn.playerId;
+        g.hands[me] = Array.from({ length: 9 }, (_, i) => card(['infanterie', 'cavalerie', 'artillerie'][i % 3], i));
+        expect(() => endTurnSaving(g)).not.toThrow(); // save with 9 cards — fine
+        expect(g.hands[me].length).toBe(9);
+    });
+
+    it('old persisted games (no hands/deck) resume safely — cards initialize lazily', () => {
+        const { g, box } = setup();
+        const me = g.turn.playerId;
+        const legacy = g as unknown as Record<string, unknown>;
+        delete legacy.hands;
+        delete legacy.deck;
+        delete legacy.setsCashed;
+        g.boxes.forEach((b) => { if (b.id === '17-inner') { b.owner = me; b.armies = 2; } });
+        box('17-outer').owner = null; box('17-outer').armies = 0;
+        applyDart(g, { segment: 17, multiplier: 1, singleRing: 'outer' }); // claim → lazy init + draw
+        expect(g.hands[me].length).toBe(1);
+        expect(g.deck.length).toBe(41);
+    });
+});
+
+describe('Risk 42 — reach rule (2026-10-23: darts only count on own or adjacent)', () => {
+    const setup = () => {
+        const g = createGame(['a', 'b'], { seed: 42 });
+        const box = (id: string) => g.boxes.find((x) => x.id === id)!;
+        return { g, box };
+    };
+
+    it('adjacency table covers all 40 territories, symmetric, no self/dupes', () => {
+        const names = BOARD.map(([, , t]) => t);
+        expect(new Set(names).size).toBe(40);
+        expect(Object.keys(ADJACENT_TERRITORIES).sort()).toEqual([...names].sort());
+        for (const [t, neighbors] of Object.entries(ADJACENT_TERRITORIES)) {
+            expect(new Set(neighbors).size).toBe(neighbors.length);
+            expect(neighbors).not.toContain(t);
+            for (const n of neighbors) {
+                expect(ADJACENT_TERRITORIES[n]).toBeDefined();
+                expect(ADJACENT_TERRITORIES[n]).toContain(t); // symmetric
+            }
+        }
+    });
+
+    it('the board graph is connected (guarantees a frontier for any non-total empire)', () => {
+        const seen = new Set([BOARD[0][2]]);
+        const queue = [BOARD[0][2]];
+        while (queue.length) {
+            const t = queue.pop()!;
+            for (const n of ADJACENT_TERRITORIES[t]) if (!seen.has(n)) { seen.add(n); queue.push(n); }
+        }
+        expect(seen.size).toBe(40);
+    });
+
+    it('classic edges: Alaska–Kamchatka sea lane; Siam–Indonesia; Egypt and Congo NOT adjacent', () => {
+        expect(ADJACENT_TERRITORIES['Alaska']).toContain('Kamchatka');
+        expect(ADJACENT_TERRITORIES['Siam']).toContain('Indonesia');
+        expect(ADJACENT_TERRITORIES['Egypt']).not.toContain('Congo');
+        expect(ADJACENT_TERRITORIES['Congo']).not.toContain('Egypt');
+    });
+
+    it('same-wedge inner/outer pairs are adjacent (physically touching boxes)', () => {
+        expect(ADJACENT_TERRITORIES['Ukraine']).toContain('Siberia');   // wedge 1
+        expect(ADJACENT_TERRITORIES['Siberia']).toContain('Ukraine');
+        expect(ADJACENT_TERRITORIES['Greenland']).toContain('Iceland'); // wedge 5
+        expect(ADJACENT_TERRITORIES['Great Britain']).toContain('Northwest Territory'); // wedge 12
+    });
+
+    it('own box: deposits work; adjacent enemy box: combat works (control)', () => {
+        const { g, box } = setup();
+        g.boxes.forEach((b) => { b.owner = b.id === '1-inner' ? 'a' : 'b'; b.armies = 2; }); // a keeps Ukraine only
+        g.turn.playerId = 'a';
+        // Ukraine (1-inner) is own: deposit works
+        applyDart(g, { segment: 1, multiplier: 1, singleRing: 'inner' });
+        expect(box('1-inner').armies).toBe(3);
+        // Siberia (1-outer) is same wedge = adjacent: combat lands
+        applyDart(g, { segment: 1, multiplier: 1, singleRing: 'outer' });
+        expect(box('1-outer').armies).toBe(1); // 2 - 1
+    });
+
+    it('a dart on a box that is neither own nor adjacent does NOTHING but consume the dart', () => {
+        const { g, box } = setup();
+        g.boxes.forEach((b) => { b.owner = b.id === '1-inner' ? 'a' : 'b'; b.armies = 2; });
+        g.turn.playerId = 'a';
+        // Mongolia (13-inner): not adjacent to Ukraine (check via the exported predicate)
+        expect(isReachable(g, 'a', '13-inner')).toBe(false);
+        const before = structuredClone(structuredClone(box('13-inner')));
+        applyDart(g, { segment: 13, multiplier: 3 }); // treble on unreachable land
+        expect(box('13-inner')).toMatchObject({ owner: before.owner, armies: before.armies });
+        expect(g.turn.dartsLeft).toBe(2); // the dart is spent
+    });
+
+    it('adjacent blank territory is claimable; far blank is not', () => {
+        const { g, box } = setup();
+        g.boxes.forEach((b) => { b.owner = b.id === '1-inner' ? 'a' : 'b'; b.armies = 2; });
+        box('1-outer').owner = null; box('1-outer').armies = 0;   // blank, same wedge → reachable
+        box('2-outer').owner = null; box('2-outer').armies = 0;   // blank, Western Australia → far
+        g.turn.playerId = 'a';
+        expect(isReachable(g, 'a', '1-outer')).toBe(true);
+        expect(isReachable(g, 'a', '2-outer')).toBe(false);
+        applyDart(g, { segment: 2, multiplier: 1, singleRing: 'outer' }); // far blank — dead dart
+        expect(box('2-outer')).toMatchObject({ owner: null, armies: 0 });
+        applyDart(g, { segment: 1, multiplier: 1, singleRing: 'outer' }); // adjacent blank — claimed
+        expect(box('1-outer')).toMatchObject({ owner: 'a', armies: 1 });
+    });
+
+    it('an exile may throw anywhere — the clawback needs a foothold', () => {
+        const { g, box } = setup();
+        g.boxes.forEach((b) => { if (b.owner === 'b') { b.owner = 'a'; b.armies = 2; } }); // b stripped
+        box('2-outer').owner = null; box('2-outer').armies = 0; // a blank so a doesn't hold all 40 (domination)
+        g.turn = { playerId: 'a', dartsLeft: 1, carried: 0, index: g.turn.index };
+        applyDart(g, { segment: 0 });
+        expect(g.turn.playerId).toBe('b');
+        expect(isExiled(g, 'b')).toBe(true);
+        expect(reachableBoxIds(g, 'b').size).toBe(40);
+        const far = box('2-outer'); // Western Australia, weakened
+        far.owner = 'a'; far.armies = 1;
+        applyDart(g, { segment: 2, multiplier: 2 }); // double → 2 damage → capture
+        expect(far).toMatchObject({ owner: 'b', armies: 1 }); // clawed back
+    });
+
+    it('reach set = own ∪ neighbors — the UI highlight source', () => {
+        const { g } = setup();
+        g.boxes.forEach((b) => { b.owner = b.id === '1-inner' ? 'a' : 'b'; b.armies = 2; });
+        const reach = reachableBoxIds(g, 'a');
+        expect(reach.has('1-inner')).toBe(true);  // own
+        expect(reach.has('1-outer')).toBe(true);  // same wedge
+        expect(reach.has('2-inner')).toBe(true);  // Middle East borders Ukraine (classic edge)
+        expect(reach.has('13-inner')).toBe(false); // Mongolia — far away
+        expect(reach.size).toBeGreaterThan(2);
+    });
+});
 
 describe('Risk 42 — the Deal (M1.1)', () => {
     it('deals all 40 boxes equally with 2 armies each (2 players)', () => {
@@ -100,19 +336,21 @@ describe('Risk 42 — deposits & mirror combat (M1.2)', () => {
 
     it('claims blank land: single founds with 1, ring founds its fed box with 2', () => {
         const { g, me, box } = setup();
+        box('12-inner').owner = me; // Great Britain — Iceland (5-outer) is adjacent → blank reachable
         box('5-outer').owner = null; box('5-outer').armies = 0;
         box('5-inner').owner = null; box('5-inner').armies = 0;
 
         applyDart(g, { segment: 5, multiplier: 1, singleRing: 'outer' });
         expect(box('5-outer')).toMatchObject({ owner: me, armies: 1 });
 
-        applyDart(g, { segment: 5, multiplier: 3 });
+        applyDart(g, { segment: 5, multiplier: 3 }); // same wedge now owned → 5-inner reachable
         expect(box('5-inner')).toMatchObject({ owner: me, armies: 2 });
     });
 
     it('mirror damage: enemy box loses the dart value; at 0 it flips to the attacker with 1 army', () => {
         const { g, me, box } = setup();
         const foe = g.players.find((p) => p !== me)!;
+        box('17-inner').owner = me; // Congo borders South Africa (3-outer) → target reachable
         box('3-outer').owner = foe; box('3-outer').armies = 2;
 
         applyDart(g, { segment: 3, multiplier: 2 }); // -2 → 0 → flip
@@ -181,6 +419,7 @@ describe('Risk 42 — turn lifecycle & the Arsenal (M1.3)', () => {
         const { g, box } = setup();
         const me = g.turn.playerId;
         const foe = g.players.find((p) => p !== me)!;
+        box('17-inner').owner = me; // Congo borders South Africa (3-outer) → target reachable
         box('3-outer').owner = foe; box('3-outer').armies = 5;
 
         applyDart(g, { segment: 25 });               // +2 darts, no charge
@@ -330,86 +569,93 @@ describe('Risk 42 — exile & clawback (M1.4)', () => {
     });
 });
 
-describe('Risk 42 — continent income (M1.5)', () => {
+describe('Risk 42 — territory income (2026-10-23 rework: continents pay nothing)', () => {
+    // budget = max(3, floor(owned / 6)) — the user's own worked example: 24 boxes = 4 darts
     const SA_IDS = ['19-outer', '7-outer', '16-inner', '16-outer'];
     const AS_IDS = ['1-outer', '18-inner', '18-outer', '4-inner', '4-outer', '13-inner', '13-outer', '6-inner', '6-outer', '10-inner', '2-inner'];
 
     const setup = () => {
         const g = createGame(['a', 'b'], { seed: 42 });
         const box = (id: string) => g.boxes.find((x) => x.id === id)!;
-        const give = (ids: string[], p: string) => ids.forEach((id) => { box(id).owner = p; });
+        /** give a EXACTLY n boxes, always including every id in mustInclude; the rest go to b. */
+        const give = (n: number, mustInclude: string[] = []) => {
+            const rest = g.boxes.map((b) => b.id).filter((id) => !mustInclude.includes(id));
+            const owned = new Set([...mustInclude, ...rest.slice(0, Math.max(0, n - mustInclude.length))]);
+            g.boxes.forEach((b) => { b.owner = owned.has(b.id) ? 'a' : 'b'; b.armies = 2; });
+        };
         return { g, box, give };
     };
     const playTurn = (g: ReturnType<typeof createGame>) => {
-        const p = g.turn.playerId; // play out THIS player turn only — the advance hands over mid-loop
+        const p = g.turn.playerId;
         while (g.turn.playerId === p && g.turn.dartsLeft > 0) applyDart(g, { segment: 0 });
     };
 
-    it('full South America = +1 dart per turn (budget 4)', () => {
+    it('income ladder: 5→3 (minimum), 6→3, 12→3, 18→3, 23→3, 24→4, 30→5, 36→6', () => {
         const { g, give } = setup();
-        give(SA_IDS, 'b');
-        playTurn(g);
-        expect(g.turn.playerId).toBe('b');
-        expect(g.turn.dartsLeft).toBe(4);
+        const cases: Array<[number, number]> = [[5, 3], [6, 3], [12, 3], [18, 3], [23, 3], [24, 4], [30, 5], [36, 6]];
+        for (const [n, want] of cases) {
+            g.turn = { playerId: 'a', dartsLeft: 0, carried: 0, index: g.turn.index };
+            give(n);
+            const b = budgetWithSources(g);
+            expect(b.total).toBe(want);
+        }
     });
 
-    it('Asia pays double (+2 → budget 5); stacking SA + Asia → 6', () => {
+    it('a complete continent pays NOTHING — 19 boxes incl. all of SA = 3 darts, 24 incl. SA + Asia = 4', () => {
         const { g, give } = setup();
-        give(AS_IDS, 'b');
-        playTurn(g);
-        expect(g.turn.playerId).toBe('b');
-        expect(g.turn.dartsLeft).toBe(5);
+        g.turn = { playerId: 'a', dartsLeft: 0, carried: 0, index: g.turn.index };
+        give(19, SA_IDS); // 19 owned incl. full SA — old rule: 4, new: 3
+        expect(budgetWithSources(g).total).toBe(3);
 
-        give(SA_IDS, 'b');
-        playTurn(g); playTurn(g);
-        expect(g.turn.playerId).toBe('b');
-        expect(g.turn.dartsLeft).toBe(6);
+        give(24, [...SA_IDS, ...AS_IDS]); // full SA + Asia too — old rule: 6, new: 4
+        expect(budgetWithSources(g).total).toBe(4);
     });
 
-    it('losing one box kills the bonus; a blank in the continent blocks it', () => {
-        const { g, box, give } = setup();
-        give(SA_IDS, 'b');
-        box('19-outer').owner = 'a';
-        playTurn(g);
-        expect(g.turn.playerId).toBe('b');
-        expect(g.turn.dartsLeft).toBe(3);
-
-        give(SA_IDS, 'b');
-        box('16-outer').owner = null; box('16-outer').armies = 0; // blank blocks control
-        playTurn(g); playTurn(g); // b consumes, a consumes, b's fresh turn
-        expect(g.turn.playerId).toBe('b');
-        expect(g.turn.dartsLeft).toBe(3);
-    });
-
-    it('budgetWithSources itemizes the pre-turn banner', () => {
+    it('exile (0 boxes) shows the minimum 3 on the gate', () => {
         const { g, give } = setup();
-        for (const b of g.boxes) b.owner = 'b'; // neutralize the random deal
-        give(SA_IDS, 'a');
-        give(AS_IDS, 'a');
+        give(0); // a owns nothing — exiled (no darts thrown: b holding all 40 is pending domination)
         g.turn.playerId = 'a';
-
         const budget = budgetWithSources(g);
-        expect(budget.base).toBe(3);
-        expect(budget.sources).toEqual([
-            expect.objectContaining({ continent: 'AS', darts: 2 }),
-            expect.objectContaining({ continent: 'SA', darts: 1 }),
-        ]);
-        expect(budget.total).toBe(6);
+        expect(budget.minimumApplied).toBe(true);
+        expect(budget.total).toBe(3);
     });
 
-    it('budgetWithSources itemizes banked savings rolled into the new turn', () => {
-        const { g, box } = setup();
-        for (const b of g.boxes) b.owner = 'b'; // neutralize the random deal (no continent income for a)
-        box('5-inner').owner = 'a'; // a keeps one non-continent box — no domination, no exile
+    it('advanceTurn pays the new income: 24 boxes → 4 darts next turn', () => {
+        const { g, give } = setup();
+        give(24);
+        playTurn(g); // a drains 3
+        expect(g.turn.playerId).toBe('b');
+        playTurn(g);
+        expect(g.turn.playerId).toBe('a');
+        expect(g.turn.dartsLeft).toBe(4); // floor(24/6) = 4
+    });
+
+    it('budgetWithSources itemizes territories + savings for the banner', () => {
+        const { g, give, box } = setup();
+        for (const b of g.boxes) b.owner = 'b';
+        box('5-inner').owner = 'a';
         applyDart(g, { segment: 50 }); // 3 - 1 + 3 = 5 left
         endTurnSaving(g);              // bank 5
-        playTurn(g);                   // b drains their 3 darts
+        playTurn(g);                   // b drains their 6 (39 boxes, old-rule income for the mid-game board)
         expect(g.turn.playerId).toBe('a');
-
+        give(24); // 24 a / 16 b — budget view reads the board live
         const budget = budgetWithSources(g);
-        expect(budget.base).toBe(3);
-        expect(budget.saved).toBe(5);
-        expect(budget.total).toBe(8); // 3 base + 5 saved
+        expect(budget.territories).toBe(24);
+        expect(budget.income).toBe(4);
+        expect(budget.minimumApplied).toBe(false);
+        expect(budget.saved).toBe(5); // turn.carried provenance
+        expect(budget.total).toBe(9); // 4 income + 5 saved
+    });
+
+    it('minimum applied flag is true under 6 boxes', () => {
+        const { g, give, box } = setup();
+        for (const b of g.boxes) b.owner = 'b';
+        box('5-inner').owner = 'a'; // 1 box
+        g.turn.playerId = 'a';
+        const budget = budgetWithSources(g);
+        expect(budget.minimumApplied).toBe(true);
+        expect(budget.income).toBe(0);
+        expect(budget.total).toBe(3);
     });
 });
 
@@ -535,6 +781,31 @@ describe('Risk 42 — seeded invariant sweep (M1.7)', () => {
         }
         if (g.winner !== null && !g.players.includes(g.winner)) bad('winner not in roster');
         if (g.tie && (g.tie.length < 2 || g.winner !== null)) bad('tie state inconsistent');
+        // cards: every card lives in exactly one place; hands/set counters only belong to real players
+        const seen = new Set<string>();
+        for (const c of g.deck ?? []) {
+            if (seen.has(c.id)) bad('duplicate card in deck: ' + c.id);
+            seen.add(c.id);
+        }
+        for (const [p, hand] of Object.entries(g.hands ?? {})) {
+            if (!g.players.includes(p)) bad('hand for unknown player: ' + p);
+            for (const c of hand) {
+                if (seen.has(c.id)) bad('card in two places: ' + c.id);
+                seen.add(c.id);
+            }
+        }
+        for (const v of Object.values(g.setsCashed ?? {})) if ((v ?? 0) < 0) bad('negative setsCashed');
+    };
+
+    /** first legal 3-card set in a hand, or null (small hands — plain combinatorics is fine) */
+    const firstSet = (hand: ReturnType<typeof createGame>['hands'][string]): string[] | null => {
+        for (let i = 0; i < hand.length; i++)
+            for (let j = i + 1; j < hand.length; j++)
+                for (let k = j + 1; k < hand.length; k++) {
+                    const ids = [hand[i].id, hand[j].id, hand[k].id];
+                    if (setPayout(hand.filter((c) => ids.includes(c.id)), 0) !== null) return ids;
+                }
+        return null;
     };
 
     const runGame = (players: number, mode: 'domination' | 'clock', seed: number) => {
@@ -544,7 +815,14 @@ describe('Risk 42 — seeded invariant sweep (M1.7)', () => {
         let darts = 0;
         while (g.winner === null && !g.tie && darts < 2500) {
             if (g.turn.dartsLeft === 0) throw new Error('stuck: turn with zero budget');
-            if (r() < 0.1 && g.turn.dartsLeft > 1) endTurnSaving(g); // exercise the bank in sweeps
+            const combo = firstSet(g.hands[g.turn.playerId] ?? []);
+            if (combo && r() < 0.2) {
+                const before = g.turn.dartsLeft;
+                const handBefore = g.hands[g.turn.playerId].length;
+                cashSet(g, combo);
+                if (g.turn.dartsLeft <= before) throw new Error('INVARIANT BROKEN: cash-in did not add darts');
+                if (g.hands[g.turn.playerId].length !== handBefore - 3) throw new Error('INVARIANT BROKEN: cash-in card count');
+            } else if (r() < 0.1 && g.turn.dartsLeft > 1) endTurnSaving(g); // exercise the bank in sweeps
             else applyDart(g, botDart(g, r));
             invariants(g);
             darts++;
