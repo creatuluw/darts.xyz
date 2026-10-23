@@ -23,6 +23,15 @@ export interface TurnState {
     index: number; // 1-based turn counter (for the clock)
 }
 
+export type CardFace = 'infanterie' | 'cavalerie' | 'artillerie' | 'joker';
+
+/** A territory card. Jokers have no territory. Faces drive the set combos. */
+export interface Card {
+    id: string; // `<number>-<ring>` for territory cards, `joker-1` / `joker-2`
+    face: CardFace;
+    territory?: string;
+}
+
 export interface RiskGameState {
     players: PlayerId[];
     starterPlayerId: PlayerId;
@@ -32,6 +41,9 @@ export interface RiskGameState {
     boxes: Box[];
     turn: TurnState;
     saved: Record<PlayerId, number>; // banked Arsenal darts — spent at the player's next turn
+    hands: Record<PlayerId, Card[]>; // territory cards — one drawn per conquest, hoarding unlimited
+    deck: Card[]; // remaining draw pile (exhausts; no reshuffle — like real Risk)
+    setsCashed: Record<PlayerId, number>; // drives the +1-per-cashed-set escalation
     winner: PlayerId | null;
     tie: PlayerId[] | null; // clock horn ended level → sudden-death darts
 }
@@ -97,6 +109,65 @@ export const BOX_COUNT = BOARD.length; // 40
 export const BASE_DARTS = 3;
 export const DEAL_ARMIES = 2;
 
+/**
+ * Classic Risk map adjacency for our 40 territories (Japan & Madagascar cut). Same-wedge
+ * inner/outer pairs are added below — those boxes physically touch on the dartboard.
+ * Reach rule (2026-10-23): a dart only counts on own territory or territory adjacent to own.
+ */
+export const ADJACENT_TERRITORIES: Record<string, string[]> = {
+    // North America
+    'Alaska': ['Northwest Territory', 'Alberta', 'Kamchatka'],
+    'Alberta': ['Alaska', 'Northwest Territory', 'Ontario', 'Western United States'],
+    'Central America': ['Western United States', 'Eastern United States', 'Venezuela'],
+    'Eastern United States': ['Central America', 'Ontario', 'Quebec', 'Western United States'],
+    'Greenland': ['Northwest Territory', 'Ontario', 'Quebec', 'Iceland'],
+    'Northwest Territory': ['Alaska', 'Alberta', 'Ontario', 'Greenland'],
+    'Ontario': ['Alberta', 'Northwest Territory', 'Greenland', 'Quebec', 'Eastern United States', 'Western United States'],
+    'Quebec': ['Greenland', 'Ontario', 'Eastern United States'],
+    'Western United States': ['Alberta', 'Ontario', 'Eastern United States', 'Central America'],
+    // South America
+    'Argentina': ['Peru', 'Brazil'],
+    'Brazil': ['Venezuela', 'Peru', 'Argentina', 'North Africa'],
+    'Peru': ['Venezuela', 'Brazil', 'Argentina'],
+    'Venezuela': ['Central America', 'Peru', 'Brazil'],
+    // Europe
+    'Great Britain': ['Iceland', 'Scandinavia', 'Northern Europe', 'Western Europe', 'Northwest Territory'],
+    'Iceland': ['Greenland', 'Great Britain', 'Scandinavia'],
+    'Northern Europe': ['Scandinavia', 'Great Britain', 'Western Europe', 'Southern Europe', 'Ukraine'],
+    'Scandinavia': ['Iceland', 'Great Britain', 'Northern Europe', 'Ukraine'],
+    'Southern Europe': ['Western Europe', 'Northern Europe', 'Ukraine', 'Middle East', 'Egypt', 'North Africa'],
+    'Ukraine': ['Scandinavia', 'Northern Europe', 'Southern Europe', 'Ural', 'Afghanistan', 'Middle East', 'Siberia'],
+    'Western Europe': ['Great Britain', 'Northern Europe', 'Southern Europe', 'North Africa'],
+    // Africa (Madagascar cut)
+    'Congo': ['North Africa', 'East Africa', 'South Africa'],
+    'East Africa': ['Egypt', 'North Africa', 'Congo', 'South Africa', 'Middle East'],
+    'Egypt': ['North Africa', 'Southern Europe', 'Middle East', 'East Africa', 'South Africa'],
+    'North Africa': ['Brazil', 'Western Europe', 'Southern Europe', 'Egypt', 'East Africa', 'Congo'],
+    'South Africa': ['Congo', 'East Africa', 'Egypt'],
+    // Asia (Japan cut)
+    'Afghanistan': ['Ukraine', 'Ural', 'China', 'India', 'Middle East', 'Irkutsk'],
+    'China': ['Mongolia', 'Siam', 'Ural', 'Siberia', 'Afghanistan', 'India'],
+    'India': ['Middle East', 'Siam', 'China', 'Afghanistan'],
+    'Irkutsk': ['Siberia', 'Yakutsk', 'Mongolia', 'Kamchatka', 'Afghanistan'],
+    'Kamchatka': ['Yakutsk', 'Irkutsk', 'Mongolia', 'Alaska'],
+    'Middle East': ['Southern Europe', 'Ukraine', 'Afghanistan', 'India', 'East Africa', 'Egypt'],
+    'Mongolia': ['Siberia', 'Irkutsk', 'Kamchatka', 'China'],
+    'Siam': ['India', 'China', 'Indonesia'],
+    'Siberia': ['Ural', 'Yakutsk', 'Irkutsk', 'Mongolia', 'China', 'Ukraine'],
+    'Ural': ['Ukraine', 'Siberia', 'China', 'Afghanistan'],
+    'Yakutsk': ['Siberia', 'Irkutsk', 'Kamchatka'],
+    // Oceania
+    'Eastern Australia': ['New Guinea', 'Western Australia', 'Indonesia'],
+    'Indonesia': ['Siam', 'New Guinea', 'Western Australia', 'Eastern Australia'],
+    'New Guinea': ['Indonesia', 'Eastern Australia', 'Western Australia'],
+    'Western Australia': ['Indonesia', 'New Guinea', 'Eastern Australia'],
+};
+// same-wedge boxes touch on the board you throw at: Ukraine↔Siberia, Greenland↔Iceland, GB↔NW Territory, ...
+for (const [number, ring, territory] of BOARD) {
+    const wedgeMate = BOARD.find(([n, r]) => n === number && r !== ring)![2];
+    if (!ADJACENT_TERRITORIES[territory].includes(wedgeMate)) ADJACENT_TERRITORIES[territory].push(wedgeMate);
+}
+
 // mulberry32 — small, fast, seedable; good enough for a party game's shuffle
 function rng(seed: number): () => number {
     let a = seed >>> 0;
@@ -118,9 +189,9 @@ export function createGame(playerIds: PlayerId[], opts: CreateGameOptions = {}):
     const starter = opts.starterPlayerId ?? playerIds[0];
     if (!playerIds.includes(starter)) throw new Error('starterPlayerId must be a player');
 
+    const rand = rng(seed);
     // The Deal: shuffle the board, deal EXACTLY equally, leftovers stay blank
     const order = BOARD.map((_, i) => i);
-    const rand = rng(seed);
     for (let i = order.length - 1; i > 0; i--) {
         const j = Math.floor(rand() * (i + 1));
         [order[i], order[j]] = [order[j], order[i]];
@@ -136,6 +207,9 @@ export function createGame(playerIds: PlayerId[], opts: CreateGameOptions = {}):
             armies: owner ? DEAL_ARMIES : 0,
         };
     });
+    const deck = buildDeck(rand);
+    const hands: Record<PlayerId, Card[]> = {};
+    for (const p of playerIds) hands[p] = [];
 
     return {
         players: [...playerIds],
@@ -146,9 +220,35 @@ export function createGame(playerIds: PlayerId[], opts: CreateGameOptions = {}):
         boxes,
         turn: { playerId: starter, dartsLeft: BASE_DARTS, carried: 0, index: 1 },
         saved: {},
+        hands,
+        deck,
+        setsCashed: {},
         winner: null,
         tie: null,
     };
+}
+
+/** The 42-card deck: one card per territory (faces cycle infanterie/cavalerie/artillerie) + 2 jokers. */
+function buildDeck(rand: () => number): Card[] {
+    const cards: Card[] = BOARD.map(([number, ring, territory], i) => ({
+        id: `${number}-${ring}`,
+        face: (['infanterie', 'cavalerie', 'artillerie'] as const)[i % 3],
+        territory,
+    }));
+    cards.push({ id: 'joker-1', face: 'joker' }, { id: 'joker-2', face: 'joker' });
+    for (let i = cards.length - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1));
+        [cards[i], cards[j]] = [cards[j], cards[i]];
+    }
+    return cards;
+}
+
+/** Games persisted before cards existed resume cleanly: build the deck the seed would have dealt. */
+function ensureCards(state: RiskGameState): void {
+    if (state.deck && state.hands) return;
+    state.deck = state.deck ?? buildDeck(rng(state.seed));
+    state.hands = state.hands ?? Object.fromEntries(state.players.map((p) => [p, []]));
+    state.setsCashed = state.setsCashed ?? {};
 }
 
 export function isExiled(state: RiskGameState, playerId: PlayerId): boolean {
@@ -169,28 +269,105 @@ export function continentsHeld(state: RiskGameState, playerId: PlayerId): Contin
     );
 }
 
-function continentDarts(c: Continent): number {
-    return c === 'AS' ? 2 : 1; // Asia pays superpower money
-}
-
 export interface DartBudget {
-    base: number;
-    sources: Array<{ continent: Continent; darts: number }>;
+    minimum: number; // the guaranteed floor (3)
+    territories: number; // boxes currently owned
+    income: number; // floor(territories / 6)
+    minimumApplied: boolean; // income fell below the floor
     saved: number; // banked Arsenal darts rolling into this turn
     total: number;
 }
 
+/** Turn income: +1 dart per 6 owned territories, minimum 3. Continents pay nothing (2026-10-23 rework). */
+export function territoryIncome(state: RiskGameState, playerId: PlayerId): { territories: number; income: number; minimumApplied: boolean; total: number } {
+    const territories = state.boxes.filter((b) => b.owner === playerId).length;
+    const income = Math.floor(territories / 6);
+    const minimumApplied = income < BASE_DARTS;
+    return { territories, income, minimumApplied, total: Math.max(BASE_DARTS, income) };
+}
+
 /** For the pre-turn banner: exact dart count with itemized sources. */
 export function budgetWithSources(state: RiskGameState): DartBudget {
-    const held = continentsHeld(state, state.turn.playerId);
-    const sources = held
-        .map((c) => ({ continent: c, darts: continentDarts(c) }))
-        .sort((x, y) => y.darts - x.darts); // biggest bonus first for the banner
+    const inc = territoryIncome(state, state.turn.playerId);
     const saved = state.turn.carried ?? state.saved?.[state.turn.playerId] ?? 0;
-    return { base: BASE_DARTS, sources, saved, total: BASE_DARTS + sources.reduce((s, x) => s + x.darts, 0) + saved };
+    return {
+        minimum: BASE_DARTS,
+        territories: inc.territories,
+        income: inc.income,
+        minimumApplied: inc.minimumApplied,
+        saved,
+        total: inc.total + saved,
+    };
+}
+
+/**
+ * Reach rule: boxes the player's darts can affect — own territory ∪ territory adjacent to own.
+ * An exile (owns nothing) may throw ANYWHERE: the clawback needs a foothold.
+ */
+const TERRITORY_OF: Record<string, string> = Object.fromEntries(BOARD.map(([n, r, t]) => [`${n}-${r}`, t]));
+
+export function isReachable(state: RiskGameState, playerId: PlayerId, boxId: string): boolean {
+    const box = state.boxes.find((b) => b.id === boxId);
+    if (!box) return false;
+    if (isExiled(state, playerId)) return true;
+    for (const b of state.boxes) {
+        if (b.owner === playerId) {
+            if (b.id === boxId) return true;
+            if (ADJACENT_TERRITORIES[TERRITORY_OF[b.id]]?.includes(TERRITORY_OF[boxId])) return true;
+        }
+    }
+    return false;
+}
+
+/** The UI highlight set: every box id the given player's darts currently count on. */
+export function reachableBoxIds(state: RiskGameState, playerId: PlayerId): Set<string> {
+    return new Set(state.boxes.filter((b) => isReachable(state, playerId, b.id)).map((b) => b.id));
 }
 
 const RING_VALUE: Record<1 | 2 | 3, number> = { 1: 1, 2: 2, 3: 2 };
+
+/** Set values: triple artillerie > cavalerie > infanterie, one of each beats them all (real Risk shape). */
+const SET_VALUES: Record<'triple' | 'mixed', Record<CardFace, number>> = {
+    triple: { infanterie: 3, cavalerie: 4, artillerie: 5, joker: 0 },
+    mixed: { infanterie: 6, cavalerie: 6, artillerie: 6, joker: 6 },
+};
+
+/**
+ * Payout of a 3-card hand as a set, +1 per set this player already cashed (escalation).
+ * null = not a legal set. Jokers complete the BEST combo: 3-of-a-kind or one of each.
+ */
+export function setPayout(cards: Array<Pick<Card, 'face'>>, setsCashedAlready: number): number | null {
+    if (cards.length !== 3) return null;
+    const n = { infanterie: 0, cavalerie: 0, artillerie: 0, joker: 0 };
+    for (const c of cards) n[c.face]++;
+    let best: number | null = null;
+    // triples: any face with count + jokers >= 3 (jokers join the strongest qualifying face)
+    for (const face of ['artillerie', 'cavalerie', 'infanterie'] as const) {
+        if (n[face] + n.joker >= 3) best = Math.max(best ?? 0, SET_VALUES.triple[face]);
+    }
+    // one of each: the distinct faces plus jokers must cover all three
+    if ((n.infanterie ? 1 : 0) + (n.cavalerie ? 1 : 0) + (n.artillerie ? 1 : 0) + n.joker >= 3) {
+        best = Math.max(best ?? 0, SET_VALUES.mixed.infanterie);
+    }
+    return best === null ? null : best + setsCashedAlready;
+}
+
+/** Cash in exactly 3 hand cards as a set: payout lands in the live dart pool, right now. */
+export function cashSet(state: RiskGameState, cardIds: string[]): RiskGameState {
+    if (state.winner !== null || state.tie) throw new Error('game is over');
+    ensureCards(state);
+    const me = state.turn.playerId;
+    const hand = state.hands[me] ?? [];
+    if (new Set(cardIds).size !== 3) throw new Error('a set is exactly 3 distinct cards');
+    const chosen = cardIds.map((id) => hand.find((c) => c.id === id));
+    if (chosen.some((c) => !c)) throw new Error('card not in hand');
+    const payout = setPayout(chosen as Card[], state.setsCashed?.[me] ?? 0);
+    if (payout === null) throw new Error('these cards do not form a set (3 of a kind or one of each)');
+    state.hands[me] = hand.filter((c) => !cardIds.includes(c.id));
+    state.setsCashed[me] = (state.setsCashed[me] ?? 0) + 1;
+    state.turn.dartsLeft += payout;
+    return state;
+}
 
 /** Which box a dart deposits into: S → the hit box; T → the wedge's inner; D → the wedge's outer. */
 function targetBoxId(hit: DartHit): string {
@@ -207,6 +384,7 @@ export function applyDart(state: RiskGameState, hit: DartHit): RiskGameState {
     if (state.turn.dartsLeft <= 0) throw new Error('no darts left this turn');
 
     const me = state.turn.playerId;
+    ensureCards(state);
 
     if (hit.segment === 0) {
         // miss: consumes a dart, changes nothing
@@ -221,16 +399,25 @@ export function applyDart(state: RiskGameState, hit: DartHit): RiskGameState {
 
         const value = RING_VALUE[hit.multiplier!];
 
-        if (box.owner === null) {
-            box.owner = me;
-            box.armies = value;
-        } else if (box.owner === me) {
-            box.armies += value;
+        if (!isReachable(state, me, box.id)) {
+            // reach rule: dead dart — thrown is thrown, but no armies, no points, no capture
         } else {
-            box.armies -= value;
-            if (box.armies <= 0) {
+            const wasMine = box.owner === me;
+            if (box.owner === null) {
                 box.owner = me;
-                box.armies = 1;
+                box.armies = value;
+            } else if (wasMine) {
+                box.armies += value;
+            } else {
+                box.armies -= value;
+                if (box.armies <= 0) {
+                    box.owner = me;
+                    box.armies = 1;
+                }
+            }
+            // a conquest (claiming a blank OR flipping an enemy box) earns exactly one card
+            if (!wasMine && box.owner === me && state.deck.length > 0) {
+                (state.hands[me] ??= []).push(state.deck.shift()!);
             }
         }
     }
@@ -255,7 +442,7 @@ function advanceTurn(state: RiskGameState, banked: number): void {
     if (carried > 0) state.saved[next] = 0; // drawn into the pool — clear so the bank only shows real savings
     state.turn = {
         playerId: next,
-        dartsLeft: BASE_DARTS + continentsHeld(state, next).reduce((s, c) => s + continentDarts(c), 0) + carried,
+        dartsLeft: territoryIncome(state, next).total + carried,
         carried,
         index: state.turn.index + 1,
     };

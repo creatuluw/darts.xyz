@@ -6,10 +6,13 @@
         state,
         onHit,
         disabled = false,
+        reach = null,
     }: {
         state: RiskGameState;
         onHit: (hit: DartHit) => void;
         disabled?: boolean;
+        /** Reach rule: box ids the thrower's darts count on — highlighted with an emerald edge. */
+        reach?: Set<string> | null;
     } = $props();
 
     const CX = 250,
@@ -110,6 +113,10 @@
     const innerLabelPos = labelPos("inner");
     const outerLabelPos = labelPos("outer");
 
+    // reach highlight: an emerald edge marks every box the thrower's darts count on;
+    // treble/double ring segments deposit into their wedge's boxes, so the box edge is the cue
+    const edgeFor = (id: string, base: string) => (reach?.has(id) ? "#34d399" : base);
+
     function hit(seg: number, mult: 1 | 2 | 3, ring?: "inner" | "outer") {
         if (!disabled) onHit({ segment: seg, multiplier: mult, singleRing: ring });
     }
@@ -137,8 +144,8 @@
                 class="seg cursor-pointer transition-opacity hover:opacity-80"
                 d={w.outer}
                 fill={ownedFill(`${w.num}-outer`, w.outerColor)}
-                stroke={COL.wire}
-                stroke-width="1.5"
+                stroke={edgeFor(`${w.num}-outer`, COL.wire)}
+                stroke-width={reach?.has(`${w.num}-outer`) ? 2 : 1.5}
                 stroke-linejoin="round"
                 onclick={() => hit(w.num, 1, "outer")}
             />
@@ -157,8 +164,8 @@
                 class="seg cursor-pointer transition-opacity hover:opacity-80"
                 d={w.inner}
                 fill={ownedFill(`${w.num}-inner`, w.singleColor)}
-                stroke={COL.wire}
-                stroke-width="1.5"
+                stroke={edgeFor(`${w.num}-inner`, COL.wire)}
+                stroke-width={reach?.has(`${w.num}-inner`) ? 2 : 1.5}
                 stroke-linejoin="round"
                 onclick={() => hit(w.num, 1, "inner")}
             />

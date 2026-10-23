@@ -47,9 +47,18 @@
                 <section>
                     <h3 class="font-bold mb-1">🎲 Je beurt</h3>
                     <p class="text-zinc-600 dark:text-zinc-300">
-                        3 darts per beurt, <strong>+1 dart per volledig continent</strong> (Azië +2). Een leeg terrein breekt
-                        continentcontrole. Je budget staat vóór elke beurt op het scherm. Te vroeg klaar? Met
+                        <strong>3 darts per beurt, +1 dart per 6 eigen terreinen</strong> (minimaal 3, ook in ballingschap).
+                        Continenten geven geen bonusdarts. Je budget staat vóór elke beurt op het scherm. Te vroeg klaar? Met
                         <strong>End turn</strong> spaar je de resterende darts voor je volgende beurt — ze stapelen op.
+                    </p>
+                </section>
+
+                <section>
+                    <h3 class="font-bold mb-1">🎯 Reikwijdte</h3>
+                    <p class="text-zinc-600 dark:text-zinc-300">
+                        Je darts tellen alleen op <strong>eigen terrein</strong> of terrein dat <strong>daaraan grenst</strong>
+                        (de groene rand op het bord). Treffers buiten je bereik zijn <strong>dode darts</strong> — je pijl is weg,
+                        maar er gebeurt niets. Ballingen mogen overal gooien om terug te keren. Bull (25/50) telt altijd.
                     </p>
                 </section>
 
@@ -68,6 +77,25 @@
                     <p class="text-zinc-600 dark:text-zinc-300">
                         Raak een <strong>leeg terrein</strong> → direct van jou. <strong>Eigen terrein</strong> → legers erbij.
                         <strong>Vijandelijk terrein</strong> → legers eraf; op 0 legers is het <strong>veroverd</strong> (er blijft 1 leger van jou staan).
+                    </p>
+                </section>
+
+                <section>
+                    <h3 class="font-bold mb-1">🃏 Territoriumkaarten</h3>
+                    <p class="text-zinc-600 dark:text-zinc-300">
+                        Elke verovering (leeg terrein claimen of vijandelijk terrein flippen) levert <strong>1 kaart</strong> op.
+                        Hamsteren mag — zonder limiet. Lever op een willekeurig moment in je beurt <strong>3 kaarten</strong> in
+                        voor extra darts, direct in je pool:
+                    </p>
+                    <ul class="text-zinc-600 dark:text-zinc-300 space-y-0.5 list-disc list-inside mt-1">
+                        <li>3× 🪖 Infanterie = <strong>+3 darts</strong></li>
+                        <li>3× 🐎 Cavalerie = <strong>+4 darts</strong></li>
+                        <li>3× 💥 Artillerie = <strong>+5 darts</strong></li>
+                        <li>1 van elk = <strong>+6 darts</strong></li>
+                    </ul>
+                    <p class="text-zinc-600 dark:text-zinc-300 mt-1">
+                        ⭐ Jokers zijn wild en betalen altijd de beste combi. Elke set die je deze game al indeleverde maakt de
+                        volgende <strong>+1 dart</strong> waard. Het deck (42 kaarten) is eindig — op = op, zoals in echt Risk.
                     </p>
                 </section>
 

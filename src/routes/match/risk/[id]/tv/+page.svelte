@@ -192,7 +192,7 @@
                             <span class="inline-block w-2 h-7 rounded-full bg-zinc-200"></span>
                         {/each}
                     </div>
-                    <p class="text-sm text-zinc-400">{budgetWithSources(game).total} darts</p>
+                    <p class="text-sm text-zinc-400">{budgetWithSources(game).total} darts{#if (game.hands?.[game.turn.playerId]?.length ?? 0) > 0}&nbsp;· {game.hands[game.turn.playerId].length} 🃏{/if}</p>
                 {:else}
                     <p class="text-sm {game.winner || game.tie ? 'text-zinc-500' : 'text-emerald-300'}">{phaseText}</p>
                 {/if}
