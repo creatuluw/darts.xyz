@@ -43,3 +43,5 @@
 - [Risk 42 wears the classic Risk continent palette everywhere](./risk-42-wears-the-classic-risk-continent-palette-everywhere.md) - Context
 - [Risk 42 TV: full-bleed map with overlay panels pinned to measured-empty margins](./risk-42-tv-full-bleed-map-with-overlay-panels-pinned-to-meas.md) - Context
 - [Commentary API degrades per-segment — TTS failure drops to subtitles, never a whole-request 502](./commentary-api-degrades-per-segment-tts-failure-drops-to-sub.md) - Context
+- [Risk 42 6-player legibility: hue-spread player palette, collision-free chips, podium scrim](./risk-42-6-player-legibility-hue-spread-player-palette-collis.md) - Context
+- [Risk 42 Arsenal becomes a bankable dart economy: bull 25 = +2 darts, bullseye 50 = +3, savable](./risk-42-arsenal-becomes-a-bankable-dart-economy-bull-25-2-da.md) - Context

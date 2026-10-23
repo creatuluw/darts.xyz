@@ -2931,6 +2931,43 @@ Also locked in the same turn: the **ON FIRE effect = Artillery**, reinterpreted 
 - If B, late-game fortification amplifies (a 200-claim #20 is a castle) → the **win condition needs a clock** (time/round limit or similar), which is the following question.
 - Rationale is proposal-stage design, not implemented code.
 `,
+  "decisions/commentary-api-degrades-per-segment-tts-failure-drops-to-sub.md": `---
+type: Decision
+title: Commentary API degrades per-segment — TTS failure drops to subtitles, never a whole-request 502
+description: Context
+tags: [risk-42, commentary, resilience, tts, elevenlabs]
+status: accepted
+timestamp: "2026-09-09T21:33:41.240Z"
+---
+
+# Commentary API degrades per-segment — TTS failure drops to subtitles, never a whole-request 502
+
+## Context
+
+While playtesting Risk 42 on prod (2026-09-09/10 campaign, 4P/6P Clock games), \`/api/commentary\` intermittently returned **502**. Initial suspicion: Railway edge timeout (~30s) on runs where LLM + 4× ElevenLabs TTS exceeded the window.
+
+Probing showed all-segments-OK runs complete in 22–26s — inside the budget. The real root cause: **our own catch block**. The endpoint wrapped the whole pipeline (LLM call + all TTS synthesizes) in one try/catch and returned 502 on *any* upstream failure — so a single ElevenLabs hiccup killed the entire broadcast segment, even though the LLM text was fine.
+
+## Decision
+
+Degrade per segment instead of failing the request:
+
+- If an individual TTS synthesis fails, that segment is returned **as subtitle-only** (text survives, voice drops).
+- The LLM text is always returned; only voice is degradable.
+- Client side: added a fetch timeout so a hung connection can't pin the commentary pill forever (toast + clear already existed).
+
+## Alternatives considered
+
+- Retry the whole pipeline on failure — doubles latency (~25s baseline) for a marginal gain; still all-or-nothing.
+- Raise the Railway/edge timeout — treats the symptom; the failure mode was upstream flakiness, not just slowness.
+- Do nothing / toast-only — the TV screen already toasts, but the broadcast content (grounded Dutch commentary) was lost entirely.
+
+## Consequences
+
+- Broadcasts survive partial TTS outages — worst case is a silent-but-readable segment.
+- Future failure-mode additions (e.g. LLM timeout) should follow the same pattern: degrade the missing modality, keep the rest.
+- Related known constraint: [commentary pipeline ~25s real cost](../learnings/commentary-pipeline-25s-real-cost-vs-20s-timeout-raise-paral.md) — latency budget remains tight against the ~30s edge limit.
+`,
   "decisions/commentary-becomes-a-4-segment-broadcast-with-leo-theodore-s.md": `---
 type: Decision
 title: Commentary becomes a 4-segment broadcast with Leo & Theodore swapping roles
@@ -3188,6 +3225,8 @@ Also tabled for later tuning: holding a full arc of neighboring numbers ("kingdo
 - [TV cast pages render on a fixed 1920×1080 TvStage canvas, scaled to fit — no viewport breakpoints](./tv-cast-pages-render-on-a-fixed-1920-1080-tvstage-canvas-sca.md) - Context
 - [TvStage fills the viewport (independent x/y scale) — letterboxing dropped](./tvstage-fills-the-viewport-independent-x-y-scale-letterboxin.md) - Context
 - [Risk 42 wears the classic Risk continent palette everywhere](./risk-42-wears-the-classic-risk-continent-palette-everywhere.md) - Context
+- [Risk 42 TV: full-bleed map with overlay panels pinned to measured-empty margins](./risk-42-tv-full-bleed-map-with-overlay-panels-pinned-to-meas.md) - Context
+- [Commentary API degrades per-segment — TTS failure drops to subtitles, never a whole-request 502](./commentary-api-degrades-per-segment-tts-failure-drops-to-sub.md) - Context
 `,
   "decisions/interview-questions-per-player-curated.md": `---
 type: Decision
@@ -3890,6 +3929,44 @@ The user asked why \`/match/risk\` has no TV/2nd-screen cast button. Answer: cla
 - If Risk 42 state ever needs server-side querying, the jsonb opacity is the constraint to lift.
 - Shipped as PR #13 (worktree \`kees-risk42-server-persist\`, branch \`feature/risk42-server-persist\`); per house rule the user merges.
 `,
+  "decisions/risk-42-tv-full-bleed-map-with-overlay-panels-pinned-to-meas.md": `---
+type: Decision
+title: "Risk 42 TV: full-bleed map with overlay panels pinned to measured-empty margins"
+description: Context
+tags: [risk-42, tv, layout, overlays]
+status: accepted
+timestamp: "2026-09-09T21:12:32.449Z"
+---
+
+# Risk 42 TV: full-bleed map with overlay panels pinned to measured-empty margins
+
+## Context
+
+The Risk 42 TV view (\`src/routes/match/risk/[id]/tv/+page.svelte\`) originally rendered the world map at ~877×607 next to a fixed sidebar of stats. The user asked for a way bigger map with all info/data in overlay panels that never block any territory.
+
+## Decision
+
+The world map fills the **entire TvStage** (landmass spans stage x 228–1703 / y 39–1007 of the 1920×1080 canvas; 1560×1080 on a real TV). All UI lives in four overlay panels pinned to stage margins that were measured **empty against live-DOM territory bounds** before designing:
+
+- **Top bar**: RISK 42 · clock (Klok) · turn N · LIVE · copy-link
+- **Left**: standings — color dot, name, boxes/armies, score, continent chips, exile state
+- **Right**: "Aan de beurt" card — dart pips, dart budget, ⚡ Arsenal charge
+- **Bottom**: mechanic hint pill
+
+The winner card stays fullscreen at game over; the TvCommentary subtitle was nudged below the landmass tip (land ends at stage-y ~1007).
+
+## Alternatives considered
+
+- Keep the sidebar layout — rejected: map stays ~877×607, defeats the purpose.
+- Shrink/pad the map around fixed panels — rejected: still eats map area; margins-only pinning uses the genuinely empty ocean/edge space instead.
+
+## Consequences
+
+- 2.4× map area; the map is the layout, UI floats on top of it.
+- "Never blocks a territory" is a **verifiable invariant, not an eyeball claim**: extract all 40 territory bboxes + the 4 overlay rects from the live DOM and assert 0 intersections (verified 2026-09-09; screenshot in \`docs/in-game-session-testing/screenshots/session5/\`). Follow the overlay-verification rule whenever either the map or the panels change.
+- Extends [[risk-42-two-screen-identity-dartboard-to-play-world-map-to-s]]: the spectate screen is now map-first.
+- Report: \`docs/in-game-session-testing/2026-09-09-session-5-risk-map-and-commentary.md\`.
+`,
   "decisions/risk-42-two-screen-identity-dartboard-to-play-world-map-to-s.md": `---
 type: Decision
 title: "Risk 42 two-screen identity: dartboard to play, world map to spectate"
@@ -3971,8 +4048,8 @@ The Risk 42 game surfaces had inconsistent color stories: the scorer dartboard u
 
 Adopt the **classic Risk continent palette** as the single source of truth, exported from \`risk-engine.ts\` (\`CONTINENT_COLORS\` / \`CONTINENT_DARK\`, body + darker companion per continent): NA yellow, SA red-orange, EU cyan, AF golden-brown, AS green, OC purple.
 
-- **Scorer dartboard**: unowned/base box fills wear continent colors (outer box = body shade, inner box = darker companion); owned boxes still fill with the player color (ownership glanceability on the playing surface).
-- **TV world map**: territories ALWAYS wear their continent color — because the Risk 42 deal assigns every box an owner, a player-color fill would erase the scheme entirely. Ownership rides on the army-badge disc (player color), owner initials (player color, dark halo), and a white stroke on the active player's territories — the classic Risk model of colored pieces on continent-colored land.
+- **Scorer dartboard**: boxes wear continent colors (outer box = body shade, inner box = darker companion), matching the map. AMENDED same turn per user refinement: owned boxes no longer fill with player color, and player stats/labels were removed from the board — only territory names remain; ownership and player data live in the scorer panels.
+- **TV world map**: territories ALWAYS wear their continent color — because the Risk 42 deal assigns every box an owner, a player-color fill would erase the scheme entirely. Ownership rides on a **thick player-colored stroke on every owned territory** (distinct per-player palette, width 1.8) plus the army-badge disc (player color) with owner initials; unowned territories get a thin (0.8) stroke in a 72%-darkened continent shade — the classic Risk model of colored pieces on continent-colored land. AMENDED same turn per user refinement (was: white stroke on active player only — not distinct enough at a glance).
 
 ## Alternatives considered
 
@@ -4419,7 +4496,7 @@ okf_version: "0.1"
 <!-- wiki-nav:start -->
 ## Navigation map
 
-Auto-generated detailed index of every docs/wiki/ concept — the map the LLM uses to locate information. 133 concept(s). Regenerated on init and on wiki_mark_synced. Generated 2026-09-09T20:57:25.918Z.
+Auto-generated detailed index of every docs/wiki/ concept — the map the LLM uses to locate information. 134 concept(s). Regenerated on init and on wiki_mark_synced. Generated 2026-09-09T21:10:13.134Z.
 
 Each entry: [title](concept-id.md) — description. Links are clickable in /wiki; pass the concept-id (link target minus .md) to wiki_get.
 
@@ -4522,6 +4599,7 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 
 ### Learnings
 
+- [Commentary LLM = DeepSeek deepseek-v4-flash (from glm-5.3-flash); ~1s LLM latency](learnings/commentary-llm-deepseek-deepseek-v4-flash-from-glm-5-3-flash.md) — 2026-09-09 evening: commentary LLM switched from OpenCode Zen Go (glm-5.3-flash, ~20-50s latency, needed x-opencode-session header) to **DeepSeek** (\`https://ap
 - [Commentary pipeline: ~25s real cost vs 20s timeout — raise/parallelize](learnings/commentary-pipeline-25s-real-cost-vs-20s-timeout-raise-paral.md) — Measured while playtesting all game modes on 2026-09-09: the 4-segment commentary pipeline (glm-5.3-flash LLM call + 4 sequential ElevenLabs TTS synthesizes) ta
 - [Trebles & Territories build was untracked in the working tree — now landed on feature/trebles-territories (PR #2)](learnings/conquest-build-untracked-in-working-tree.md) — RESOLVED 2026-09-08: the conquest build that survived the git rollback as untracked files is now committed on feature/trebles-territories and pushed as PR #2 (master still empty until merge)
 - [Conquest state is client-side only — nothing for a 2nd screen to poll](learnings/conquest-state-client-side-only.md) — The fact
@@ -4970,6 +5048,8 @@ Railway's TLS cert flow for an apex domain **requires the root to be a CNAME (fl
 - [TV cast pages freeze in background tabs — document.hidden pauses polling and commentary](./tv-cast-pages-freeze-in-background-tabs-document-hidden-paus.md) - All three TV cast routes — \`src/routes/match/[id]/tv/+page.svelte\` (classic), \`src/routes/match/conquest/[id]/tv/+page.svelte\` (T&T), \`src/routes/match/risk/[id
 - [Risk map SVG layers share a translate(-168,-119) — apply it when extracting paths or labels misalign](./risk-map-svg-layers-share-a-translate-168-119-apply-it-when-.md) - While building the Risk 42 TV world map (2026-09-09): \`docs/risk/risk-territory-board.svg\` puts ALL its content layers (countries, labels, tints) inside groups
 - [Commentary LLM = DeepSeek deepseek-v4-flash (from glm-5.3-flash); ~1s LLM latency](./commentary-llm-deepseek-deepseek-v4-flash-from-glm-5-3-flash.md) - 2026-09-09 evening: commentary LLM switched from OpenCode Zen Go (glm-5.3-flash, ~20-50s latency, needed x-opencode-session header) to **DeepSeek** (\`https://ap
+- [startRisk clears risk42_state but not risk42_game_id — new game silently resumes the old one](./startrisk-clears-risk42-state-but-not-risk42-game-id-new-gam.md) - **Found during the Risk 42 prod playtest campaign (2026-09-09/10), logged P1.**
+- [TV commentary hangs on one segment: audio events never fire in throttled windows — race every segment against a reading-time cap](./tv-commentary-hangs-on-one-segment-audio-events-never-fire-i.md) - Discovered during the 2026-09-09/10 prod playtest campaign (session 6): the TV commentary broadcast could hang forever on ONE segment. Root cause chain:
 `,
   "learnings/junctioned-node-modules-needs-vite-server-fs-allow-client-en.md": `---
 type: Learning
@@ -5411,6 +5491,32 @@ Every route renders an **empty SSR shell** — \`curl\`ing a page (or reading it
 
 \`svelte-check\` has 4 baseline errors in \`Dartboard.svelte\` that predate current work — "clean for touched files" is the real bar, not repo-wide zero.
 `,
+  "learnings/startrisk-clears-risk42-state-but-not-risk42-game-id-new-gam.md": `---
+type: Learning
+title: startRisk clears risk42_state but not risk42_game_id — new game silently resumes the old one
+description: **Found during the Risk 42 prod playtest campaign (2026-09-09/10), logged P1.**
+tags: [risk-42, bug, session, persistence]
+timestamp: "2026-09-09T21:33:41.240Z"
+---
+
+# startRisk clears risk42_state but not risk42_game_id — new game silently resumes the old one
+
+**Found during the Risk 42 prod playtest campaign (2026-09-09/10), logged P1.**
+
+The setup flow's \`startRisk()\` clears the \`risk42_state\` sessionStorage key but **not** \`risk42_game_id\`. Consequence: starting a new Risk 42 game in the same browser tab **silently resumes the old game** — the new setup (different roster, mode, clock) is discarded and play continues from the stale server-persisted game.
+
+## Workaround used in testing
+
+Clear \`risk42_game_id\` manually before starting a new game (or use a fresh tab).
+
+## Fix needed
+
+\`startRisk()\` must clear both keys together — they're one logical session pointer; splitting them is the bug. Any future "reset/replace game" flow should clear the pair atomically.
+
+## Related
+
+- [Risk 42 server persistence rides conquest_games + /api/conquest](../decisions/risk-42-server-persistence-rides-conquest-games-api-conquest.md) — the persistence layer whose stale pointer this is.
+`,
   "learnings/structuredclone-can-t-clone-svelte-5-state.md": `---
 type: Learning
 title: structuredClone can't clone Svelte 5 $state proxies — pass $state.snapshot() at the engine boundary
@@ -5624,6 +5730,23 @@ During the 2026-09-09 session testing, opening the TV second screen in a backgro
 - [TV cast pages decision](../decisions/tv-mode-url-tab-cast-polling.md) — the 1s polling design these guards implement
 - Reports: \`docs/in-game-session-testing/\`
 `,
+  "learnings/tv-commentary-hangs-on-one-segment-audio-events-never-fire-i.md": `---
+type: Learning
+title: "TV commentary hangs on one segment: audio events never fire in throttled windows — race every segment against a reading-time cap"
+description: "Discovered during the 2026-09-09/10 prod playtest campaign (session 6): the TV commentary broadcast could hang forever on ONE segment. Root cause chain:"
+tags: [commentary, tv, audio, throttling, gotcha]
+timestamp: "2026-09-09T21:52:29.607Z"
+---
+
+# TV commentary hangs on one segment: audio events never fire in throttled windows — race every segment against a reading-time cap
+
+Discovered during the 2026-09-09/10 prod playtest campaign (session 6): the TV commentary broadcast could hang forever on ONE segment. Root cause chain:
+
+1. \`Audio.play()\` in a **throttled/hidden browser window** can stay PENDING without rejecting (Chrome blocks audio silently in background windows — the \`.catch(autoplay blocked)\` fallback never runs), and \`onended\`/\`onerror\` never fire → the segment promise never resolves → the whole 4-segment broadcast pins on one subtitle and \`inFlight\` stays true. This is why the host→spectator→analyst flow was invisible to the user.
+2. Related: CDP \`Page.bringToFront\` activates a TAB but does not unhide the page if the OS window itself is backgrounded — \`document.hidden\` stays true and the TV's polling/boundary effects sleep. Workaround during testing: \`Object.defineProperty(document, 'hidden', { get: () => false, configurable: true })\`.
+
+Fixes shipped (commit 1cf0d05): every segment resolves at \`min(audio end, ~reading time)\` (3500ms + 90ms/char, cap 30s) — \`setTimeout\` caps are the only reliable timer in throttled tabs; the subtitle-only fallback uses the same estimate instead of a flat 4s. Lesson: never gate a media pipeline purely on media element events — always race them against a wall-clock cap.
+`,
   "learnings/vitest-can-t-see-type-holes-esbuild-strips-types-svelte-chec.md": `---
 type: Learning
 title: Vitest can't see type holes — esbuild strips types; svelte-check is the only net
@@ -5804,10 +5927,12 @@ okf_version: "0.1"
 Auto-generated digest of the most recent conventions, decisions, rules and
 development patterns, plus architecture and global patterns — newest first.
 The actual files live in the wiki subfolders; follow the links (clickable in /wiki).
-Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21:04:36.390Z.
+Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21:52:29.628Z.
 
 ## Recent Decisions
 
+- [Commentary API degrades per-segment — TTS failure drops to subtitles, never a whole-request 502](decisions/commentary-api-degrades-per-segment-tts-failure-drops-to-sub.md) — Context (2026-09-09)
+- [Risk 42 TV: full-bleed map with overlay panels pinned to measured-empty margins](decisions/risk-42-tv-full-bleed-map-with-overlay-panels-pinned-to-meas.md) — Context (2026-09-09)
 - [Risk 42 wears the classic Risk continent palette everywhere](decisions/risk-42-wears-the-classic-risk-continent-palette-everywhere.md) — Context (2026-09-09)
 - [TvStage fills the viewport (independent x/y scale) — letterboxing dropped](decisions/tvstage-fills-the-viewport-independent-x-y-scale-letterboxin.md) — Context (2026-09-09)
 - [TV cast pages render on a fixed 1920×1080 TvStage canvas, scaled to fit — no viewport breakpoints](decisions/tv-cast-pages-render-on-a-fixed-1920-1080-tvstage-canvas-sca.md) — Context (2026-09-09)
@@ -5821,11 +5946,10 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21
 - [Risk 42 continent income: +1 dart per full continent (Asia +2); budget shown pre-turn](decisions/risk-42-continent-income.md) — Context (2026-09-09)
 - [Risk 42 bulls: the Arsenal charge (25 = +1, 50 = +2)](decisions/risk-42-bulls-the-arsenal-charge-25-1-50-2.md) — Context (2026-09-09)
 - [Risk 42 elimination: exile & clawback — zero boxes ≠ death](decisions/risk-42-exile-and-clawback.md) — Context (2026-09-09)
-- [Risk 42 endgame: Domination as headline, 170/301/501 clock as alt — mirroring T&T](decisions/risk-42-domination-headline-clock-alt.md) — Context (2026-09-09)
-- [Territory labels go horizontal: centered in each box, no rotation](decisions/territory-labels-go-horizontal-centered-in-each.md) — Context (2026-09-08)
 
 ## Active Rules
 
+- [Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert](rules/prove-overlays-never-block-gameplay-live-dom-bbox-measuremen.md) — The guideline (2026-09-09)
 - [New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board](rules/new-game-modes-follow-the-conquest-cut-pure-setup-module-fun.md) — The rule (2026-09-09)
 - [Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets](rules/engine-invariant-sweeps-plain-asserts-assert-theorems-not-em.md) — The guideline (2026-09-09)
 - [Board SVGs are generated — edit the regenerator, never the output](rules/board-svgs-are-generated.md) — Guideline (2026-09-08)
@@ -5842,6 +5966,8 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21
 
 ## Recent Learnings — development patterns
 
+- [TV commentary hangs on one segment: audio events never fire in throttled windows — race every segment against a reading-time cap](learnings/tv-commentary-hangs-on-one-segment-audio-events-never-fire-i.md) — Discovered during the 2026-09-09/10 prod playtest campaign (session 6): the TV commentary broadcast could hang forever on ONE segment. Root … (2026-09-09)
+- [startRisk clears risk42_state but not risk42_game_id — new game silently resumes the old one](learnings/startrisk-clears-risk42-state-but-not-risk42-game-id-new-gam.md) — **Found during the Risk 42 prod playtest campaign (2026-09-09/10), logged P1.** (2026-09-09)
 - [Commentary LLM = DeepSeek deepseek-v4-flash (from glm-5.3-flash); ~1s LLM latency](learnings/commentary-llm-deepseek-deepseek-v4-flash-from-glm-5-3-flash.md) — 2026-09-09 evening: commentary LLM switched from OpenCode Zen Go (glm-5.3-flash, ~20-50s latency, needed x-opencode-session header) to **Dee… (2026-09-09)
 - [Risk map SVG layers share a translate(-168,-119) — apply it when extracting paths or labels misalign](learnings/risk-map-svg-layers-share-a-translate-168-119-apply-it-when-.md) — While building the Risk 42 TV world map (2026-09-09): \`docs/risk/risk-territory-board.svg\` puts ALL its content layers (countries, labels, t… (2026-09-09)
 - [TV cast pages freeze in background tabs — document.hidden pauses polling and commentary](learnings/tv-cast-pages-freeze-in-background-tabs-document-hidden-paus.md) — All three TV cast routes — \`src/routes/match/[id]/tv/+page.svelte\` (classic), \`src/routes/match/conquest/[id]/tv/+page.svelte\` (T&T), \`src/r… (2026-09-09)
@@ -5860,8 +5986,6 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21
 - [Engine test helpers must adapt to live dart budgets — income mechanics break fixed throw counts](learnings/engine-test-helpers-must-adapt-to-live-dart-budgets-income-m.md) — Engine test helpers must adapt to live dart budgets — income mechanics break fixed throw counts (2026-09-09)
 - [Game-engine tests: filler darts must be misses, and fixtures obey the rules they enforce](learnings/game-engine-tests-filler-darts-must-be-misses-and-fixtures-o.md) — Caught red-handed twice during the Risk 42 M1 TDD cycles (2026-09-09), both produced false reds (and one false green that slipped into a com… (2026-09-09)
 - [Fresh SvelteKit worktree needs \`svelte-kit sync\` before tests run](learnings/fresh-sveltekit-worktree-needs-svelte-kit-sync-before-tests-.md) — Gotcha from the Risk 42 M1 build (2026-09-09): a freshly created SvelteKit worktree (deps junctioned from the main checkout) is **missing th… (2026-09-09)
-- [risk-territory-board.svg palette: fills live in layer2, join to territories by centroid containment](learnings/risk-territory-board-svg-palette-fills-live-in-layer2-join-t.md) — The world map for the Risk 42 TV view (\`docs/risk/risk-territory-board.svg\`, a copy of \`risk-board.svg\`) carries its **per-territory tints i… (2026-09-09)
-- [Top-level return in a CJS script skips the file write — silent no-op](learnings/top-level-return-in-a-cjs-script-skips-the-file.md) — Gotcha (2026-09-08)
 
 ## Architecture
 
@@ -6039,14 +6163,14 @@ Reference assets for the Risk-style conquest mode ([risk-darts-proposed-game-mod
   "pages/artifacts/in-game-session-testing-reports-docs-in-game-session-testing.md": `---
 type: Artifact
 title: In-game session testing reports (docs/in-game-session-testing/)
-description: Four full playtest session reports from 2026-09-09, played through the real UI (BrowserOS neo against the dev server, master \`46a429e\`) with the TV second scree
+description: Five full playtest session reports from 2026-09-09, played through the real UI (BrowserOS neo against the dev server, master \`46a429e\`) with the TV second scree
 tags: [playtest, qa, reports, conquest, risk-42]
 timestamp: "2026-09-09T19:48:45.129Z"
 ---
 
 # In-game session testing reports (docs/in-game-session-testing/)
 
-Four full playtest session reports from 2026-09-09, played through the real UI (BrowserOS neo against the dev server, master \`46a429e\`) with the TV second screen open and every turn verified against engine/API state — plus a cross-session index with a prioritized improvement backlog and reusable helper scripts.
+Five full playtest session reports from 2026-09-09, played through the real UI (BrowserOS neo against the dev server, master \`46a429e\`) with the TV second screen open and every turn verified against engine/API state — plus a cross-session index with a prioritized improvement backlog and reusable helper scripts. Session 5 (evening) covered the Risk 42 continent-palette map work and the TV full-bleed overlay redesign verification.
 
 ## What it documents
 
@@ -7133,6 +7257,7 @@ Evidence: Risk 42 M1.7, 2026-09-09 — sweep went 59s → ~2.2s and three false 
 - [Board SVGs are generated — edit the regenerator, never the output](./board-svgs-are-generated.md) - Guideline
 - [Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets](./engine-invariant-sweeps-plain-asserts-assert-theorems-not-em.md) - The guideline
 - [New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board](./new-game-modes-follow-the-conquest-cut-pure-setup-module-fun.md) - The rule
+- [Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert](./prove-overlays-never-block-gameplay-live-dom-bbox-measuremen.md) - The guideline
 `,
   "rules/logic-todos-must-use-tdd-skill.md": `---
 type: Rule
@@ -7250,6 +7375,31 @@ Stated explicitly by the user on 2026-09-08 ("ask all questions 1-by-1") during 
 
 Batched questions get partial answers and are easy to skip; one-at-a-time keeps decisions crisp and reviewable — especially important here since this project's feature work (e.g. [[risk-darts-proposed-game-mode]]) has repeatedly hinged on precise rule wording.
 `,
+  "rules/prove-overlays-never-block-gameplay-live-dom-bbox-measuremen.md": `---
+type: Rule
+title: "Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert"
+description: The guideline
+timestamp: "2026-09-09T21:12:32.448Z"
+---
+
+# Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert
+
+## The guideline
+
+When UI overlays sit on top of a map/board (TV views especially), don't eyeball placement:
+
+1. **Measure first**: extract the real gameplay-element bboxes (\`getBoundingClientRect()\` on every territory/path) from the **live page DOM on the running route**, not from the SVG source — TvStage scaling and safe margins mean source coordinates ≠ rendered coordinates (the same page renders 1529×860 in a test window and 1560×1080 on a real TV).
+2. **Design into the gaps**: place overlays only in margins proven empty by those measurements.
+3. **Assert after**: reload the page and assert every overlay rect intersects **zero** gameplay bboxes. Re-run after any later map or panel change — layout drift is silent.
+
+## When it applies
+
+Any TV/cast view or big-canvas UI where panels float over gameplay geometry (Risk 42 TV today; any future map/board second screen).
+
+## Rationale / evidence
+
+In the Risk 42 TV full-bleed redesign (2026-09-09) the final check ran 4 overlay rects against all 40 territory bboxes in the live DOM and proved 0 intersections — turning "looks fine in a screenshot" into a checkable invariant at a size nobody actually views (window-scaled). See [[risk-42-tv-full-bleed-map-with-overlay-panels-pinned-to-measured-e]].
+`,
   "rules/use-app-stores-page-for-page-state-house-style.md": `---
 type: Rule
 title: Use $app/stores $page for page state — house style
@@ -7347,6 +7497,7 @@ var WIKI_PAGES = [
   { path: "decisions/cap-match-rosters-at-6-players.md", label: "Cap match rosters at 6 players, enforced client and server", group: "Decisions" },
   { path: "decisions/cards-around-the-board.md", label: "Cards around the board for all roster sizes (condensed panels for 3–6)", group: "Decisions" },
   { path: "decisions/claim-based-territory-ownership.md", label: "Claim-based territory ownership replaces the damage-flip model in Risk darts", group: "Decisions" },
+  { path: "decisions/commentary-api-degrades-per-segment-tts-failure-drops-to-sub.md", label: "Commentary API degrades per-segment — TTS failure drops to subtitles, never a whole-request 502", group: "Decisions" },
   { path: "decisions/commentary-becomes-a-4-segment-broadcast-with-leo-theodore-s.md", label: "Commentary becomes a 4-segment broadcast with Leo & Theodore swapping roles", group: "Decisions" },
   { path: "decisions/commentary-gated-on-2nd-screen.md", label: "Commentary gated on open 2nd screen + pause button; all match types; every-N-turns cadence", group: "Decisions" },
   { path: "decisions/conquest-state-server-persisted.md", label: "Conquest state persists server-side: write-through per dart, own table + uuid", group: "Decisions" },
@@ -7370,6 +7521,7 @@ var WIKI_PAGES = [
   { path: "decisions/risk-42-domination-headline-clock-alt.md", label: "Risk 42 endgame: Domination as headline, 170/301/501 clock as alt — mirroring T&T", group: "Decisions" },
   { path: "decisions/risk-42-game-start-random-deal.md", label: "Risk 42 game start: random deal of all 40 territories (1 army each), no claiming phase", group: "Decisions" },
   { path: "decisions/risk-42-server-persistence-rides-conquest-games-api-conquest.md", label: "Risk 42 server persistence rides conquest_games + /api/conquest — sessionStorage stopgap superseded", group: "Decisions" },
+  { path: "decisions/risk-42-tv-full-bleed-map-with-overlay-panels-pinned-to-meas.md", label: "Risk 42 TV: full-bleed map with overlay panels pinned to measured-empty margins", group: "Decisions" },
   { path: "decisions/risk-42-two-screen-identity-dartboard-to-play-world-map-to-s.md", label: "Risk 42 two-screen identity: dartboard to play, world map to spectate", group: "Decisions" },
   { path: "decisions/risk-42-v1-persists-to-sessionstorage-stopgap-server-write-t.md", label: "Risk 42 v1 persists to sessionStorage (stopgap) — server write-through lands at M3", group: "Decisions" },
   { path: "decisions/risk-42-wears-the-classic-risk-continent-palette-everywhere.md", label: "Risk 42 wears the classic Risk continent palette everywhere", group: "Decisions" },
@@ -7423,6 +7575,7 @@ var WIKI_PAGES = [
   { path: "learnings/session-only-logins-not-in-accounts-list.md", label: "Session-only logins are absent from the saved-accounts list — don't gate account switching on it", group: "Learnings" },
   { path: "learnings/squash-merged-branch-commit-ahead-unmerged-prove-with-git-ch.md", label: "Squash-merged branch: commit-ahead ≠ unmerged — prove with git cherry", group: "Learnings" },
   { path: "learnings/ssr-pages-are-empty-shells-emailgate.md", label: "SSR pages are empty shells — EmailGate gates all rendering client-side", group: "Learnings" },
+  { path: "learnings/startrisk-clears-risk42-state-but-not-risk42-game-id-new-gam.md", label: "startRisk clears risk42_state but not risk42_game_id — new game silently resumes the old one", group: "Learnings" },
   { path: "learnings/structuredclone-can-t-clone-svelte-5-state.md", label: "structuredClone can't clone Svelte 5 $state proxies — pass $state.snapshot() at the engine boundary", group: "Learnings" },
   { path: "learnings/svg-path-parsing-arc-arguments-are-not-points.md", label: "SVG path parsing: arc arguments are not points — tokenize by command, never by coordinate-pair regex", group: "Learnings" },
   { path: "learnings/sync-infinite-loop-in-a-test-helper-hangs-vitest-with-no-tim.md", label: "Sync infinite loop in a test helper hangs vitest with no timeout", group: "Learnings" },
@@ -7431,6 +7584,7 @@ var WIKI_PAGES = [
   { path: "learnings/conquest-build-untracked-in-working-tree.md", label: "Trebles & Territories build was untracked in the working tree — now landed on feature/trebles-territories (PR #2)", group: "Learnings" },
   { path: "learnings/ts-can-t-narrow-state-in-closures.md", label: "TS can't narrow $state inside closures — use $derived.by with local capture", group: "Learnings" },
   { path: "learnings/tv-cast-pages-freeze-in-background-tabs-document-hidden-paus.md", label: "TV cast pages freeze in background tabs — document.hidden pauses polling and commentary", group: "Learnings" },
+  { path: "learnings/tv-commentary-hangs-on-one-segment-audio-events-never-fire-i.md", label: "TV commentary hangs on one segment: audio events never fire in throttled windows — race every segment against a reading-time cap", group: "Learnings" },
   { path: "learnings/vitest-can-t-see-type-holes-esbuild-strips-types-svelte-chec.md", label: "Vitest can't see type holes — esbuild strips types; svelte-check is the only net", group: "Learnings" },
   { path: "learnings/vitest-suite-uncommitted-master-has-no-test-runner.md", label: "Vitest/Playwright suite is uncommitted — master branches have no test runner", group: "Learnings" },
   { path: "learnings/wedge-index-from-a-seg-path-s-m-point-needs-a-9.md", label: "Wedge index from a seg path's M point needs a +9° half-wedge shift", group: "Learnings" },
@@ -7477,6 +7631,7 @@ var WIKI_PAGES = [
   { path: "rules/engine-invariant-sweeps-plain-asserts-assert-theorems-not-em.md", label: "Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets", group: "Rules" },
   { path: "rules/never-hardcode-player-slots-in-match-ui.md", label: "Never hardcode player slots in match UI", group: "Rules" },
   { path: "rules/new-game-modes-follow-the-conquest-cut-pure-setup-module-fun.md", label: "New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board", group: "Rules" },
+  { path: "rules/prove-overlays-never-block-gameplay-live-dom-bbox-measuremen.md", label: "Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert", group: "Rules" },
   { path: "rules/index.md", label: "Rules", group: "Rules" },
   { path: "rules/use-app-stores-page-for-page-state-house-style.md", label: "Use $app/stores $page for page state — house style", group: "Rules" },
   { path: "rules/use-tooltip-not-native-title.md", label: "Use the Tooltip component, not native title attributes", group: "Rules" },

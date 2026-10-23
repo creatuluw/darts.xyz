@@ -8,10 +8,12 @@ okf_version: "0.1"
 Auto-generated digest of the most recent conventions, decisions, rules and
 development patterns, plus architecture and global patterns — newest first.
 The actual files live in the wiki subfolders; follow the links (clickable in /wiki).
-Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21:52:29.628Z.
+Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-10-23T13:37:04.806Z.
 
 ## Recent Decisions
 
+- [Risk 42 Arsenal becomes a bankable dart economy: bull 25 = +2 darts, bullseye 50 = +3, savable](decisions/risk-42-arsenal-becomes-a-bankable-dart-economy-bull-25-2-da.md) — Context (2026-10-23)
+- [Risk 42 6-player legibility: hue-spread player palette, collision-free chips, podium scrim](decisions/risk-42-6-player-legibility-hue-spread-player-palette-collis.md) — Context (2026-09-09)
 - [Commentary API degrades per-segment — TTS failure drops to subtitles, never a whole-request 502](decisions/commentary-api-degrades-per-segment-tts-failure-drops-to-sub.md) — Context (2026-09-09)
 - [Risk 42 TV: full-bleed map with overlay panels pinned to measured-empty margins](decisions/risk-42-tv-full-bleed-map-with-overlay-panels-pinned-to-meas.md) — Context (2026-09-09)
 - [Risk 42 wears the classic Risk continent palette everywhere](decisions/risk-42-wears-the-classic-risk-continent-palette-everywhere.md) — Context (2026-09-09)
@@ -25,17 +27,16 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21
 - [Risk 42 deal amended: exactly equal deal, 2 armies each, blank leftovers claimable, players pick starter](decisions/risk-42-deal-final-equal-2-armies-blanks.md) — Context (2026-09-09)
 - [Risk 42 game start: random deal of all 40 territories (1 army each), no claiming phase](decisions/risk-42-game-start-random-deal.md) — Context (2026-09-09)
 - [Risk 42 continent income: +1 dart per full continent (Asia +2); budget shown pre-turn](decisions/risk-42-continent-income.md) — Context (2026-09-09)
-- [Risk 42 bulls: the Arsenal charge (25 = +1, 50 = +2)](decisions/risk-42-bulls-the-arsenal-charge-25-1-50-2.md) — Context (2026-09-09)
-- [Risk 42 elimination: exile & clawback — zero boxes ≠ death](decisions/risk-42-exile-and-clawback.md) — Context (2026-09-09)
 
 ## Active Rules
 
+- [Worktree feature loop: PR-only master, worktrees in E:/worktrees/, user merges](rules/worktree-feature-loop.md) — House workflow for all feature work — PR-only master, worktrees under E:/worktrees/ (locked while active), provably-lossless cleanup only, a… (2026-10-23)
+- [When a playtest stalls under background-tab throttling, finish the game via the engine + PATCH — don't tab-hop](rules/when-a-playtest-stalls-under-background-tab-throttling-finis.md) — The guideline (2026-09-09)
 - [Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert](rules/prove-overlays-never-block-gameplay-live-dom-bbox-measuremen.md) — The guideline (2026-09-09)
 - [New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board](rules/new-game-modes-follow-the-conquest-cut-pure-setup-module-fun.md) — The rule (2026-09-09)
 - [Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets](rules/engine-invariant-sweeps-plain-asserts-assert-theorems-not-em.md) — The guideline (2026-09-09)
 - [Board SVGs are generated — edit the regenerator, never the output](rules/board-svgs-are-generated.md) — Guideline (2026-09-08)
 - [Ask clarifying questions one at a time — user preference](rules/one-question-at-a-time.md) — The rule (2026-09-08)
-- [Worktree feature loop: PR-only master, worktrees in E:/worktrees/, user merges](rules/worktree-feature-loop.md) — House workflow for all feature work — PR-only master, worktrees under E:/worktrees/ (locked while active), provably-lossless cleanup only, a… (2026-09-08)
 - [Use $app/stores $page for page state — house style](rules/use-app-stores-page-for-page-state-house-style.md) — Rule (2026-09-07)
 - [All code/logic todos must use the TDD skill (red→green→refactor)](rules/logic-todos-must-use-tdd-skill.md) — The rule (2026-09-07)
 - [Use the Tooltip component, not native title attributes](rules/use-tooltip-not-native-title.md) — Guideline (2026-09-07)
@@ -47,6 +48,8 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21
 
 ## Recent Learnings — development patterns
 
+- [Bank folded in at handover loses provenance — carry it on the object (turn.carried)](learnings/bank-folded-in-at-handover-loses-provenance-carry-it-on-the-.md) — **The gotcha:** in Risk 42 the engine adds the player's saved-dart bank to the next turn's budget *at handover* — so by the time the UI rend… (2026-10-23)
+- [Playwright hit-target check fails at the bull's center — the 50 ring paints on top; click the 25 ring off-center](learnings/playwright-hit-target-check-fails-at-the-bull-s-center-the-5.md) — **The gotcha:** in the dartboard SVG the bullseye (50) is painted **on top of** the single bull (25). A Playwright click aimed at the exact … (2026-10-23)
 - [TV commentary hangs on one segment: audio events never fire in throttled windows — race every segment against a reading-time cap](learnings/tv-commentary-hangs-on-one-segment-audio-events-never-fire-i.md) — Discovered during the 2026-09-09/10 prod playtest campaign (session 6): the TV commentary broadcast could hang forever on ONE segment. Root … (2026-09-09)
 - [startRisk clears risk42_state but not risk42_game_id — new game silently resumes the old one](learnings/startrisk-clears-risk42-state-but-not-risk42-game-id-new-gam.md) — **Found during the Risk 42 prod playtest campaign (2026-09-09/10), logged P1.** (2026-09-09)
 - [Commentary LLM = DeepSeek deepseek-v4-flash (from glm-5.3-flash); ~1s LLM latency](learnings/commentary-llm-deepseek-deepseek-v4-flash-from-glm-5-3-flash.md) — 2026-09-09 evening: commentary LLM switched from OpenCode Zen Go (glm-5.3-flash, ~20-50s latency, needed x-opencode-session header) to **Dee… (2026-09-09)
@@ -65,8 +68,6 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21
 - [Vitest/Playwright suite is uncommitted — master branches have no test runner](learnings/vitest-suite-uncommitted-master-has-no-test-runner.md) — UPDATE 2026-09-08: the suite is committed on feature/trebles-territories (PR #2, 112 unit tests) — master branches still have no test runner… (2026-09-09)
 - [Sync infinite loop in a test helper hangs vitest with no timeout](learnings/sync-infinite-loop-in-a-test-helper-hangs-vitest-with-no-tim.md) — The symptom (2026-09-09)
 - [Engine test helpers must adapt to live dart budgets — income mechanics break fixed throw counts](learnings/engine-test-helpers-must-adapt-to-live-dart-budgets-income-m.md) — Engine test helpers must adapt to live dart budgets — income mechanics break fixed throw counts (2026-09-09)
-- [Game-engine tests: filler darts must be misses, and fixtures obey the rules they enforce](learnings/game-engine-tests-filler-darts-must-be-misses-and-fixtures-o.md) — Caught red-handed twice during the Risk 42 M1 TDD cycles (2026-09-09), both produced false reds (and one false green that slipped into a com… (2026-09-09)
-- [Fresh SvelteKit worktree needs `svelte-kit sync` before tests run](learnings/fresh-sveltekit-worktree-needs-svelte-kit-sync-before-tests-.md) — Gotcha from the Risk 42 M1 build (2026-09-09): a freshly created SvelteKit worktree (deps junctioned from the main checkout) is **missing th… (2026-09-09)
 
 ## Architecture
 
@@ -74,7 +75,7 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-09-09T21
 
 ## Global Patterns
 
-- [Risk 42 (proposed game mode)](pages/concepts/risk-42-proposed-game-mode.md) — What is it? (2026-09-09)
+- [Risk 42 (proposed game mode)](pages/concepts/risk-42-proposed-game-mode.md) — What is it? (2026-10-23)
 - [Risk Darts (proposed game mode)](pages/concepts/risk-darts-proposed-game-mode.md) — What is it? (2026-09-07)
 
 <!-- wiki-memory:end -->
