@@ -7,7 +7,7 @@ okf_version: "0.1"
 <!-- wiki-nav:start -->
 ## Navigation map
 
-Auto-generated detailed index of every docs/wiki/ concept — the map the LLM uses to locate information. 134 concept(s). Regenerated on init and on wiki_mark_synced. Generated 2026-09-09T21:10:13.134Z.
+Auto-generated detailed index of every docs/wiki/ concept — the map the LLM uses to locate information. 139 concept(s). Regenerated on init and on wiki_mark_synced. Generated 2026-09-09T22:07:24.738Z.
 
 Each entry: [title](concept-id.md) — description. Links are clickable in /wiki; pass the concept-id (link target minus .md) to wiki_get.
 
@@ -27,7 +27,7 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [dart-board.svg (extracted production dartboard)](pages/artifacts/dart-board-svg-extracted-production-dartboard.md) — A clean, static SVG of the standard dartboard extracted directly from the live scorer's rendered `Dartboard.svelte` output on a production match page (https://w
 - [DartBoardInGame.svg (id-addressable in-game board)](pages/artifacts/dartboardingame-svg-id-addressable-in-game-board.md) — A wedge-by-wedge export of the production dartboard geometry (`Dartboard.svelte`), rebuilt with self-explanatory, collision-free element ids — the board the Ris
 - [docs/risk/ assets (Risk board SVGs + notes)](pages/artifacts/docs-risk-assets-risk-board-svgs-notes.md) — Reference assets for the Risk-style conquest mode ([[risk-darts-proposed-game-mode]] / Trebles & Territories): two classic Risk board SVGs (`Risk_board.svg` ~50
-- [In-game session testing reports (docs/in-game-session-testing/)](pages/artifacts/in-game-session-testing-reports-docs-in-game-session-testing.md) — Four full playtest session reports from 2026-09-09, played through the real UI (BrowserOS neo against the dev server, master `46a429e`) with the TV second scree
+- [In-game session testing reports (docs/in-game-session-testing/)](pages/artifacts/in-game-session-testing-reports-docs-in-game-session-testing.md) — Five full playtest session reports from 2026-09-09, played through the real UI (BrowserOS neo against the dev server, master `46a429e`) with the TV second scree
 - [Risk 42 implementation spec](pages/artifacts/risk-42-implementation-spec.md) — The implementation spec for **Risk 42** — the self-contained HTML design document (built with the html-docs skill) that drives the build. Written 2026-09-09; co
 - [Risk 42 territory mapping (mapping.json)](pages/artifacts/risk-42-territory-mapping-mapping-json.md) — Canonical machine-readable game data for [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md): every one of the 40 numbered boxes mapped to `
 - [Risk dart board mockup (risk-dart-board.svg)](pages/artifacts/risk-dart-board-mockup-risk-dart-board-svg.md) — The canonical labeled design board for the Risk-on-a-dartboard redesign: the id-addressable in-game board cloned with all 40 territory names — full names,
@@ -60,6 +60,7 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [Cap match rosters at 6 players, enforced client and server](decisions/cap-match-rosters-at-6-players.md) — Context
 - [Cards around the board for all roster sizes (condensed panels for 3–6)](decisions/cards-around-the-board.md) — Decision
 - [Claim-based territory ownership replaces the damage-flip model in Risk darts](decisions/claim-based-territory-ownership.md) — Context
+- [Commentary API degrades per-segment — TTS failure drops to subtitles, never a whole-request 502](decisions/commentary-api-degrades-per-segment-tts-failure-drops-to-sub.md) — Context
 - [Commentary becomes a 4-segment broadcast with Leo & Theodore swapping roles](decisions/commentary-becomes-a-4-segment-broadcast-with-leo-theodore-s.md) — Context
 - [Commentary gated on open 2nd screen + pause button; all match types; every-N-turns cadence](decisions/commentary-gated-on-2nd-screen.md) — Context
 - [Conquest state persists server-side: write-through per dart, own table + uuid](decisions/conquest-state-server-persisted.md) — Context
@@ -82,6 +83,7 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [Risk 42 elimination: exile & clawback — zero boxes ≠ death](decisions/risk-42-exile-and-clawback.md) — Context
 - [Risk 42 game start: random deal of all 40 territories (1 army each), no claiming phase](decisions/risk-42-game-start-random-deal.md) — Context
 - [Risk 42 server persistence rides conquest_games + /api/conquest — sessionStorage stopgap superseded](decisions/risk-42-server-persistence-rides-conquest-games-api-conquest.md) — Context
+- [Risk 42 TV: full-bleed map with overlay panels pinned to measured-empty margins](decisions/risk-42-tv-full-bleed-map-with-overlay-panels-pinned-to-meas.md) — Context
 - [Risk 42 two-screen identity: dartboard to play, world map to spectate](decisions/risk-42-two-screen-identity-dartboard-to-play-world-map-to-s.md) — Context
 - [Risk 42 v1 persists to sessionStorage (stopgap) — server write-through lands at M3](decisions/risk-42-v1-persists-to-sessionstorage-stopgap-server-write-t.md) — Context
 - [Risk 42 wears the classic Risk continent palette everywhere](decisions/risk-42-wears-the-classic-risk-continent-palette-everywhere.md) — Context
@@ -104,6 +106,7 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [Never hardcode player slots in match UI](rules/never-hardcode-player-slots-in-match-ui.md) — Guideline
 - [New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board](rules/new-game-modes-follow-the-conquest-cut-pure-setup-module-fun.md) — The rule
 - [Ask clarifying questions one at a time — user preference](rules/one-question-at-a-time.md) — The rule
+- [Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert](rules/prove-overlays-never-block-gameplay-live-dom-bbox-measuremen.md) — The guideline
 - [Use $app/stores $page for page state — house style](rules/use-app-stores-page-for-page-state-house-style.md) — Rule
 - [Use the Tooltip component, not native title attributes](rules/use-tooltip-not-native-title.md) — Guideline
 - [Worktree feature loop: PR-only master, worktrees in E:/worktrees/, user merges](rules/worktree-feature-loop.md) — House workflow for all feature work — PR-only master, worktrees under E:/worktrees/ (locked while active), provably-lossless cleanup only, and the user is the only one who merges.
@@ -147,6 +150,7 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [Session-only logins are absent from the saved-accounts list — don't gate account switching on it](learnings/session-only-logins-not-in-accounts-list.md) — Gotcha
 - [Squash-merged branch: commit-ahead ≠ unmerged — prove with git cherry](learnings/squash-merged-branch-commit-ahead-unmerged-prove-with-git-ch.md) — Squash-merged branch: commit-ahead ≠ unmerged
 - [SSR pages are empty shells — EmailGate gates all rendering client-side](learnings/ssr-pages-are-empty-shells-emailgate.md) — Gotcha
+- [startRisk clears risk42_state but not risk42_game_id — new game silently resumes the old one](learnings/startrisk-clears-risk42-state-but-not-risk42-game-id-new-gam.md) — **Found during the Risk 42 prod playtest campaign (2026-09-09/10), logged P1.**
 - [structuredClone can't clone Svelte 5 $state proxies — pass $state.snapshot() at the engine boundary](learnings/structuredclone-can-t-clone-svelte-5-state.md) — Gotcha
 - [SVG path parsing: arc arguments are not points — tokenize by command, never by coordinate-pair regex](learnings/svg-path-parsing-arc-arguments-are-not-points.md) — Gotcha
 - [Sync infinite loop in a test helper hangs vitest with no timeout](learnings/sync-infinite-loop-in-a-test-helper-hangs-vitest-with-no-tim.md) — The symptom
@@ -154,6 +158,7 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [Top-level return in a CJS script skips the file write — silent no-op](learnings/top-level-return-in-a-cjs-script-skips-the-file.md) — Gotcha
 - [TS can't narrow $state inside closures — use $derived.by with local capture](learnings/ts-can-t-narrow-state-in-closures.md) — Gotcha
 - [TV cast pages freeze in background tabs — document.hidden pauses polling and commentary](learnings/tv-cast-pages-freeze-in-background-tabs-document-hidden-paus.md) — All three TV cast routes — `src/routes/match/[id]/tv/+page.svelte` (classic), `src/routes/match/conquest/[id]/tv/+page.svelte` (T&T), `src/routes/match/risk/[id
+- [TV commentary hangs on one segment: audio events never fire in throttled windows — race every segment against a reading-time cap](learnings/tv-commentary-hangs-on-one-segment-audio-events-never-fire-i.md) — Discovered during the 2026-09-09/10 prod playtest campaign (session 6): the TV commentary broadcast could hang forever on ONE segment. Root cause chain:
 - [Vitest can't see type holes — esbuild strips types; svelte-check is the only net](learnings/vitest-can-t-see-type-holes-esbuild-strips-types-svelte-chec.md) — The gotcha
 - [Vitest/Playwright suite is uncommitted — master branches have no test runner](learnings/vitest-suite-uncommitted-master-has-no-test-runner.md) — UPDATE 2026-09-08: the suite is committed on feature/trebles-territories (PR #2, 112 unit tests) — master branches still have no test runner until the PR merges
 - [Only webSpeech TTS speaks Dutch — kokoro is English-only, ElevenLabs is pre-generated clips](learnings/webspeech-only-dutch-tts.md) — Only webSpeech TTS speaks Dutch

@@ -3,7 +3,7 @@ type: Rule
 title: "Worktree feature loop: PR-only master, worktrees in E:/worktrees/, user merges"
 description: House workflow for all feature work — PR-only master, worktrees under E:/worktrees/ (locked while active), provably-lossless cleanup only, and the user is the only one who merges.
 tags: [git, workflow, worktree, pull-request]
-timestamp: "2026-09-08T19:44:39.112Z"
+timestamp: "2026-10-23T13:02:56.426Z"
 ---
 
 # Worktree feature loop: PR-only master, worktrees in E:/worktrees/, user merges
@@ -23,11 +23,22 @@ All feature work in this repo runs through the **worktree feature loop** the use
 - **Task summary (what we did / what it changes / why it matters) goes to three places**: the first block of the final commit message, appended to the task todo, and the end-of-work report.
 - **Cleanup only after the user confirms the merge**: `git worktree unlock E:/worktrees/kees-<slug>` (ignore "not locked"), `git worktree remove`, `git branch -d feature/<slug>`, `git fetch --prune`; then re-sync master (the step-9 pull can be blocked by merged-PR leftovers in the main tree — verify identical to origin/master before discarding: [merged-pr-leftovers-in-the-main-tree-block-the-pull-verify-i](../learnings/merged-pr-leftovers-in-the-main-tree-block-the-pull-verify-i.md)).
 
+## Hot-apply to the main checkout — when the user asks
+
+The user sometimes wants the worktree's changes live in `E:\dart.monster` immediately, because the dev server on :5173 watches the main checkout. The pattern (established 2026-10-23, Risk 42 UX task / PR #15):
+
+1. Finish verification in the worktree first (tests, svelte-check, smoke).
+2. Copy the changed files into `E:\dart.monster` **uncommitted** — this is a hot-reload convenience, NOT a master merge. Never commit on master; the PR stays the only path to master.
+3. Verify the copies are byte-identical to the worktree versions (hash compare).
+4. Tell the user the main-tree copies are deliberately uncommitted.
+5. After the user merges the PR: discard the main-tree copies (identical to merged master) and pull — the same provably-lossless discipline as cleanup; identical leftovers don't block the pull ([merged-pr-leftovers-in-the-main-tree-block-the-pull-verify-i](../learnings/merged-pr-leftovers-in-the-main-tree-block-the-pull-verify-i.md)).
+
 ## Why
 
-The user runs this loop deliberately: master stays deployable (**Railway auto-deploys from master — a worktree-branch push deploys nothing**), merge decisions stay in human hands, and parallel sessions on one machine can't destroy each other's in-flight worktrees (locking + lossless-only cleanup).
+The user runs this loop deliberately: master stays deployable (**Railway auto-deploys from master — a worktree-branch push deploys nothing**), merge decisions stay in human hands, and parallel sessions on one machine can't destroy each other's in-flight worktrees (locking + lossless-only cleanup). The hot-apply step exists because the user's live dev server tracks the main checkout, not the worktree — without it the user can't see/verify the feature until merge.
 
 ## Evidence
 
 - remember-me task (2026-09-08): steps 0–3 ran; loop correctly paused at step 3 to clarify scope before coding.
 - 2nd-tv-screen-cast-realtime task (2026-09-08): step 0 correctly left `kees-remember-me` untouched (unmerged commit `cc9f39b` despite merged PR #1); new worktree created at `E:/worktrees/kees-2nd-tv-screen-cast-realtime`, deps installed, locked; paused at step 3 awaiting the user's scope answers.
+- Risk 42 UX task (2026-10-23): PR #15 opened from the worktree (black-rim miss + Regels modal); changes hot-applied uncommitted to `E:\dart.monster` for the :5173 dev server, byte-identical verified; discard-after-merge handed to the user.

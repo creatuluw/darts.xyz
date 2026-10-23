@@ -3,12 +3,14 @@ type: Decision
 title: "Risk 42 bulls: the Arsenal charge (25 = +1, 50 = +2)"
 description: Context
 tags: [game-design, risk-42, conquest-mode, bulls, combat]
-status: accepted
+status: superseded
 supersedes: "[]"
 timestamp: "2026-09-09T08:04:43.667Z"
 ---
 
 # Risk 42 bulls: the Arsenal charge (25 = +1, 50 = +2)
+
+> **SUPERSEDED 2026-10-23** — the Arsenal was amended to a [bankable dart economy](./risk-42-arsenal-becomes-a-bankable-dart-economy-bull-25-2-da.md): bull 25 = **+2 darts**, bullseye 50 = **+3 darts**, savable and accumulating. This charge ruling no longer applies.
 
 ## Context
 
