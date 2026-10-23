@@ -2,8 +2,9 @@
     import { onMount } from "svelte";
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
-    import { IconCast } from "@tabler/icons-svelte";
+    import { IconBook, IconCast } from "@tabler/icons-svelte";
     import RiskBoard from "$lib/components/risk/RiskBoard.svelte";
+    import RiskRules from "$lib/components/risk/RiskRules.svelte";
     import RiskWorldMap from "$lib/components/risk/RiskWorldMap.svelte";
     import {
         applyDart,
@@ -45,6 +46,7 @@
     let feed = $state<{ id: number; text: string; color: string }[]>([]);
     let gate = $state(true); // pre-turn budget banner — the player confirms before throwing
     let gateFor = $state("");
+    let rulesOpen = $state(false);
     let feedId = 0;
     let lastTurnIndex = $state(0);
 
@@ -204,16 +206,26 @@
             <div>
                 <div class="flex items-center justify-between mb-4">
                     <h1 class="font-display font-extrabold text-2xl md:text-3xl">Risk 42</h1>
-                    {#if gameId}
+                    <div class="flex items-center gap-1.5">
                         <button
-                            onclick={() => window.open(`/match/risk/${gameId}/tv`, "_blank")}
-                            aria-label="Open TV-weergave in nieuw tabblad"
+                            onclick={() => (rulesOpen = true)}
+                            aria-label="Spelregels openen"
                             class="flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                         >
-                            <IconCast size={16} />
-                            TV
+                            <IconBook size={16} />
+                            Regels
                         </button>
-                    {/if}
+                        {#if gameId}
+                            <button
+                                onclick={() => window.open(`/match/risk/${gameId}/tv`, "_blank")}
+                                aria-label="Open TV-weergave in nieuw tabblad"
+                                class="flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                            >
+                                <IconCast size={16} />
+                                TV
+                            </button>
+                        {/if}
+                    </div>
                 </div>
                 {#if game.winner}
                     <div class="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-500/30 p-6 mb-4 flex items-center justify-between">
@@ -270,7 +282,7 @@
                     {:else}
                         <RiskBoard state={game} onHit={throwDart} disabled={boardDisabled} />
                         <div class="mt-3 flex items-center justify-between">
-                            <p class="text-xs text-zinc-400">Treble feeds the inner box · double feeds the outer · bull charges the Arsenal</p>
+                            <p class="text-xs text-zinc-400">Treble feeds the inner box · double feeds the outer · bull charges the Arsenal · black rim = miss</p>
                             {#if !boardDisabled}
                                 <button class="text-xs font-semibold px-3 py-1.5 rounded-full ring-1 ring-black/10 dark:ring-white/15 text-zinc-500" onclick={() => throwDart({ segment: 0, multiplier: 1 })}>Miss</button>
                             {/if}
@@ -339,6 +351,7 @@
                 <a href="/match/setup?tab=fun" class="block text-center text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 py-2">← New game</a>
             </div>
         </div>
+        <RiskRules open={rulesOpen} close={() => (rulesOpen = false)} />
     {:else}
         <p class="p-10 text-center text-zinc-400">Loading campaign…</p>
     {/if}

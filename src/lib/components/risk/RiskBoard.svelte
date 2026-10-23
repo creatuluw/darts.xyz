@@ -116,8 +116,9 @@
 </script>
 
 <svg viewBox="0 0 500 500" class="w-full h-auto select-none" role="img" aria-label="Risk 42 board">
-    <circle cx={CX} cy={CY} r={245} fill="#0d0d0d" />
-    <circle cx={CX} cy={CY} r={220} fill="#111" />
+    <!-- outer black no-point zone: everything outside the double ring is a miss -->
+    <circle cx={CX} cy={CY} r={245} fill="#0d0d0d" class="cursor-pointer" onclick={() => hit(0, 1)} />
+    <circle cx={CX} cy={CY} r={220} fill="#111" class="cursor-pointer" onclick={() => hit(0, 1)} />
 
     {#each wedges as w, idx}
         <g id="wedge-{w.num}">
