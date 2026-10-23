@@ -193,9 +193,6 @@
                         {/each}
                     </div>
                     <p class="text-sm text-zinc-400">{budgetWithSources(game).total} darts</p>
-                    {#if game.turn.charge > 0}
-                        <p class="text-amber-300 font-bold text-lg">⚡ +{game.turn.charge}</p>
-                    {/if}
                 {:else}
                     <p class="text-sm {game.winner || game.tie ? 'text-zinc-500' : 'text-emerald-300'}">{phaseText}</p>
                 {/if}

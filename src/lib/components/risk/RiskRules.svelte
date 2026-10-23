@@ -48,7 +48,8 @@
                     <h3 class="font-bold mb-1">🎲 Je beurt</h3>
                     <p class="text-zinc-600 dark:text-zinc-300">
                         3 darts per beurt, <strong>+1 dart per volledig continent</strong> (Azië +2). Een leeg terrein breekt
-                        continentcontrole. Je budget staat vóór elke beurt op het scherm.
+                        continentcontrole. Je budget staat vóór elke beurt op het scherm. Te vroeg klaar? Met
+                        <strong>End turn</strong> spaar je de resterende darts voor je volgende beurt — ze stapelen op.
                     </p>
                 </section>
 
@@ -73,7 +74,8 @@
                 <section>
                     <h3 class="font-bold mb-1">⚡ Het Arsenaal (bull)</h3>
                     <p class="text-zinc-600 dark:text-zinc-300">
-                        Bull (25) laadt +1 dart, bullseye (50) +2 darts — deze beurt. De lading telt mee met elke latere worp deze beurt.
+                        Bull (25) levert <strong>+2 extra darts</strong>, bullseye (50) <strong>+3</strong> — meteen beschikbaar in
+                        deze beurt. Houd je aan het eind darts over, dan gaan die automatisch mee naar je volgende beurt.
                     </p>
                 </section>
 

@@ -19,7 +19,7 @@ export interface Box {
 export interface TurnState {
     playerId: PlayerId;
     dartsLeft: number;
-    charge: number; // Arsenal charge active for the rest of the turn
+    carried?: number; // banked darts drawn from the savings pool into this turn's budget (banner itemization)
     index: number; // 1-based turn counter (for the clock)
 }
 
@@ -31,6 +31,7 @@ export interface RiskGameState {
     seed: number;
     boxes: Box[];
     turn: TurnState;
+    saved: Record<PlayerId, number>; // banked Arsenal darts — spent at the player's next turn
     winner: PlayerId | null;
     tie: PlayerId[] | null; // clock horn ended level → sudden-death darts
 }
@@ -143,7 +144,8 @@ export function createGame(playerIds: PlayerId[], opts: CreateGameOptions = {}):
         clockTurns: mode === 'clock' ? (opts.clockTurns ?? null) : null,
         seed,
         boxes,
-        turn: { playerId: starter, dartsLeft: BASE_DARTS, charge: 0, index: 1 },
+        turn: { playerId: starter, dartsLeft: BASE_DARTS, carried: 0, index: 1 },
+        saved: {},
         winner: null,
         tie: null,
     };
@@ -174,6 +176,7 @@ function continentDarts(c: Continent): number {
 export interface DartBudget {
     base: number;
     sources: Array<{ continent: Continent; darts: number }>;
+    saved: number; // banked Arsenal darts rolling into this turn
     total: number;
 }
 
@@ -183,7 +186,8 @@ export function budgetWithSources(state: RiskGameState): DartBudget {
     const sources = held
         .map((c) => ({ continent: c, darts: continentDarts(c) }))
         .sort((x, y) => y.darts - x.darts); // biggest bonus first for the banner
-    return { base: BASE_DARTS, sources, total: BASE_DARTS + sources.reduce((s, x) => s + x.darts, 0) };
+    const saved = state.turn.carried ?? state.saved?.[state.turn.playerId] ?? 0;
+    return { base: BASE_DARTS, sources, saved, total: BASE_DARTS + sources.reduce((s, x) => s + x.darts, 0) + saved };
 }
 
 const RING_VALUE: Record<1 | 2 | 3, number> = { 1: 1, 2: 2, 3: 2 };
@@ -207,14 +211,15 @@ export function applyDart(state: RiskGameState, hit: DartHit): RiskGameState {
     if (hit.segment === 0) {
         // miss: consumes a dart, changes nothing
     } else if (hit.segment === 25 || hit.segment === 50) {
-        // the Arsenal: a bull charges the darts thrown after it, this turn only
-        state.turn.charge += hit.segment === 50 ? 2 : 1;
+        // the Arsenal: a bull pays in darts — spendable this turn, and what's left when the
+        // player stops early (endTurnSaving) stays banked for their next turn
+        state.turn.dartsLeft += hit.segment === 50 ? 3 : 2;
     } else {
         if (hit.segment < 1 || hit.segment > 20) throw new Error(`segment out of range: ${hit.segment}`);
         const box = state.boxes.find((b) => b.id === targetBoxId(hit));
         if (!box) throw new Error(`no box for hit ${JSON.stringify(hit)}`);
 
-        const value = RING_VALUE[hit.multiplier!] + state.turn.charge;
+        const value = RING_VALUE[hit.multiplier!];
 
         if (box.owner === null) {
             box.owner = me;
@@ -232,21 +237,38 @@ export function applyDart(state: RiskGameState, hit: DartHit): RiskGameState {
 
     state.turn.dartsLeft -= 1;
     if (state.turn.dartsLeft === 0) {
-        // turn advances: next player from the starter, fresh budget + income, charge cleared
-        const order = [state.starterPlayerId, ...state.players.filter((p) => p !== state.starterPlayerId)];
-        const at = order.indexOf(state.turn.playerId);
-        const next = order[(at + 1) % order.length];
-        state.turn = {
-            playerId: next,
-            dartsLeft: BASE_DARTS + continentsHeld(state, next).reduce((s, c) => s + continentDarts(c), 0),
-            charge: 0,
-            index: state.turn.index + 1,
-        };
-        if (state.mode === 'clock' && state.turn.index - 1 >= (state.clockTurns ?? 0) * state.players.length) {
-            soundTheHorn(state);
-        }
+        advanceTurn(state, 0);
     }
     checkDomination(state);
+    return state;
+}
+
+/** Hand the turn to the next player from the starter; their banked darts roll into their pool. Horn checked here. */
+function advanceTurn(state: RiskGameState, banked: number): void {
+    const me = state.turn.playerId;
+    state.saved ??= {}; // games persisted before the bank existed resume cleanly
+    if (banked > 0) state.saved[me] = (state.saved[me] ?? 0) + banked;
+    const order = [state.starterPlayerId, ...state.players.filter((p) => p !== state.starterPlayerId)];
+    const at = order.indexOf(me);
+    const next = order[(at + 1) % order.length];
+    const carried = state.saved[next] ?? 0;
+    if (carried > 0) state.saved[next] = 0; // drawn into the pool — clear so the bank only shows real savings
+    state.turn = {
+        playerId: next,
+        dartsLeft: BASE_DARTS + continentsHeld(state, next).reduce((s, c) => s + continentDarts(c), 0) + carried,
+        carried,
+        index: state.turn.index + 1,
+    };
+    if (state.mode === 'clock' && state.turn.index - 1 >= (state.clockTurns ?? 0) * state.players.length) {
+        soundTheHorn(state);
+    }
+}
+
+/** The player stops early: every dart left in the pool is saved for their next turn. Counts as a turn. */
+export function endTurnSaving(state: RiskGameState): RiskGameState {
+    if (state.winner !== null) throw new Error('game is over');
+    if (state.tie) throw new Error('game is over');
+    advanceTurn(state, state.turn.dartsLeft);
     return state;
 }
 
