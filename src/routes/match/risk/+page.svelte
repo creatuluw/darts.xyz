@@ -2,13 +2,15 @@
     import { onMount } from "svelte";
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
-    import { IconCast } from "@tabler/icons-svelte";
+    import { IconBook, IconCast } from "@tabler/icons-svelte";
     import RiskBoard from "$lib/components/risk/RiskBoard.svelte";
+    import RiskRules from "$lib/components/risk/RiskRules.svelte";
     import RiskWorldMap from "$lib/components/risk/RiskWorldMap.svelte";
     import {
         applyDart,
         budgetWithSources,
         createGame,
+        endTurnSaving,
         isExiled,
         standings,
         type DartHit,
@@ -45,6 +47,7 @@
     let feed = $state<{ id: number; text: string; color: string }[]>([]);
     let gate = $state(true); // pre-turn budget banner — the player confirms before throwing
     let gateFor = $state("");
+    let rulesOpen = $state(false);
     let feedId = 0;
     let lastTurnIndex = $state(0);
 
@@ -100,7 +103,7 @@
         return {
             turns: game.turn.index - 1,
             captures: texts.filter((t) => t.includes("captures")).length,
-            arsenal: texts.filter((t) => t.includes("Arsenal")).length,
+            arsenal: texts.filter((t) => t.includes("banks")).length,
             misses: texts.filter((t) => t.endsWith("misses")).length,
         };
     });
@@ -157,13 +160,13 @@
     function describe(before: RiskGameState, hit: DartHit): string {
         const who = setup?.name(before.turn.playerId) ?? "?";
         if (hit.segment === 0) return `${who} misses`;
-        if (hit.segment === 25 || hit.segment === 50) return `${who} ⚡ charges the Arsenal +${hit.segment === 50 ? 2 : 1}`;
+        if (hit.segment === 25 || hit.segment === 50) return `${who} ⚡ banks +${hit.segment === 50 ? 3 : 2} darts`;
         const target = hit.multiplier === 1
             ? `${hit.segment}-${hit.singleRing}`
             : `${hit.segment}-${hit.multiplier === 3 ? "inner" : "outer"}`;
         const b0 = before.boxes.find((b) => b.id === target)!;
         const b1 = game!.boxes.find((b) => b.id === target)!;
-        const val = (hit.multiplier === 1 ? 1 : 2) + before.turn.charge;
+        const val = hit.multiplier === 1 ? 1 : 2;
         if (b0.owner !== before.turn.playerId && b1.owner === before.turn.playerId && b0.owner !== null)
             return `${who} captures ${b1.territory}! (${val} dmg)`;
         if (b0.owner === null) return `${who} claims ${b1.territory} (${val} armies)`;
@@ -182,6 +185,20 @@
         }
         if (game.winner) log(`🏆 ${setup?.name(game.winner)} wins!`, "#7fb069");
         else if (game.tie) log(`Horn! Tie: ${game.tie.map((p) => setup?.name(p)).join(" vs ")} — nearest bull wins`, "#d9a441");
+        persist();
+    }
+
+    /** Stop early: every dart left in the pool is banked for this player's next turn. */
+    function saveRest() {
+        if (!game || boardDisabled) return;
+        const who = game.turn.playerId;
+        const n = game.turn.dartsLeft;
+        endTurnSaving(game);
+        log(`${setup?.name(who)} saves ${n} dart${n === 1 ? "" : "s"} for later`, setup?.color(who) ?? "#666");
+        if (game.tie) log(`Horn! Tie: ${game.tie.map((p) => setup?.name(p)).join(" vs ")} — nearest bull wins`, "#d9a441");
+        gate = true;
+        gateFor = game.turn.playerId;
+        lastTurnIndex = game.turn.index;
         persist();
     }
 
@@ -204,16 +221,26 @@
             <div>
                 <div class="flex items-center justify-between mb-4">
                     <h1 class="font-display font-extrabold text-2xl md:text-3xl">Risk 42</h1>
-                    {#if gameId}
+                    <div class="flex items-center gap-1.5">
                         <button
-                            onclick={() => window.open(`/match/risk/${gameId}/tv`, "_blank")}
-                            aria-label="Open TV-weergave in nieuw tabblad"
+                            onclick={() => (rulesOpen = true)}
+                            aria-label="Spelregels openen"
                             class="flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                         >
-                            <IconCast size={16} />
-                            TV
+                            <IconBook size={16} />
+                            Regels
                         </button>
-                    {/if}
+                        {#if gameId}
+                            <button
+                                onclick={() => window.open(`/match/risk/${gameId}/tv`, "_blank")}
+                                aria-label="Open TV-weergave in nieuw tabblad"
+                                class="flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                            >
+                                <IconCast size={16} />
+                                TV
+                            </button>
+                        {/if}
+                    </div>
                 </div>
                 {#if game.winner}
                     <div class="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-500/30 p-6 mb-4 flex items-center justify-between">
@@ -233,14 +260,20 @@
                         <div class="flex items-center gap-3">
                             <span class="w-3.5 h-3.5 rounded-full" style="background:{setup.color(game.turn.playerId)}"></span>
                             <span class="font-display font-bold text-lg">{activeName}</span>
-                            {#if game.turn.charge > 0}
-                                <span class="text-amber-500 font-bold text-sm">⚡ +{game.turn.charge} charged</span>
-                            {/if}
                         </div>
-                        <div class="flex items-center gap-1.5">
-                            {#each Array(game.turn.dartsLeft) as _, i}
-                                <span class="w-2 h-6 rounded-full bg-zinc-800 dark:bg-white"></span>
-                            {/each}
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-1.5">
+                                {#each Array(game.turn.dartsLeft) as _, i}
+                                    <span class="w-2 h-6 rounded-full bg-zinc-800 dark:bg-white"></span>
+                                {/each}
+                            </div>
+                            {#if !gate}
+                                <button
+                                    onclick={saveRest}
+                                    aria-label="Eindig beurt en spaar resterende darts"
+                                    class="text-xs font-semibold px-3 py-1.5 rounded-full ring-1 ring-black/10 dark:ring-white/15 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                                >End turn · save {game.turn.dartsLeft}</button>
+                            {/if}
                         </div>
                     </div>
                 {/if}
@@ -270,7 +303,7 @@
                     {:else}
                         <RiskBoard state={game} onHit={throwDart} disabled={boardDisabled} />
                         <div class="mt-3 flex items-center justify-between">
-                            <p class="text-xs text-zinc-400">Treble feeds the inner box · double feeds the outer · bull charges the Arsenal</p>
+                            <p class="text-xs text-zinc-400">Treble feeds the inner box · double feeds the outer · bull banks darts (25 +2 · 50 +3) · black rim = miss</p>
                             {#if !boardDisabled}
                                 <button class="text-xs font-semibold px-3 py-1.5 rounded-full ring-1 ring-black/10 dark:ring-white/15 text-zinc-500" onclick={() => throwDart({ segment: 0, multiplier: 1 })}>Miss</button>
                             {/if}
@@ -279,7 +312,7 @@
                 </div>
             </div>
 
-            <div class="space-y-4">
+            <div class="flex flex-col gap-4">
                 {#if gate && !game.winner && !game.tie}
                     {@const b = budget!}
                     <div class="rounded-2xl ring-1 ring-black/10 dark:ring-white/15 p-4 bg-white dark:bg-zinc-900">
@@ -287,7 +320,7 @@
                         <h2 class="font-display text-xl font-bold" style="color:{setup.color(gateFor)}">{setup.name(gateFor)}</h2>
                         <p class="mt-1 text-sm">
                             <span class="font-bold text-base">{b.total}</span> darts
-                            <span class="text-zinc-400">— base {b.base}{#each b.sources as s}&nbsp;· +{s.darts} {s.continent}{/each}</span>
+                            <span class="text-zinc-400">— base {b.base}{#each b.sources as s}&nbsp;· +{s.darts} {s.continent}{/each}{#if b.saved}&nbsp;· +{b.saved} saved{/if}</span>
                         </p>
                         {#if isExiled(game, gateFor)}
                             <p class="mt-1 text-xs text-amber-600 dark:text-amber-400 font-semibold">In exile — capture any box at 0 armies to claw back</p>
@@ -327,9 +360,9 @@
                     {/if}
                 </div>
 
-                <div class="rounded-2xl bg-white dark:bg-zinc-900 ring-1 ring-black/10 dark:ring-white/15 p-4">
+                <div class="rounded-2xl bg-white dark:bg-zinc-900 ring-1 ring-black/10 dark:ring-white/15 p-4 flex-1 min-h-0 flex flex-col">
                     <h2 class="font-display font-bold mb-3">War log</h2>
-                    <div class="space-y-1 max-h-72 overflow-y-auto text-sm">
+                    <div class="space-y-1 flex-1 min-h-0 overflow-y-auto text-sm">
                         {#each feed as f (f.id)}
                             <p class="text-zinc-600 dark:text-zinc-300"><span class="inline-block w-2 h-2 rounded-full mr-1.5 align-middle" style="background:{f.color}"></span>{f.text}</p>
                         {/each}
@@ -339,6 +372,7 @@
                 <a href="/match/setup?tab=fun" class="block text-center text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 py-2">← New game</a>
             </div>
         </div>
+        <RiskRules open={rulesOpen} close={() => (rulesOpen = false)} />
     {:else}
         <p class="p-10 text-center text-zinc-400">Loading campaign…</p>
     {/if}

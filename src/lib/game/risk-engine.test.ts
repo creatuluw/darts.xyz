@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyDart, applyTiebreak, budgetWithSources, createGame, isExiled, standings } from './risk-engine';
+import { applyDart, applyTiebreak, budgetWithSources, createGame, endTurnSaving, isExiled, standings } from './risk-engine';
 
 describe('Risk 42 — the Deal (M1.1)', () => {
     it('deals all 40 boxes equally with 2 armies each (2 players)', () => {
@@ -40,12 +40,12 @@ describe('Risk 42 — the Deal (M1.1)', () => {
         expect(c.boxes.map((x) => [x.id, x.owner])).not.toEqual(a.boxes.map((x) => [x.id, x.owner]));
     });
 
-    it('starter is an input; the first turn starts with base budget and no charge', () => {
+    it('starter is an input; the first turn starts with base budget and an empty dart bank', () => {
         const g = createGame(['alice', 'bob', 'carol'], { seed: 1, starterPlayerId: 'carol' });
 
         expect(g.turn.playerId).toBe('carol');
         expect(g.turn.dartsLeft).toBe(3);
-        expect(g.turn.charge).toBe(0);
+        expect(g.saved).toEqual({});
         expect(g.turn.index).toBe(1);
         expect(g.winner).toBeNull();
     });
@@ -159,63 +159,65 @@ describe('Risk 42 — turn lifecycle & the Arsenal (M1.3)', () => {
         return { g, box };
     };
 
-    it('a bull charges the darts thrown after it: 25 = +1, 50 = +2', () => {
-        const { g, box } = setup();
+    it('a bull banks extra darts into the current turn: 25 = +2, 50 = +3', () => {
+        const { g } = setup();
         const me = g.turn.playerId;
-        box('20-inner').owner = me; box('20-inner').armies = 5;
 
-        applyDart(g, { segment: 25 });                      // charge +1
-        applyDart(g, { segment: 20, multiplier: 1, singleRing: 'inner' }); // 1 + 1
-        applyDart(g, { segment: 0 });                       // end turn harmlessly
-        expect(box('20-inner').armies).toBe(7);
+        applyDart(g, { segment: 25 }); // 3 - 1 + 2 = 4
+        expect(g.turn.dartsLeft).toBe(4);
+        applyDart(g, { segment: 0 });
+        expect(g.turn.dartsLeft).toBe(3);
 
-        // a's next turn (3 players: b, c in between) — 50 = +2
+        // a's next turn (3 players: b, c in between) — me still has 3 banked-from-the-bull darts to spend
+        applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); // me
         applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); // b
         applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); // c
         expect(g.turn.playerId).toBe(me);
-        applyDart(g, { segment: 50 });
-        applyDart(g, { segment: 20, multiplier: 3 });       // 2 + 2
-        expect(box('20-inner').armies).toBe(11);
+        applyDart(g, { segment: 50 }); // 3 - 1 + 3 = 5
+        expect(g.turn.dartsLeft).toBe(5);
     });
 
-    it('charges stack additively: 25 then 50 = +3 on the following dart', () => {
+    it('a bull pays in darts, not damage — the next dart deposits its plain ring value', () => {
         const { g, box } = setup();
         const me = g.turn.playerId;
         const foe = g.players.find((p) => p !== me)!;
         box('3-outer').owner = foe; box('3-outer').armies = 5;
 
-        applyDart(g, { segment: 25 });
-        applyDart(g, { segment: 50 });
-        applyDart(g, { segment: 3, multiplier: 2 }); // 2 + 3 = 5 damage → 0 → flips
-        expect(box('3-outer')).toMatchObject({ owner: me, armies: 1 });
+        applyDart(g, { segment: 25 });               // +2 darts, no charge
+        applyDart(g, { segment: 3, multiplier: 2 }); // plain 2 damage
+        expect(box('3-outer').armies).toBe(3);       // 5 - 2, NOT 5 - 5
     });
 
-    it('a bull as the last dart fizzles — no board effect; a bull-only turn touches nothing', () => {
+    it('a bull on the last dart refills the pool — the turn keeps going', () => {
         const { g } = setup();
         const before = JSON.stringify(g.boxes);
-        applyDart(g, { segment: 25 });
-        applyDart(g, { segment: 25 });
-        applyDart(g, { segment: 50 }); // last-dart bull: charge set but turn ends
-        expect(JSON.stringify(g.boxes)).toBe(before); // bulls never touch boxes
-        expect(g.turn.charge).toBe(0); // fresh turn, nothing carried
+        const me = g.turn.playerId;
+        applyDart(g, { segment: 0 });
+        applyDart(g, { segment: 0 }); // 1 dart left
+        applyDart(g, { segment: 50 }); // last dart → +3 back
+        expect(JSON.stringify(g.boxes)).toBe(before); // misses + a bull never touch boxes
         expect(g.turn.dartsLeft).toBe(3);
+        expect(g.turn.playerId).toBe(me);             // same turn, darts to spend
     });
 
-    it('charge never leaks across the turn boundary', () => {
+    it('without saving, the pool drains to zero and the turn advances with nothing banked', () => {
         const { g, box } = setup();
         const me = g.turn.playerId;
-        applyDart(g, { segment: 25 });
+        applyDart(g, { segment: 25 }); // 4 left
         applyDart(g, { segment: 20, multiplier: 3 });
         applyDart(g, { segment: 20, multiplier: 3 });
-        // turn advanced (3 darts spent); next player's deposits are uncharged
+        applyDart(g, { segment: 20, multiplier: 3 });
+        applyDart(g, { segment: 20, multiplier: 3 }); // bull-refilled pool fully drained (5 throws)
+        // pool drained → turn advanced normally, nothing banked
         expect(g.turn.playerId).not.toBe(me);
+        expect(g.saved[me] ?? 0).toBe(0);
         const next = g.turn.playerId;
         box('1-inner').owner = next; box('1-inner').armies = 4;
         applyDart(g, { segment: 1, multiplier: 3 });
-        expect(box('1-inner').armies).toBe(6); // 2 + 0, no charge
+        expect(box('1-inner').armies).toBe(6); // plain 2 deposit
     });
 
-    it('after the last dart the turn advances: next player, fresh budget, charge cleared, index increments', () => {
+    it('after the last dart the turn advances: next player, fresh budget, bank untouched, index increments', () => {
         const { g } = setup();
         const starter = g.turn.playerId;
         applyDart(g, { segment: 20, multiplier: 3 });
@@ -224,8 +226,51 @@ describe('Risk 42 — turn lifecycle & the Arsenal (M1.3)', () => {
 
         expect(g.turn.playerId).not.toBe(starter);
         expect(g.turn.dartsLeft).toBe(3);
-        expect(g.turn.charge).toBe(0);
+        expect(g.saved).toEqual({});
         expect(g.turn.index).toBe(2);
+    });
+
+    it('endTurnSaving banks the whole remaining pool for this player\'s next turn', () => {
+        const { g } = setup();
+        const me = g.turn.playerId;
+        applyDart(g, { segment: 25 }); // 4 left
+        endTurnSaving(g);
+        expect(g.turn.playerId).not.toBe(me);
+        expect(g.saved[me]).toBe(4);
+    });
+
+    it('saved darts roll into the next turn on top of base + income, then leave the bank', () => {
+        const { g } = setup();
+        const me = g.turn.playerId;
+        applyDart(g, { segment: 50 }); // 3 - 1 + 3 = 5 left
+        endTurnSaving(g);              // bank 5
+        applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); // b
+        applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); // c
+        expect(g.turn.playerId).toBe(me);
+        expect(g.turn.dartsLeft).toBe(8); // 3 base + 5 saved
+        expect(g.saved[me] ?? 0).toBe(0); // drawn from the bank
+    });
+
+    it('savings accumulate: skip again and the bank stacks; saving counts as a turn', () => {
+        const { g } = setup();
+        const me = g.turn.playerId;
+        applyDart(g, { segment: 25 });
+        endTurnSaving(g); // bank 4
+        applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); // b
+        applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); // c
+        expect(g.turn.playerId).toBe(me);
+        expect(g.turn.dartsLeft).toBe(7); // 3 + 4
+        endTurnSaving(g);                 // bank all 7
+        applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); // b
+        applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); applyDart(g, { segment: 0 }); // c
+        expect(g.turn.dartsLeft).toBe(10); // 3 + 7 — the bank stacked
+        expect(g.turn.index).toBe(7);      // every handover counted a turn
+    });
+
+    it('endTurnSaving is rejected once the game is over', () => {
+        const { g } = setup();
+        g.winner = g.turn.playerId;
+        expect(() => endTurnSaving(g)).toThrow(/over/);
     });
 
     it('turn order rotates through the roster from the starter', () => {
@@ -351,6 +396,21 @@ describe('Risk 42 — continent income (M1.5)', () => {
         ]);
         expect(budget.total).toBe(6);
     });
+
+    it('budgetWithSources itemizes banked savings rolled into the new turn', () => {
+        const { g, box } = setup();
+        for (const b of g.boxes) b.owner = 'b'; // neutralize the random deal (no continent income for a)
+        box('5-inner').owner = 'a'; // a keeps one non-continent box — no domination, no exile
+        applyDart(g, { segment: 50 }); // 3 - 1 + 3 = 5 left
+        endTurnSaving(g);              // bank 5
+        playTurn(g);                   // b drains their 3 darts
+        expect(g.turn.playerId).toBe('a');
+
+        const budget = budgetWithSources(g);
+        expect(budget.base).toBe(3);
+        expect(budget.saved).toBe(5);
+        expect(budget.total).toBe(8); // 3 base + 5 saved
+    });
 });
 
 describe('Risk 42 — endgames (M1.6)', () => {
@@ -456,7 +516,7 @@ describe('Risk 42 — seeded invariant sweep (M1.7)', () => {
             const b = pick(r, mine); // reinforce
             return { segment: b.number, multiplier: 1 as const, singleRing: b.ring };
         }
-        return { segment: pick(r, [0, 25, 50]) }; // miss or Arsenal charge
+        return { segment: pick(r, [0, 25, 50]) }; // miss or Arsenal darts
     };
 
     // plain-JS invariant check: assert-on-violation (expect-per-dart would be 10M matcher calls)
@@ -469,7 +529,10 @@ describe('Risk 42 — seeded invariant sweep (M1.7)', () => {
         }
         if (!g.players.includes(g.turn.playerId)) bad('turn player not in roster');
         if (g.turn.dartsLeft < 0) bad('negative budget');
-        if (g.turn.charge < 0) bad('negative charge');
+        for (const p of Object.keys(g.saved ?? {})) {
+            if (!g.players.includes(p)) bad('saved bank for unknown player: ' + p);
+            if ((g.saved[p] ?? 0) < 0) bad('negative saved darts for ' + p);
+        }
         if (g.winner !== null && !g.players.includes(g.winner)) bad('winner not in roster');
         if (g.tie && (g.tie.length < 2 || g.winner !== null)) bad('tie state inconsistent');
     };
@@ -481,7 +544,8 @@ describe('Risk 42 — seeded invariant sweep (M1.7)', () => {
         let darts = 0;
         while (g.winner === null && !g.tie && darts < 2500) {
             if (g.turn.dartsLeft === 0) throw new Error('stuck: turn with zero budget');
-            applyDart(g, botDart(g, r));
+            if (r() < 0.1 && g.turn.dartsLeft > 1) endTurnSaving(g); // exercise the bank in sweeps
+            else applyDart(g, botDart(g, r));
             invariants(g);
             darts++;
         }
