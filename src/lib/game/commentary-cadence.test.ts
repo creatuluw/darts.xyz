@@ -8,8 +8,12 @@ import {
 } from './commentary-cadence';
 
 describe('commentary cadence', () => {
-	it('default cadence is every 2 turns', () => {
-		expect(DEFAULT_COMMENTARY_CADENCE).toBe(2);
+	it('default cadence is every 3 turns', () => {
+		expect(DEFAULT_COMMENTARY_CADENCE).toBe(3);
+		// the default itself lands boundaries on 3, 6, 9
+		expect(boundaryOf(2, DEFAULT_COMMENTARY_CADENCE)).toBe(0);
+		expect(boundaryOf(3, DEFAULT_COMMENTARY_CADENCE)).toBe(1);
+		expect(boundaryOf(6, DEFAULT_COMMENTARY_CADENCE)).toBe(2);
 	});
 
 	it('N=2: boundaries land on 2, 4, 6 — never mid-interval', () => {

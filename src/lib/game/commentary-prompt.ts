@@ -69,7 +69,7 @@ export function buildInterviewPrompt(input: InterviewInput): string {
 		'- Gebruik ALLEEN de beurten en spelers die hierboven genoemd worden. Verzin GEEN worpen, scores of gebeurtenissen die niet in de lijst staan.',
 		'- Een grap of overdrijving mag, maar de feiten eronder moeten kloppen met de lijst.',
 		'- Houd het levendig en betrokken: dit is een feestje, geen nieuwsuitzending.',
-		'Houd alle vier de teksten kort (max 3 zinnen elk).',
+		'- Houd elk segment kort: de vraag van de commentator, het antwoord van de toeschouwer, de analyse en de vooruitblik zijn elk MAXIMAAL 3 korte zinnen.',
 		'',
 		'Antwoord ALLEEN met geldige JSON, zonder markdown:',
 		'{"question": "<vraag van de commentator>", "answer": "<antwoord van de toeschouwer>", "analysis": "<analyse van de commentator>", "outlook": "<vooruitblik met cliffhanger>"}'

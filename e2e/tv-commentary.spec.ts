@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createConquestMatch, applyDart } from '../src/lib/game/conquest-engine';
 import type { ConquestState } from '../src/lib/game/conquest-engine';
+import { DEFAULT_COMMENTARY_CADENCE } from '../src/lib/game/commentary-cadence';
 
 /**
  * Commentary on the conquest TV (fake mode): fires exactly once per boundary,
@@ -40,9 +41,9 @@ test.describe('TV commentary', () => {
 			if (r.url().endsWith('/api/commentary') && r.method() === 'POST') posts++;
 		});
 
-		// cross the first boundary (2 turns)
+		// cross the first boundary (cadence turns)
 		await request.patch(`/api/conquest/${id}`, {
-			data: { state: withTurns(base, 2) }
+			data: { state: withTurns(base, DEFAULT_COMMENTARY_CADENCE) }
 		});
 
 		// fake-mode interview: subtitle appears (Leo or Theodore presents), exactly one POST fired
@@ -68,7 +69,7 @@ test.describe('TV commentary', () => {
 		});
 
 		await request.patch(`/api/conquest/${id}`, {
-			data: { state: withTurns(base, 4) }
+			data: { state: withTurns(base, DEFAULT_COMMENTARY_CADENCE + 1) }
 		});
 		await page.waitForTimeout(2_500);
 		expect(posts).toBe(0);
@@ -88,7 +89,7 @@ test.describe('TV commentary', () => {
 		await expect(page.getByText('Commentaar live')).toBeVisible({ timeout: 10_000 });
 
 		await request.patch(`/api/conquest/${id}`, {
-			data: { state: withTurns(base, 2) }
+			data: { state: withTurns(base, DEFAULT_COMMENTARY_CADENCE) }
 		});
 
 		const toast = page.getByText('Commentaar mislukt');

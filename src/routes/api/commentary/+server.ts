@@ -9,6 +9,7 @@ import {
 } from "$lib/game/elevenlabs-voices";
 import { buildInterviewPrompt, pickPersona } from "$lib/game/commentary-prompt";
 import { boundaryKey } from "$lib/game/commentary-cadence";
+import { trimInterview } from "$lib/game/commentary-trim";
 
 /**
  * Generate (or return cached) a Dutch interview for a completed N-turn
@@ -77,10 +78,12 @@ export const POST: RequestHandler = async ({ request }) => {
       persona
     });
     // LLM and voice-list fetch run concurrently — the voice list is cached per process
-    const [interview, voices] = await Promise.all([
+    const [rawInterview, voices] = await Promise.all([
       generateInterview(prompt),
       getDutchVoices()
     ]);
+    // defensive cap: the LLM sometimes overruns the 3-sentence instruction
+    const interview = trimInterview(rawInterview);
     const spectator = pickSpectatorVoice(voices);
     if (!spectator) throw new Error("No Dutch spectator voices available");
 
