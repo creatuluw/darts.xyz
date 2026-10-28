@@ -18,3 +18,5 @@ timestamp: "2026-10-28T18:11:08.334Z"
 3. **Refresh resurrects the "deleted" turn** — the ghost turn comes back with its score, and thrower rotation re-derives from the restored chronological turns (demoting the current thrower).
 
 **Fix direction:** the handler must take the turn id exclusively from the query param (or the body), never fall back to `params.id` — on this route `params.id` is structurally the wrong key. `deleteTurn` itself is clean; only the handler's id resolution is broken.
+
+**FIXED 2026-10-28** (commit `bf1803e`): the DELETE handler now reads `url.searchParams.get("id")` only. The same commit added the PATCH handler on the same route — its turn id comes from the body/query (`turnId`), never from `params.id`, so the bug cannot regress there.

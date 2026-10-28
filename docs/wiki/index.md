@@ -7,7 +7,7 @@ okf_version: "0.1"
 <!-- wiki-nav:start -->
 ## Navigation map
 
-Auto-generated detailed index of every docs/wiki/ concept — the map the LLM uses to locate information. 133 concept(s). Regenerated on init and on wiki_mark_synced. Generated 2026-10-28T18:45:15.946Z.
+Auto-generated detailed index of every docs/wiki/ concept — the map the LLM uses to locate information. 154 concept(s). Regenerated on init and on wiki_mark_synced. Generated 2026-10-28T20:04:09.789Z.
 
 Each entry: [title](concept-id.md) — description. Links are clickable in /wiki; pass the concept-id (link target minus .md) to wiki_get.
 
@@ -46,11 +46,13 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [LLM Commentary (Trebles & Territories)](pages/entities/llm-commentary-trebles-territories.md) — The in-game AI commentary/interview broadcast layer: an LLM writes Dutch commentary and spectator interviews at every-N-turn boundaries, voiced and subtitled on
 - [Match Stats Tab](pages/entities/match-stats-tab.md) — All-players statistics table in the live match UI, plus the leg/match average displays shipped with it.
 - [PlayerPanel](pages/entities/playerpanel.md) — A reusable scoreboard panel component for the live match scorer, rendered around the board for every roster size (full-size for 1–2 players, condensed cards for 3–6).
+- [Profile Editing (player name + sign-in email)](pages/entities/profile-editing-player-name-sign-in-email.md) — Profile Editing (player name + sign-in email)
 - [Recap Video Pipeline (Trebles & Territories)](pages/entities/recap-video-pipeline-trebles-territories.md) — The planned Morning-After recap feature for Trebles & Territories: the day after a game, each match gets an LLM-generated recap video, and players who stored an email address receive a link to it.
 - [Risk 42 end screens & Teruglezen drawer](pages/entities/risk-42-end-screens-teruglezen-drawer.md) — The game-over surfaces for [Risk 42](../concepts/risk-42-proposed-game-mode.md), shipped during the session-6 prod playtest (2026-09-10, commits `5e6dc11` + `bf
 - [Risk 42 engine (risk-engine.ts)](pages/entities/risk-42-engine-risk-engine-ts.md) — The pure, TDD'd game engine implementing [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md) — Risk 42 played on the standard dartboard wher
 - [Risk 42 playable game (risk-setup + Fun tab + /match/risk + RiskBoard)](pages/entities/risk-42-playable-game-risk-setup-fun-tab-match.md) — The playable cut of [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md): the pure setup module, the Fun-tab format picker, and the live game
 - [Spectator Interviews (Trebles & Territories)](pages/entities/spectator-interviews-trebles-territories.md) — Spectator Interviews (Trebles & Territories)
+- [Turns API (matches/[id]/turns)](pages/entities/turns-api-matches-id-turns.md) — Turns API
 - [TV second screen (cast views)](pages/entities/tv-second-screen-cast-views.md) — Read-only big-screen views of a live match, meant for tab-casting to a TV in the room: one route each for classic matches, conquest, and **Risk 42**. The scorer
 - [Page Templates](pages/TEMPLATES.md) — Reference templates for Concept, Entity, and Artifact pages. Follow these when using wiki_note_page.
 
@@ -104,41 +106,56 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [TV cast pages render on a fixed 1920×1080 TvStage canvas, scaled to fit — no viewport breakpoints](decisions/tv-cast-pages-render-on-a-fixed-1920-1080-tvstage.md) — Context
 - [TV spectator mode: URL + tab-cast, 1s polling, public-by-link, room-first](decisions/tv-mode-url-tab-cast-polling.md) — Context
 - [TvStage fills the viewport (independent x/y scale) — letterboxing dropped](decisions/tvstage-fills-the-viewport-independent-x-y-scale.md) — Context
+- [Wiki scope: product knowledge only — all dev-process content removed](decisions/wiki-scope-product-knowledge-only-all-dev-process-content-re.md) — Context
 
 ### Rules
 
 - [Board SVGs are generated — edit the regenerator, never the output](rules/board-svgs-are-generated.md) — Guideline
 - [Derive stats from state deltas, never by substring-matching log copy](rules/derive-stats-from-state-deltas-never-by-substring.md) — **Guideline:** Never derive a gameplay stat by scanning or substring-matching human-readable log lines. Count from state deltas (or engine return values) instea
+- [Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets](rules/engine-invariant-sweeps-plain-asserts-assert.md) — The guideline
 - [Never hardcode player slots in match UI](rules/never-hardcode-player-slots-in-match-ui.md) — Guideline
 - [New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board](rules/new-game-modes-follow-the-conquest-cut-pure-setup.md) — The rule
+- [Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert](rules/prove-overlays-never-block-gameplay-live-dom.md) — The guideline
 - [Use $app/stores $page for page state — house style](rules/use-app-stores-page-for-page-state-house-style.md) — Rule
 - [Use the Tooltip component, not native title attributes](rules/use-tooltip-not-native-title.md) — Guideline
+- [When a playtest stalls under background-tab throttling, finish the game via the engine + PATCH — don't tab-hop](rules/when-a-playtest-stalls-under-background-tab.md) — The guideline
 
 ### Learnings
 
 - [Abandon match is instant with no confirmation](learnings/abandon-match-is-instant-with-no-confirmation.md) — **Found during the 2026-10-28 four-game test sweep** (Game 2, 3-player 301).
 - [Bank folded in at handover loses provenance — carry it on the object (turn.carried)](learnings/bank-folded-in-at-handover-loses-provenance-carry.md) — **The gotcha:** in Risk 42 the engine adds the player's saved-dart bank to the next turn's budget *at handover* — so by the time the UI renders the pre-turn gat
+- [Bulk-deleting wiki concepts strands links — grep short slugs too and let wiki_validate catch the rest](learnings/bulk-deleting-wiki-concepts-strands-links-grep-short-slugs-t.md) — **The gotcha:** deleting a wiki concept file does NOT clean up references to it. Folder indexes (`rules/index.md`, `decisions/index.md`, …) keep stale entries, 
 - [Commentary LLM = DeepSeek deepseek-v4-flash (from glm-5.3-flash); ~1s LLM latency](learnings/commentary-llm-deepseek-v4-flash.md) — 2026-09-09 evening: commentary LLM switched from OpenCode Zen Go (glm-5.3-flash, ~20-50s latency, needed x-opencode-session header) to **DeepSeek** (`https://ap
 - [Commentary pipeline: ~25s real cost vs 20s timeout — raise/parallelize](learnings/commentary-pipeline-25s-real-cost-vs-20s-timeout.md) — Measured while playtesting all game modes on 2026-09-09: the 4-segment commentary pipeline (glm-5.3-flash LLM call + 4 sequential ElevenLabs TTS synthesizes) ta
 - [Conquest state is client-side only — nothing for a 2nd screen to poll](learnings/conquest-state-client-side-only.md) — The fact
+- [Copy .env into a fresh worktree BEFORE starting the dev server — Vite loads it at startup only](learnings/copy-env-into-a-fresh-worktree-before-starting.md) — Symptom
 - [Dartboard SVG paths encode box identity — read (number, ring) from geometry, don't hand-map](learnings/dartboard-svg-paths-encode-box-identity-read.md) — The fact
 - [darts_email localStorage key stores the email raw, not JSON](learnings/darts-email-localstorage-stores-raw-email.md) — The `darts_email` localStorage key stores the email as a **raw string** — `getEmail`/`setEmail` do not JSON-encode it. This differs from the accounts key, which
 - [db:push ignores the darts schema — migrations are file-as-record, applied directly](learnings/db-push-ignores-darts-schema.md) — `drizzle-kit push` (npm `db:push`) only manages the **`public`** schema — it silently ignores the `darts` schema, so a push can "succeed" while the table never 
 - [deleteLastTurn UI: shared confirm state + restore uses the wrong player's remaining score](learnings/deletelastturn-ui-shared-confirm-state-restore-uses-the-wron.md) — **Found during the 2026-10-28 neo-browser delete-turn test campaign**, verified live in both a 2-player and a 3-player match. The trash-icon delete on PlayerPan
 - [Double-in is a dead toggle — saved and loaded, never enforced in scoring](learnings/double-in-is-a-dead-toggle-saved-and-loaded-never-enforced-i.md) — **Found during the 2026-10-28 four-game test sweep** (Game 3: 701 double-in, 2 players) — highest-severity finding of the sweep.
 - [EmailGate remember-me already ships — email persists, gate skips, saved accounts exist](learnings/emailgate-remember-me-already-ships.md) — A feature request to "remember the email on the EmailGate" (2026-09, worktree `kees-remember-me`) turned out to be **already shipped in master** — recon before
+- [Engine test helpers must adapt to live dart budgets — income mechanics break fixed throw counts](learnings/engine-test-helpers-must-adapt-to-live-dart.md) — Engine test helpers must adapt to live dart budgets — income mechanics break fixed throw counts
 - [$env/dynamic/private doesn't resolve in vitest — split the pure logic into its own module](learnings/env-dynamic-private-vitest-split.md) — Vitest can't resolve `$env/dynamic/private` — importing it in a module under test fails at import time.
 - [Flipped labels: negate radial offset on left half](learnings/flipped-labels-negate-radial-offset-on-left-half.md) — Gotcha
+- [Fresh SvelteKit worktree needs `svelte-kit sync` before tests run](learnings/fresh-sveltekit-worktree-needs-svelte-kit-sync.md) — Gotcha from the Risk 42 M1 build (2026-09-09): a freshly created SvelteKit worktree (deps junctioned from the main checkout) is **missing the generated `.svelte
+- [Game-engine tests: filler darts must be misses, and fixtures obey the rules they enforce](learnings/game-engine-tests-filler-darts-must-be-misses-and.md) — Caught red-handed twice during the Risk 42 M1 TDD cycles (2026-09-09), both produced false reds (and one false green that slipped into a commit and had to be am
 - [GoDaddy apex domain on Railway: A record to live edge IP, not the documented one](learnings/godaddy-apex-domain-a-record-to-edge-ip.md) — The pattern (snooze.monster / dart.monster, Sep 2026)
 - [GoDaddy DNS can't serve a Railway apex domain](learnings/godaddy-dns-can-t-serve-a-railway-apex-domain.md) — The gotcha
 - [inputMode lives in per-origin localStorage — same repo on different ports shows different scorer state](learnings/inputmode-lives-in-per-origin-localstorage-same-repo-on-diff.md) — **The gotcha:** a user report of "the dartboard is broken on the same repo, other port" turned out to be **per-origin localStorage divergence**, not a code bug.
+- [Junctioned node_modules needs Vite server.fs.allow — client entry 403s otherwise](learnings/junctioned-node-modules-needs-vite-server-fs-allow.md) — The fact
 - [Match API is unauthenticated — the share link is the key](learnings/match-api-unauthenticated.md) — The fact
+- [Merged-PR leftovers in the main tree block the pull — verify identical, then discard](learnings/merged-pr-leftovers-block-the-pull.md) — Merged-PR leftovers in the main tree block the post-cleanup pull
 - [Miss turns must persist with dartsThrown ≥ 1](learnings/miss-turns-must-persist-with-dartsthrown-1.md) — The turns table / API has a constraint that `dartsThrown >= 1`. A miss (all three darts off the board) is still a turn and must be persisted with `dartsThrown`
+- [Neo ref-clicks silently no-op on some SvelteKit buttons — use evaluate el.click()](learnings/neo-ref-clicks-silently-no-op-on-some-sveltekit.md) — During the 2026-09-09 playtest sessions, driving the real app through BrowserOS neo's CDP-based `input().click(ref)` **failed silently** on several SvelteKit bu
 - [Don't name a top-level Svelte 5 variable `state` — svelte2tsx collision](learnings/no-top-level-state-var-svelte2tsx.md) — Naming a top-level Svelte 5 component variable `state` trips a svelte2tsx collision (the compiler's own `state` concept) and fails `svelte-check`. The conquest
 - [Numpad multiplier relabels number buttons (T20/D20) — and the selection persists across turns](learnings/numpad-multiplier-relabels-number-buttons-t20-d20-and-the-se.md) — **Found during the 2026-10-28 four-game test sweep**, driving the live scorer via browser automation.
 - [OpenCode zen/go LLM endpoint needs x-opencode-session header + custom User-Agent](learnings/opencode-zen-go-needs-session-header.md) — The OpenCode Zen Go chat-completions endpoint (`https://opencode.ai/zen/go/v1/chat/completions`) rejects plain requests — it requires BOTH:
 - [Patching board SVGs: replace existing attributes, never append duplicates](learnings/patching-board-svgs-replace-existing-attributes.md) — Gotcha
 - [Plain `let` assigned in async onMount never re-renders — must be $state](learnings/plain-let-onmount-needs-state.md) — The gotcha
+- [Playwright hit-target check fails at the bull's center — the 50 ring paints on top; click the 25 ring off-center](learnings/playwright-hit-target-fails-at-bull-center.md) — **The gotcha:** in the dartboard SVG the bullseye (50) is painted **on top of** the single bull (25). A Playwright click aimed at the exact center of the bull t
+- [Playwright reuses orphaned dev servers — E2E can silently test master code, not your worktree](learnings/playwright-reuses-orphaned-dev-servers.md) — The fact
+- [Railway auto-deploy can silently skip a master push — verify timestamp vs latest commit, fallback is railway up](learnings/railway-auto-deploy-can-silently-skip-a-master-push-verify-t.md) — **Found on 2026-10-28** while checking whether PR #18 (`7d01bcf`, "always show the dartboard on the Board tab") was live.
 - [Refresh-resume depends on chronological turn order and persisted firstThrowerId](learnings/refresh-resume-needs-chronological-turn-order.md) — Refreshing the browser mid-leg (resume logic in `src/routes/match/[id]/+page.svelte`) silently depends on two implicit contracts. Breaking either reproduces the
 - [Risk 42 adjacency table drifts from classic Risk by 3 edges — edge-sampling tests can't catch membership drift](learnings/risk-42-adjacency-table-drifts-from-classic-risk.md) — **Found in the 2026-10-24 three-axis code review** of PR #17 (commit 2c4d474) — Spec axis, should-fix/high.
 - [Risk board SVGs: path attribute order varies — extract element-wise, not by regex lookahead](learnings/risk-board-svg-attribute-order.md) — Gotcha
@@ -147,18 +164,22 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [risk-territory-board.svg palette: fills live in layer2, join to territories by centroid containment](learnings/risk-territory-board-svg-palette-in-layer2.md) — The world map for the Risk 42 TV view (`docs/risk/risk-territory-board.svg`, a copy of `risk-board.svg`) carries its **per-territory tints in the `layer2` fill
 - [scrollbar-gutter: stable reserves 15px that window.innerWidth counts — measure the host box](learnings/scrollbar-gutter-stable-reserves-15px.md) — The gotcha
 - [Session-only logins are absent from the saved-accounts list — don't gate account switching on it](learnings/session-only-logins-not-in-accounts-list.md) — Gotcha
+- [Squash-merged branch: commit-ahead ≠ unmerged — prove with git cherry](learnings/squash-merged-branch-commit-ahead-unmerged.md) — Squash-merged branch: commit-ahead ≠ unmerged
 - [SSR pages are empty shells — EmailGate gates all rendering client-side](learnings/ssr-pages-are-empty-shells-emailgate.md) — Gotcha
 - [startRisk clears risk42_state but not risk42_game_id — new game silently resumes the old one](learnings/startrisk-clears-risk42-state-not-game-id.md) — **Found during the Risk 42 prod playtest campaign (2026-09-09/10), logged P1.**
 - [structuredClone can't clone Svelte 5 $state proxies — pass $state.snapshot() at the engine boundary](learnings/structuredclone-can-t-clone-svelte-5-state.md) — Gotcha
 - [SVG path parsing: arc arguments are not points — tokenize by command, never by coordinate-pair regex](learnings/svg-path-parsing-arc-arguments-are-not-points.md) — Gotcha
+- [Sync infinite loop in a test helper hangs vitest with no timeout](learnings/sync-infinite-loop-in-a-test-helper-hangs-vitest.md) — The symptom
 - [Tooltips must use fixed positioning to escape overflow clipping](learnings/tooltips-must-use-fixed-positioning.md) — Gotcha
 - [Top-level return in a CJS script skips the file write — silent no-op](learnings/top-level-return-in-a-cjs-script-skips-the-file.md) — Gotcha
 - [TS can't narrow $state inside closures — use $derived.by with local capture](learnings/ts-can-t-narrow-state-in-closures.md) — Gotcha
 - [Turns DELETE endpoint silently no-ops — params.id (match id) shadows the turn-id query param](learnings/turns-delete-endpoint-silently-no-ops-params-id-match-id-sha.md) — **Found during the 2026-10-28 neo-browser delete-turn test campaign** (2-player match `96c568e8`, 3-player match `02cae89f`).
 - [TV cast pages freeze in background tabs — document.hidden pauses polling and commentary](learnings/tv-cast-pages-freeze-in-background-tabs-document.md) — All three TV cast routes — `src/routes/match/[id]/tv/+page.svelte` (classic), `src/routes/match/conquest/[id]/tv/+page.svelte` (T&T), `src/routes/match/risk/[id
 - [TV commentary hangs on one segment: audio events never fire in throttled windows — race every segment against a reading-time cap](learnings/tv-commentary-hangs-on-one-segment-audio-events.md) — Discovered during the 2026-09-09/10 prod playtest campaign (session 6): the TV commentary broadcast could hang forever on ONE segment. Root cause chain:
+- [Vitest can't see type holes — esbuild strips types; svelte-check is the only net](learnings/vitest-can-t-see-type-holes-esbuild-strips-types.md) — The gotcha
 - [Only webSpeech TTS speaks Dutch — kokoro is English-only, ElevenLabs is pre-generated clips](learnings/webspeech-only-dutch-tts.md) — Only webSpeech TTS speaks Dutch
 - [Wedge index from a seg path's M point needs a +9° half-wedge shift](learnings/wedge-index-from-a-seg-path-s-m-point-needs-a-9.md) — Gotcha
+- [Wiki-recap staged files sweep into the next commit](learnings/wiki-recap-staged-files-sweep-into-the-next-commit.md) — **The gotcha:** the wiki-recap subagent writes docs/wiki/ files at the end of turns and leaves them staged in the git index. A later `git add <my-file>` + `git 
 - [wiki_search misses recently-written concepts — verify with wiki_validate or ls before writing](learnings/wiki-search-misses-recent-concepts.md) — Discovered while recapping the Risk-darts rollback turn: `wiki_search("risk territory")` and `wiki_search("heat economies")` both returned **no results**, yet `
 - [Bare [[slug]] wikilinks in wiki_note_page break cross-folder — use explicit relative paths](learnings/wikilinks-bare-slug-breaks-cross-folder.md) — The gotcha
 <!-- wiki-nav:end -->

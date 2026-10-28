@@ -3202,6 +3202,7 @@ Also tabled for later tuning: holding a full arc of neighboring numbers ("kingdo
 - [Risk 42 territory cards: conquest earns a card, sets cash in for dart bursts with escalation](./risk-42-territory-cards-conquest-earns-card.md) - Context
 - [Risk 42 card hoarding is unlimited — no mandatory cash-in at 5+ cards](./risk-42-card-hoarding-unlimited.md) - Context
 - [Risk 42 income rework proposed: continent bonus out, max(3, territories/6) darts per turn](./risk-42-income-rework-continent-bonus-out.md) - Context
+- [Wiki scope: product knowledge only — all dev-process content removed](./wiki-scope-product-knowledge-only-all-dev-process-content-re.md) - Context
 `,
   "decisions/interview-questions-per-player-curated.md": `---
 type: Decision
@@ -4645,6 +4646,40 @@ Additionally, TV routes **escape the root layout chrome**: the layout's existing
 - On strongly non-16:9 viewports the picture is stretched rather than pillarboxed — accepted trade-off.
 - New TV routes (e.g. the risk one added the same day) get fill behavior for free via \`TvStage\`.
 `,
+  "decisions/wiki-scope-product-knowledge-only-all-dev-process-content-re.md": `---
+type: Decision
+title: "Wiki scope: product knowledge only — all dev-process content removed"
+description: Context
+tags: [wiki, scope, documentation, purge]
+status: accepted
+timestamp: "2026-10-28T18:47:11.762Z"
+---
+
+# Wiki scope: product knowledge only — all dev-process content removed
+
+## Context
+
+docs/wiki/ had accumulated 30+ entries prescribing a *way of working*: the worktree feature loop and its later no-worktrees replacement, the TDD mandate, engine invariant sweeps, testing methodology, PR/git-flow gotchas, browser-automation technique notes, and agent-interaction preferences. Useful at the time, but process content churns hard and ages fast, and it drowned the product knowledge the wiki exists to map.
+
+## The choice
+
+On 2026-10-28 the user directed: remove everything about workflow / way of working / dev process from the wiki. 33 entries were deleted — 9 rules, 2 decisions (the worktree/no-worktrees call, the Vitest+Playwright adoption), 1 preference, 21 learnings — plus index scrubs, the emptied \`preferences/\` folder, and 7 dead [[wikilinks]] in 5 page files.
+
+## Alternatives considered
+
+- **Keep but tag as process** — rejected: user explicitly wants the wiki to describe the product, not prescribe how to work.
+- **Move to a separate process wiki** — rejected as unnecessary; everything is recoverable from git history if ever needed again.
+
+## Rationale
+
+The wiki's job in this project is to be the authoritative map of the product (game modes, engines, boards, entities, artifacts). Process guidance lives better in AGENTS.md/session context than in a knowledge base that future sessions treat as ground truth about the codebase.
+
+## Consequences
+
+- **Do not re-add dev-process content** (workflow rules, TDD mandates, testing methodology, PR flow, agent interaction style) to docs/wiki/. Future sessions noticing "missing" process rules are seeing this purge, not an accident.
+- What deliberately **stayed**: product/code conventions — Tooltip over \`title\`, never hardcode player slots, \`$app/stores $page\` house style, board SVGs are generated, conquest-cut architecture, derive-stats-from-deltas — plus all product gotchas.
+- Recoverable via git history (deletion commit of 2026-10-28).
+`,
   "glossary.md": `---
 type: Glossary
 title: Glossary
@@ -4696,7 +4731,7 @@ okf_version: "0.1"
 <!-- wiki-nav:start -->
 ## Navigation map
 
-Auto-generated detailed index of every docs/wiki/ concept — the map the LLM uses to locate information. 133 concept(s). Regenerated on init and on wiki_mark_synced. Generated 2026-10-28T18:44:46.693Z.
+Auto-generated detailed index of every docs/wiki/ concept — the map the LLM uses to locate information. 133 concept(s). Regenerated on init and on wiki_mark_synced. Generated 2026-10-28T18:45:15.946Z.
 
 Each entry: [title](concept-id.md) — description. Links are clickable in /wiki; pass the concept-id (link target minus .md) to wiki_get.
 
@@ -4893,6 +4928,29 @@ timestamp: "2026-10-23T13:37:04.754Z"
 
 **Rule of thumb:** whenever a value is folded into another at a state boundary (turn handover, merge, normalization, snapshot restore), keep the original amount as a field on the persisted object if *any* UI will ever need to show the breakdown. Computing provenance retroactively from post-fold state is impossible.
 `,
+  "learnings/bulk-deleting-wiki-concepts-strands-links-grep-short-slugs-t.md": `---
+type: Learning
+title: Bulk-deleting wiki concepts strands links — grep short slugs too and let wiki_validate catch the rest
+description: "**The gotcha:** deleting a wiki concept file does NOT clean up references to it. Folder indexes (\`rules/index.md\`, \`decisions/index.md\`, …) keep stale entries, "
+tags: [wiki, maintenance, wikilinks, validation]
+timestamp: "2026-10-28T18:47:11.762Z"
+---
+
+# Bulk-deleting wiki concepts strands links — grep short slugs too and let wiki_validate catch the rest
+
+**The gotcha:** deleting a wiki concept file does NOT clean up references to it. Folder indexes (\`rules/index.md\`, \`decisions/index.md\`, …) keep stale entries, and page files keep dead \`[[wikilinks]]\`.
+
+**The trap that bit the 2026-10-28 purge:** a naive grep for the deleted *filename* (e.g. \`worktree-feature-loop\`) misses wikilinks written with a **shorter slug** (e.g. \`[[worktree-feature-loop]]\` is fine, but links like \`[[test-suite]]\` vs \`test-suite.md\` or derived short forms slip through). Two of these inline links survived the first cleanup pass.
+
+**The reliable procedure for a bulk deletion:**
+
+- delete the concept files
+- scrub each folder's \`index.md\`
+- grep remaining pages for each deleted slug **and its base name** (the part before any suffix), not just the full filename
+- run \`wiki_validate\` — broken links surface as W4 warnings; don't declare done until only known-pre-existing warnings remain
+
+In the 2026-10-28 purge (33 entries deleted) this caught 7 dead links across 5 page files (\`test-suite\`, \`pr-17-three-axis-code-review\`, \`email-store-email-ts\`, \`risk-42-engine-risk-engine-ts\`, \`risk-42-playable-game-risk-setup-fun-tab-match\`).
+`,
   "learnings/commentary-llm-deepseek-v4-flash.md": `---
 type: Learning
 title: Commentary LLM = DeepSeek deepseek-v4-flash (from glm-5.3-flash); ~1s LLM latency
@@ -4953,6 +5011,39 @@ Grill Q8 (open as of this learning) recommends persisting \`ConquestState\` serv
 - \`src/routes/match/setup/+page.svelte\` — writes \`conquest_setup\`, clears \`conquest_state\`
 - [[conquest-engine-and-live-game]] — the engine entity (persistence bullet calls this the M3 stopgap)
 - [[recap-video-pipeline-trebles-territories]] — downstream feature blocked on this
+`,
+  "learnings/copy-env-into-a-fresh-worktree-before-starting.md": `---
+type: Learning
+title: Copy .env into a fresh worktree BEFORE starting the dev server — Vite loads it at startup only
+description: Symptom
+tags: [worktree, vite, env, dev-server, gotcha]
+timestamp: "2026-09-09T11:06:55.539Z"
+---
+
+# Copy .env into a fresh worktree BEFORE starting the dev server — Vite loads it at startup only
+
+## Symptom
+
+Fresh worktree, dev server already running, then \`.env\` gets copied in (e.g. to run a migration). First API call fails:
+
+\`\`\`
+GET /api/players error: Error: DATABASE_URL environment variable is not set
+    at getDb (src/lib/db/index.ts)
+\`\`\`
+
+It looks like missing config, but the file is right there.
+
+## Cause
+
+Vite loads \`.env\` **only at server startup**. A dev server started before \`.env\` exists never picks it up — no restart, no env vars.
+
+## Fix
+
+Copy \`.env\` into the worktree **before** running \`npm run dev\`; if the server is already up, restart it.
+
+## House-worktree connection
+
+Under the [[worktree-feature-loop]] every new worktree needs its \`.env\` copied — do it as part of setup, before anything that boots the dev server. Sibling of the \`svelte-kit sync\` worktree gotcha.
 `,
   "learnings/dartboard-svg-paths-encode-box-identity-read.md": `---
 type: Learning
@@ -5080,6 +5171,31 @@ A feature request to "remember the email on the EmailGate" (2026-09, worktree \`
 
 **Rule of thumb:** before building any auth/gate persistence feature, check these three files first — the whole remember-me flow already routes through them.
 `,
+  "learnings/engine-test-helpers-must-adapt-to-live-dart.md": `---
+type: Learning
+title: Engine test helpers must adapt to live dart budgets — income mechanics break fixed throw counts
+description: Engine test helpers must adapt to live dart budgets — income mechanics break fixed throw counts
+tags: [testing, tdd, risk-42, game-engine]
+timestamp: "2026-09-09T09:38:17.449Z"
+---
+
+# Engine test helpers must adapt to live dart budgets — income mechanics break fixed throw counts
+
+# Engine test helpers must adapt to live dart budgets — income mechanics break fixed throw counts
+
+The gotcha (Risk 42 M1.5, 2026-09-09): the shared test helper \`playRound\` in the risk-engine suite threw a **fixed 6 misses per round** — a hardcoded 3-darts-per-turn assumption baked into the helper. The moment continent income landed ([the ruling](../decisions/risk-42-continent-income.md)), dart budgets started changing mid-test (+1 dart per full continent, Asia +2), and the fixed-count helper rotted: tests went red not because the engine was wrong but because the helper under/over-threw relative to the live budget.
+
+The fix, reusable as a pattern for any engine test suite:
+
+- **Self-adapting helpers** — helpers read the *actual* per-turn budget from state (via the engine's budget query, e.g. \`budgetWithSources\`) and throw exactly that many filler misses. Never a literal dart count.
+- **Biggest-first source ordering** — when multiple budget sources stack, compose them deterministically biggest-first so assertions on budget composition stay stable.
+
+Applies to any mode with dynamic dart budgets: Risk 42 continent income + Arsenal charges, T&T heat. Companion to [game-engine-tests-filler-darts-must-be-misses](game-engine-tests-filler-darts-must-be-misses-and-fixtures-o.md) — that one is about fixtures obeying the rules they enforce; this one is about helpers tracking the budget the rules produce.
+
+## Source
+
+- \`src/lib/game/risk-engine.test.ts\` (worktree \`E:/worktrees/risk-42\`, branch \`feature/risk-42\`) — the self-adapting \`playRound\` helper
+`,
   "learnings/env-dynamic-private-vitest-split.md": `---
 type: Learning
 title: $env/dynamic/private doesn't resolve in vitest — split the pure logic into its own module
@@ -5129,6 +5245,36 @@ For each label, compute the anchor's polar position from its own transform and a
 ## Source
 
 - \`docs/risk/apply-territory-labels.cjs\` — the fixed labeler; \`docs/risk/risk-dart-board.svg\` is its output
+`,
+  "learnings/fresh-sveltekit-worktree-needs-svelte-kit-sync.md": `---
+type: Learning
+title: Fresh SvelteKit worktree needs \`svelte-kit sync\` before tests run
+description: "Gotcha from the Risk 42 M1 build (2026-09-09): a freshly created SvelteKit worktree (deps junctioned from the main checkout) is **missing the generated \`.svelte"
+tags: [worktree, sveltekit, vitest, tooling]
+timestamp: "2026-09-09T08:59:56.436Z"
+---
+
+# Fresh SvelteKit worktree needs \`svelte-kit sync\` before tests run
+
+Gotcha from the Risk 42 M1 build (2026-09-09): a freshly created SvelteKit worktree (deps junctioned from the main checkout) is **missing the generated \`.svelte-kit/tsconfig.json\`**, so vitest/svelte-check fail with unresolvable \`$lib\` / ambient types before any test runs.
+
+Fix: run \`npx svelte-kit sync\` once in the new worktree. Part of the standard [worktree feature loop](../rules/worktree-feature-loop.md) bootstrap — do it right after creating the worktree and linking deps, before the first red cycle.
+`,
+  "learnings/game-engine-tests-filler-darts-must-be-misses-and.md": `---
+type: Learning
+title: "Game-engine tests: filler darts must be misses, and fixtures obey the rules they enforce"
+description: Caught red-handed twice during the Risk 42 M1 TDD cycles (2026-09-09), both produced false reds (and one false green that slipped into a commit and had to be am
+tags: [testing, tdd, risk-42, game-engine]
+timestamp: "2026-09-09T08:59:56.437Z"
+---
+
+# Game-engine tests: filler darts must be misses, and fixtures obey the rules they enforce
+
+Caught red-handed twice during the Risk 42 M1 TDD cycles (2026-09-09), both produced false reds (and one false green that slipped into a commit and had to be amended):
+
+1. **Filler darts must be misses.** Tests needed "other players do nothing" filler turns, but used trebles — which **damaged the very territory under test**. Filler throws in engine tests should always be off-board misses (\`{miss}\` or equivalent), never S/D/T hits.
+2. **Fixtures must obey the rules they enforce.** Tests threw 4 darts in a 3-dart turn, expected exact-0 damage to *not* flip ownership (contradicting the capture rule the same suite asserts), and checked \`dartsLeft\` after turn advancement. The tests get disciplined by the same rules they enforce — when a red looks like the impl is wrong, re-read the test against the game rules first.
+3. **Watch for tautological assertions.** A determinism test asserted the *owner* sequence, which round-robin makes constant regardless of seed — determinism lives in the *box order*. Assert the thing the seed actually controls.
 `,
   "learnings/godaddy-apex-domain-a-record-to-edge-ip.md": `---
 type: Learning
@@ -5193,6 +5339,9 @@ Railway's TLS cert flow for an apex domain **requires the root to be a CNAME (fl
 - [Double-in is a dead toggle — saved and loaded, never enforced in scoring](./double-in-is-a-dead-toggle-saved-and-loaded-never-enforced-i.md) - **Found during the 2026-10-28 four-game test sweep** (Game 3: 701 double-in, 2 players) — highest-severity finding of the sweep.
 - [Abandon match is instant with no confirmation](./abandon-match-is-instant-with-no-confirmation.md) - **Found during the 2026-10-28 four-game test sweep** (Game 2, 3-player 301).
 - [inputMode lives in per-origin localStorage — same repo on different ports shows different scorer state](./inputmode-lives-in-per-origin-localstorage-same-repo-on-diff.md) - **The gotcha:** a user report of "the dartboard is broken on the same repo, other port" turned out to be **per-origin localStorage divergence**, not a code bug.
+- [Bulk-deleting wiki concepts strands links — grep short slugs too and let wiki_validate catch the rest](./bulk-deleting-wiki-concepts-strands-links-grep-short-slugs-t.md) - **The gotcha:** deleting a wiki concept file does NOT clean up references to it. Folder indexes (\`rules/index.md\`, \`decisions/index.md\`, …) keep stale entries,
+- [Railway auto-deploy can silently skip a master push — verify timestamp vs latest commit, fallback is railway up](./railway-auto-deploy-can-silently-skip-a-master-push-verify-t.md) - **Found on 2026-10-28** while checking whether PR #18 (\`7d01bcf\`, "always show the dartboard on the Board tab") was live.
+- [Wiki-recap staged files sweep into the next commit](./wiki-recap-staged-files-sweep-into-the-next-commit.md) - **The gotcha:** the wiki-recap subagent writes docs/wiki/ files at the end of turns and leaves them staged in the git index. A later \`git add <my-file>\` + \`git 
 `,
   "learnings/inputmode-lives-in-per-origin-localstorage-same-repo-on-diff.md": `---
 type: Learning
@@ -5209,6 +5358,24 @@ timestamp: "2026-10-28T18:41:26.320Z"
 **Why it matters:** when comparing behavior across two dev servers/ports of the same repo, never assume the browser state is identical — per-origin keys (settings, tokens, mode flags) diverge silently. Diff the relevant localStorage keys before hunting for a code bug.
 
 **Fix:** PR #18 (\`feature/board-always-visible\`, worktree \`E:/worktrees/board-always-visible\`) makes the dartboard always render on the Board tab, with the numpad below it as a secondary input when numpad mode is selected; board mode unchanged. Board clicks stayed wedge-accurate in both modes after the change.
+`,
+  "learnings/junctioned-node-modules-needs-vite-server-fs-allow.md": `---
+type: Learning
+title: Junctioned node_modules needs Vite server.fs.allow — client entry 403s otherwise
+description: The fact
+tags: [vite, worktree, junction, node-modules, e2e]
+timestamp: "2026-09-09T12:19:50.348Z"
+---
+
+# Junctioned node_modules needs Vite server.fs.allow — client entry 403s otherwise
+
+## The fact
+
+With \`node_modules\` junctioned from the main checkout (the house worktree trick), the junction target lives **outside the worktree root** — Vite's dev-server fs guard then returns **403 for the client entry**, the page never hydrates, and EmailGate (all rendering is client-side, see [[ssr-pages-are-empty-shells-emailgate]]) never appears. A cold-start dep-optimization race can mask it on first boot, making the failure look intermittent when it's deterministic on a warm server.
+
+## The fix
+
+One line in \`vite.config.ts\`: add the junction target (e.g. \`E:/dart.monster\`) to \`server.fs.allow\`. Landed with PR #13. Every future junctioned worktree needs it for browser/E2E testing — M1 "worked" only because the race happened to hide the wall.
 `,
   "learnings/match-api-unauthenticated.md": `---
 type: Learning
@@ -5236,6 +5403,32 @@ Known and consciously deferred (2026-09-08): hardening the write API is explicit
 
 - \`src/routes/api/matches/[id]/+server.ts\` — unauthenticated GET/PATCH/DELETE
 `,
+  "learnings/merged-pr-leftovers-block-the-pull.md": `---
+type: Learning
+title: Merged-PR leftovers in the main tree block the pull — verify identical, then discard
+description: Merged-PR leftovers in the main tree block the post-cleanup pull
+tags: [git, worktree, pull, cleanup, gotcha]
+timestamp: "2026-09-09T12:32:10.244Z"
+---
+
+# Merged-PR leftovers in the main tree block the pull — verify identical, then discard
+
+# Merged-PR leftovers in the main tree block the post-cleanup pull
+
+**Symptom**: step 9 of the [worktree feature loop](../rules/worktree-feature-loop.md) — \`git switch master && git pull --ff-only origin master\` — fails because the main tree carries modified/untracked copies of the merged PR's files. Recurring pattern: conquest build leftovers (2026-09-08, see [conquest-build-untracked-in-working-tree](conquest-build-untracked-in-working-tree.md)), TvStage/tv-e2e files (2026-09-09, PR #14).
+
+## Prove losslessness before discarding
+
+- **Tracked/modified files**: \`git diff origin/master -- <paths>\` empty → content already identical to what the pull brings in.
+- **Untracked files**: \`git hash-object <file>\` equals \`git rev-parse origin/master:<path>\` → same blob as the incoming version (PR #14's \`TvStage.svelte\`: both \`fe611fc\`).
+- Then discard (\`git checkout -- <paths>\` / delete untracked) and pull — identical content returns via the merge.
+
+Never discard dirty \`docs/wiki/\` files in this check — they're wiki-recap output, not touched by the incoming commits; leave them uncommitted.
+
+## Evidence
+
+2026-09-09 cleanup pass: 4 modified tv/e2e files byte-identical to origin/master + untracked \`TvStage.svelte\` blob-matched → discarded, \`pull --ff-only\` succeeded, master at \`65f79e4\`.
+`,
   "learnings/miss-turns-must-persist-with-dartsthrown-1.md": `---
 type: Learning
 title: Miss turns must persist with dartsThrown ≥ 1
@@ -5251,6 +5444,18 @@ The turns table / API has a constraint that \`dartsThrown >= 1\`. A miss (all th
 Relevant when posting turns directly to \`POST /api/.../turns\` (E2E helpers, scripts, integrations). Encoded in \`e2e/helpers.ts\` comments.
 
 Also note: the turns API returns turns ordered \`createdAt DESC\` — write order-agnostic assertions in tests.
+`,
+  "learnings/neo-ref-clicks-silently-no-op-on-some-sveltekit.md": `---
+type: Learning
+title: Neo ref-clicks silently no-op on some SvelteKit buttons — use evaluate el.click()
+description: During the 2026-09-09 playtest sessions, driving the real app through BrowserOS neo's CDP-based \`input().click(ref)\` **failed silently** on several SvelteKit bu
+tags: [browseros-neo, automation, testing]
+timestamp: "2026-09-09T19:46:47.835Z"
+---
+
+# Neo ref-clicks silently no-op on some SvelteKit buttons — use evaluate el.click()
+
+During the 2026-09-09 playtest sessions, driving the real app through BrowserOS neo's CDP-based \`input().click(ref)\` **failed silently** on several SvelteKit buttons — the "Risk 42 Marathon" format card on \`/match/setup?tab=fun\` and the "Start turn" gate on \`/match/risk\` — while the same mechanism worked on pills and player chips. Direct \`element.click()\` via \`browser.evaluate\` worked every time. If automating this app: prefer evaluate-with-click over ref clicks for composite buttons; symptom is a click that "lands" but leaves aria-pressed/state unchanged and no error.
 `,
   "learnings/no-top-level-state-var-svelte2tsx.md": `---
 type: Learning
@@ -5361,6 +5566,72 @@ Any module-level component variable that the template reads and that is assigned
 - [[tv-second-screen-cast-views]] — the cast screens the button opens (classic + conquest).
 - [[conquest-engine-and-live-game]] — the page where this bit.
 - Note: \`/match/risk\` intentionally has **no** cast button yet — Risk 42 state is sessionStorage-only ([[risk-42-v1-persists-to-sessionstorage-stopgap]]), so a second screen has nothing to poll until server write-through lands at M3.
+`,
+  "learnings/playwright-hit-target-fails-at-bull-center.md": `---
+type: Learning
+title: Playwright hit-target check fails at the bull's center — the 50 ring paints on top; click the 25 ring off-center
+description: "**The gotcha:** in the dartboard SVG the bullseye (50) is painted **on top of** the single bull (25). A Playwright click aimed at the exact center of the bull t"
+tags: [testing, playwright, dartboard, e2e]
+timestamp: "2026-10-23T13:37:04.754Z"
+---
+
+# Playwright hit-target check fails at the bull's center — the 50 ring paints on top; click the 25 ring off-center
+
+**The gotcha:** in the dartboard SVG the bullseye (50) is painted **on top of** the single bull (25). A Playwright click aimed at the exact center of the bull therefore fails the actionability/hit-target check — another element (the 50) intercepts pointer events at that point.
+
+**The fix:** click a point inside the 25 ring but **off-center** (within the outer half of the bull).
+
+**Applies to:** any e2e spec or smoke test targeting bull zones on \`Dartboard.svelte\` / \`RiskBoard.svelte\`. Same family as the layering fact that scoring segments paint above the black miss rim — SVG paint order decides Playwright hit targets, so pick click points from the topmost layer inward.
+`,
+  "learnings/playwright-reuses-orphaned-dev-servers.md": `---
+type: Learning
+title: Playwright reuses orphaned dev servers — E2E can silently test master code, not your worktree
+description: The fact
+tags: [playwright, e2e, worktree, dev-server, testing]
+timestamp: "2026-09-09T12:19:50.348Z"
+---
+
+# Playwright reuses orphaned dev servers — E2E can silently test master code, not your worktree
+
+## The fact
+
+Playwright's \`reuseExistingServer\` latches onto **whatever is listening on the target port** — including an orphaned dev server serving the **main checkout's code**, not the worktree under test. During the Risk 42 persistence build (2026-09-09), port 5174 was held by a zombie dev server from a timed-out command: every Playwright run "tested" master code while the worktree branch had never been browser-tested at all. Failures (and passes) were phantom.
+
+Symptom signature:
+
+- Phantom failures that don't match what your code actually does; the page behaves like an older/other version.
+- The port serves an app whose transformed modules lack your worktree's markers (e.g. \`GAME_ID_KEY\`).
+- Something unrelated-sounding ("MeltFX") or the main project answers on the port.
+
+## The rule
+
+Before trusting E2E results from a worktree, **prove the server is yours**: probe the running server's transformed module for a worktree-specific marker, or check which process/cwd holds the port — then kill the orphan and re-run. Related: [[windows-worktree-delete-kill-holder-first]].
+`,
+  "learnings/railway-auto-deploy-can-silently-skip-a-master-push-verify-t.md": `---
+type: Learning
+title: Railway auto-deploy can silently skip a master push — verify timestamp vs latest commit, fallback is railway up
+description: "**Found on 2026-10-28** while checking whether PR #18 (\`7d01bcf\`, "always show the dartboard on the Board tab") was live."
+tags: [devops, railway, deployment, ci]
+timestamp: "2026-10-28T19:13:00.970Z"
+---
+
+# Railway auto-deploy can silently skip a master push — verify timestamp vs latest commit, fallback is railway up
+
+**Found on 2026-10-28** while checking whether PR #18 (\`7d01bcf\`, "always show the dartboard on the Board tab") was live.
+
+**The gotcha:** pushing a merge to \`origin/master\` does NOT guarantee Railway deploys it. The GitHub auto-deploy hook (same repo, \`creatuluw/darts.xyz\`) fired fine for PR #17 on 2026-10-23 but **silently never triggered** for the PR #18 push ~30 minutes earlier — no building, no in-progress, no failed entry in Railway; the last deployment was simply still the Oct 23 one. Silence means "never picked up", not "still building".
+
+**How to check deploy status from the CLI:**
+
+- \`railway status\` — service online/offline
+- \`railway deployment list\` or the service's deployments — compare the **last successful deployment timestamp** against the latest local \`git log -1\` date
+- Match commit → deployment: PR #17 deploy at 2026-10-23 16:39 = merge commit \`42f79d9\`
+
+**Recovery:** \`railway up\` from the repo root ships exactly the current local app code. Before running it, confirm there are no uncommitted app-code changes (docs/wiki churn is fine — it doesn't affect the build). The dashboard alternative is Service → Settings → Deployments → "Deploy" (auto-deploy may have silently disconnected there).
+
+**Related context:** Railway deploys from master only — feature worktree merges are what go live (see [[remember-me-session-only-login]]).
+
+**Addendum (2026-10-28, later):** the PR #18 push was apparently *delayed*, not skipped — ~30 minutes after the push (and ~30s after a manual \`railway up\` upload \`f458b026\` was queued), a second deployment \`61792d17\` kicked in on its own, likely the lagging auto-deploy hook or a dashboard deploy. Both deployments carried identical PR #18 code, so the overlap was harmless; the later one simply supersedes. Practical takeaways: (1) "silently skipped" may really be "severely delayed" — wait or check the dashboard before concluding the hook is disconnected; (2) a manual \`railway up\` racing a late auto-deploy is safe when both ship the same commit.
 `,
   "learnings/refresh-resume-needs-chronological-turn-order.md": `---
 type: Learning
@@ -5524,6 +5795,32 @@ Found via review feedback in PR #1 (2026-09-08, worktree \`kees-remember-me\`): 
 - \`.worktrees/kees-remember-me/src/lib/components/ui/FloatingNav.svelte\` — the fixed switcher
 - [[email-store-email-ts]] — storage semantics this follows from
 `,
+  "learnings/squash-merged-branch-commit-ahead-unmerged.md": `---
+type: Learning
+title: "Squash-merged branch: commit-ahead ≠ unmerged — prove with git cherry"
+description: "Squash-merged branch: commit-ahead ≠ unmerged"
+tags: [git, worktree, pull-request, squash-merge, cleanup]
+timestamp: "2026-09-09T12:32:10.243Z"
+---
+
+# Squash-merged branch: commit-ahead ≠ unmerged — prove with git cherry
+
+# Squash-merged branch: commit-ahead ≠ unmerged
+
+After GitHub **squash-merges** a PR, the branch's original commits are *not* on master (only their combined patch is), so \`git log --oneline origin/master..<branch>\` stays non-empty **forever**. The step-0 "log empty" losslessness test from [worktree-feature-loop](../rules/worktree-feature-loop.md) would refuse to clean a perfectly merged worktree.
+
+## The correct test (patch equivalence)
+
+- \`git cherry origin/master <branch>\` (or \`git log --cherry-pick --right-only origin/master...<branch>\`) — empty output means every commit's patch is already on master, even though the commits themselves aren't.
+- Corroborate with PR state (\`gh pr view --json state\` → \`MERGED\`).
+- Also sanity-check the lock: a \`--reason "active task: <slug>"\` lock that *we* created in step 2, on a worktree whose PR is merged and whose patch is on master, protects nothing — it's ours to remove. A lock you can't account for = another session's in-flight task → leave it.
+
+## Evidence (2026-09-09 cleanup)
+
+\`kees-tv-16-9-stage\`: clean status but **1 commit ahead**; PR #14 MERGED and \`--cherry-pick\` empty → removed + branch deleted, no \`--force\`/\`-D\`. (Sibling \`kees-risk42-server-persist\`, PR #13, was the plain log-empty case.)
+
+This is the **inverse** of [merged-pr-doesn-t-empty-the-branch](merged-pr-doesn-t-empty-the-branch.md): there, a merged PR hid *unmerged* commits; here, remaining commits hide a *completed* merge. You need both directions to judge a worktree safe.
+`,
   "learnings/ssr-pages-are-empty-shells-emailgate.md": `---
 type: Learning
 title: SSR pages are empty shells — EmailGate gates all rendering client-side
@@ -5648,6 +5945,34 @@ As shipped in \`docs/risk/apply-mapping.cjs:45-50\`. Note the arc midpoint is NO
 
 - \`docs/risk/apply-mapping.cjs\` — the tokenizer + box-label placement that depends on it
 `,
+  "learnings/sync-infinite-loop-in-a-test-helper-hangs-vitest.md": `---
+type: Learning
+title: Sync infinite loop in a test helper hangs vitest with no timeout
+description: The symptom
+tags: [testing, vitest, risk-42, test-helpers, gotcha]
+timestamp: "2026-09-09T10:19:01.734Z"
+---
+
+# Sync infinite loop in a test helper hangs vitest with no timeout
+
+## The symptom
+
+"Testing takes way too long" / the vitest worker hangs mid-run and gets SIGTERM'd — **no timeout error is ever reported**, even though the suite has vitest's default 5s per-test timeout.
+
+## The root cause
+
+A synchronous **infinite loop in a test helper** (\`playTurn\` in \`risk-engine.test.ts\`): it looped on \`while dartsLeft > 0\`, but when the turn advanced, the *next player's fresh budget* kept the condition true forever. Two engine-level facts combined: turn rotation changes whose budget is being read, and income mechanics refresh it.
+
+Why the timeout never fires: vitest's timeout is a timer on the event loop. A synchronous loop **blocks the event loop**, so the timer can never run — the worker just spins until killed. The timeout you configured is useless against sync hangs.
+
+## Detection & fix
+
+- Bisect with a scratch spec containing just the suspect suite — the hang localizes in one run.
+- Kill the orphaned vitest workers (leave the agent processes alone), then fix the helper: a per-turn helper must **stop at the player change** — loop only within one turn, never across the rotation.
+- After the fix the suite went from "hangs forever" to 2.3s.
+
+Related: [[engine-test-helpers-must-adapt-to-live-dart-budgets-income-m]] — same family of trap (test helpers assuming static dart budgets).
+`,
   "learnings/tooltips-must-use-fixed-positioning.md": `---
 type: Learning
 title: Tooltips must use fixed positioning to escape overflow clipping
@@ -5752,6 +6077,8 @@ timestamp: "2026-10-28T18:11:08.334Z"
 3. **Refresh resurrects the "deleted" turn** — the ghost turn comes back with its score, and thrower rotation re-derives from the restored chronological turns (demoting the current thrower).
 
 **Fix direction:** the handler must take the turn id exclusively from the query param (or the body), never fall back to \`params.id\` — on this route \`params.id\` is structurally the wrong key. \`deleteTurn\` itself is clean; only the handler's id resolution is broken.
+
+**FIXED 2026-10-28** (commit \`bf1803e\`): the DELETE handler now reads \`url.searchParams.get("id")\` only. The same commit added the PATCH handler on the same route — its turn id comes from the body/query (\`turnId\`), never from \`params.id\`, so the bug cannot regress there.
 `,
   "learnings/tv-cast-pages-freeze-in-background-tabs-document.md": `---
 type: Learning
@@ -5796,6 +6123,37 @@ Discovered during the 2026-09-09/10 prod playtest campaign (session 6): the TV c
 2. Related: CDP \`Page.bringToFront\` activates a TAB but does not unhide the page if the OS window itself is backgrounded — \`document.hidden\` stays true and the TV's polling/boundary effects sleep. Workaround during testing: \`Object.defineProperty(document, 'hidden', { get: () => false, configurable: true })\`.
 
 Fixes shipped (commit 1cf0d05): every segment resolves at \`min(audio end, ~reading time)\` (3500ms + 90ms/char, cap 30s) — \`setTimeout\` caps are the only reliable timer in throttled tabs; the subtitle-only fallback uses the same estimate instead of a flat 4s. Lesson: never gate a media pipeline purely on media element events — always race them against a wall-clock cap.
+`,
+  "learnings/vitest-can-t-see-type-holes-esbuild-strips-types.md": `---
+type: Learning
+title: Vitest can't see type holes — esbuild strips types; svelte-check is the only net
+description: The gotcha
+tags: [vitest, svelte-check, typescript, testing, tooling]
+timestamp: "2026-09-09T10:47:22.586Z"
+---
+
+# Vitest can't see type holes — esbuild strips types; svelte-check is the only net
+
+## The gotcha
+
+Vitest runs through **esbuild, which strips TypeScript types at transform time** — a module can have real type holes (missing interface fields, wrong shapes) and every test still passes. \`svelte-check\` is the only net that catches them.
+
+Caught red-handed during Risk 42 M2.3 (2026-09-09): a failed atomic edit silently dropped the M1.6 \`tie\` field from the engine's endgame interface. **192 vitest tests stayed green**; only \`svelte-check\` flagged the hole.
+
+## The baseline problem
+
+Master carries **~62 pre-existing \`svelte-check\` errors** (noise baseline). "Zero errors repo-wide" is not achievable today — filter the output to your changed files instead, e.g.:
+
+\`\`\`bash
+npx svelte-check --output machine | grep -E "your-file|your-folder"
+\`\`\`
+
+## The guideline
+
+- Vitest green ≠ type-correct. Before any PR that touches TS interfaces, run \`svelte-check\` on the changed files.
+- Treat the master error count as a baseline: your files must add **0** new errors, not fix the world.
+
+Related: [[ts-can-t-narrow-state-in-closures]], [[fresh-sveltekit-worktree-needs-svelte-kit-sync-before-tests-]]
 `,
   "learnings/webspeech-only-dutch-tts.md": `---
 type: Learning
@@ -5847,6 +6205,22 @@ const wi = Math.round(((brg + 9) % 360) / 18) % 20; // M point sits on the CCW w
 
 When bucketing an angle (or any float) by rounding, never let the sample sit on a bucket edge — shift by the half-bucket first.
 `,
+  "learnings/wiki-recap-staged-files-sweep-into-the-next-commit.md": `---
+type: Learning
+title: Wiki-recap staged files sweep into the next commit
+description: "**The gotcha:** the wiki-recap subagent writes docs/wiki/ files at the end of turns and leaves them staged in the git index. A later \`git add <my-file>\` + \`git "
+tags: [git, wiki-recap, commits]
+timestamp: "2026-10-28T19:27:15.209Z"
+---
+
+# Wiki-recap staged files sweep into the next commit
+
+**The gotcha:** the wiki-recap subagent writes docs/wiki/ files at the end of turns and leaves them staged in the git index. A later \`git add <my-file>\` + \`git commit\` then commits EVERYTHING already staged — not just the intended file.
+
+**Observed 2026-10-28:** fix commit \`a71bd6c\` ("active player panel keeps normal size") bundled ~40 unrelated docs/wiki/ files (decisions, learnings, page renames) that the recap system had left staged.
+
+**Mitigation:** before committing, run \`git status\` — if docs/wiki/ files are staged, either \`git restore --staged docs/wiki\` first, or commit only intended paths with \`git commit -- <paths>\` (pathspec bypasses the index). Related: [[merged-pr-leftovers-block-the-pull]] — same family of "the index contains surprises" gotchas.
+`,
   "learnings/wiki-search-misses-recent-concepts.md": `---
 type: Learning
 title: wiki_search misses recently-written concepts — verify with wiki_validate or ls before writing
@@ -5897,10 +6271,11 @@ okf_version: "0.1"
 Auto-generated digest of the most recent conventions, decisions, rules and
 development patterns, plus architecture and global patterns — newest first.
 The actual files live in the wiki subfolders; follow the links (clickable in /wiki).
-Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-10-28T18:44:46.721Z.
+Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-10-28T20:03:52.591Z.
 
 ## Recent Decisions
 
+- [Wiki scope: product knowledge only — all dev-process content removed](decisions/wiki-scope-product-knowledge-only-all-dev-process-content-re.md) — Context (2026-10-28)
 - [Risk 42 card hoarding is unlimited — no mandatory cash-in at 5+ cards](decisions/risk-42-card-hoarding-unlimited.md) — Context (2026-10-23)
 - [Risk 42 income rework proposed: continent bonus out, max(3, territories/6) darts per turn](decisions/risk-42-income-rework-continent-bonus-out.md) — Context (2026-10-23)
 - [Risk 42 reach rule: darts only count on own or adjacent territories](decisions/risk-42-reach-rule-own-or-adjacent.md) — Context (2026-10-23)
@@ -5915,12 +6290,14 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-10-28T18
 - [Risk 42 server persistence rides conquest_games + /api/conquest — sessionStorage stopgap superseded](decisions/risk-42-server-persistence-rides-conquest-api.md) — Context (2026-09-09)
 - [Commentary becomes a 4-segment broadcast with Leo & Theodore swapping roles](decisions/commentary-becomes-a-4-segment-broadcast.md) — Context (2026-09-09)
 - [Risk 42 v1 persists to sessionStorage (stopgap) — server write-through lands at M3](decisions/risk-42-v1-persists-to-sessionstorage-stopgap.md) — Context (2026-09-09)
-- [Risk 42 applyDart seam: DartHit carries singleRing for singles](decisions/risk-42-applydart-seam-darthit-singlering.md) — Context (2026-09-09)
 
 ## Active Rules
 
 - [Derive stats from state deltas, never by substring-matching log copy](rules/derive-stats-from-state-deltas-never-by-substring.md) — **Guideline:** Never derive a gameplay stat by scanning or substring-matching human-readable log lines. Count from state deltas (or engine r… (2026-10-24)
+- [When a playtest stalls under background-tab throttling, finish the game via the engine + PATCH — don't tab-hop](rules/when-a-playtest-stalls-under-background-tab.md) — The guideline (2026-09-09)
+- [Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert](rules/prove-overlays-never-block-gameplay-live-dom.md) — The guideline (2026-09-09)
 - [New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board](rules/new-game-modes-follow-the-conquest-cut-pure-setup.md) — The rule (2026-09-09)
+- [Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets](rules/engine-invariant-sweeps-plain-asserts-assert.md) — The guideline (2026-09-09)
 - [Board SVGs are generated — edit the regenerator, never the output](rules/board-svgs-are-generated.md) — Guideline (2026-09-08)
 - [Use $app/stores $page for page state — house style](rules/use-app-stores-page-for-page-state-house-style.md) — Rule (2026-09-07)
 - [Use the Tooltip component, not native title attributes](rules/use-tooltip-not-native-title.md) — Guideline (2026-09-07)
@@ -5928,6 +6305,9 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-10-28T18
 
 ## Recent Learnings — development patterns
 
+- [Wiki-recap staged files sweep into the next commit](learnings/wiki-recap-staged-files-sweep-into-the-next-commit.md) — **The gotcha:** the wiki-recap subagent writes docs/wiki/ files at the end of turns and leaves them staged in the git index. A later \`git ad… (2026-10-28)
+- [Railway auto-deploy can silently skip a master push — verify timestamp vs latest commit, fallback is railway up](learnings/railway-auto-deploy-can-silently-skip-a-master-push-verify-t.md) — **Found on 2026-10-28** while checking whether PR #18 (\`7d01bcf\`, "always show the dartboard on the Board tab") was live. (2026-10-28)
+- [Bulk-deleting wiki concepts strands links — grep short slugs too and let wiki_validate catch the rest](learnings/bulk-deleting-wiki-concepts-strands-links-grep-short-slugs-t.md) — **The gotcha:** deleting a wiki concept file does NOT clean up references to it. Folder indexes (\`rules/index.md\`, \`decisions/index.md\`, …) … (2026-10-28)
 - [inputMode lives in per-origin localStorage — same repo on different ports shows different scorer state](learnings/inputmode-lives-in-per-origin-localstorage-same-repo-on-diff.md) — **The gotcha:** a user report of "the dartboard is broken on the same repo, other port" turned out to be **per-origin localStorage divergenc… (2026-10-28)
 - [Abandon match is instant with no confirmation](learnings/abandon-match-is-instant-with-no-confirmation.md) — **Found during the 2026-10-28 four-game test sweep** (Game 2, 3-player 301). (2026-10-28)
 - [Double-in is a dead toggle — saved and loaded, never enforced in scoring](learnings/double-in-is-a-dead-toggle-saved-and-loaded-never-enforced-i.md) — **Found during the 2026-10-28 four-game test sweep** (Game 3: 701 double-in, 2 players) — highest-severity finding of the sweep. (2026-10-28)
@@ -5936,18 +6316,15 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-10-28T18
 - [Turns DELETE endpoint silently no-ops — params.id (match id) shadows the turn-id query param](learnings/turns-delete-endpoint-silently-no-ops-params-id-match-id-sha.md) — **Found during the 2026-10-28 neo-browser delete-turn test campaign** (2-player match \`96c568e8\`, 3-player match \`02cae89f\`). (2026-10-28)
 - [Risk 42 adjacency table drifts from classic Risk by 3 edges — edge-sampling tests can't catch membership drift](learnings/risk-42-adjacency-table-drifts-from-classic-risk.md) — **Found in the 2026-10-24 three-axis code review** of PR #17 (commit 2c4d474) — Spec axis, should-fix/high. (2026-10-24)
 - [Bank folded in at handover loses provenance — carry it on the object (turn.carried)](learnings/bank-folded-in-at-handover-loses-provenance-carry.md) — **The gotcha:** in Risk 42 the engine adds the player's saved-dart bank to the next turn's budget *at handover* — so by the time the UI rend… (2026-10-23)
+- [Playwright hit-target check fails at the bull's center — the 50 ring paints on top; click the 25 ring off-center](learnings/playwright-hit-target-fails-at-bull-center.md) — **The gotcha:** in the dartboard SVG the bullseye (50) is painted **on top of** the single bull (25). A Playwright click aimed at the exact … (2026-10-23)
 - [TV commentary hangs on one segment: audio events never fire in throttled windows — race every segment against a reading-time cap](learnings/tv-commentary-hangs-on-one-segment-audio-events.md) — Discovered during the 2026-09-09/10 prod playtest campaign (session 6): the TV commentary broadcast could hang forever on ONE segment. Root … (2026-09-09)
 - [startRisk clears risk42_state but not risk42_game_id — new game silently resumes the old one](learnings/startrisk-clears-risk42-state-not-game-id.md) — **Found during the Risk 42 prod playtest campaign (2026-09-09/10), logged P1.** (2026-09-09)
 - [Commentary LLM = DeepSeek deepseek-v4-flash (from glm-5.3-flash); ~1s LLM latency](learnings/commentary-llm-deepseek-v4-flash.md) — 2026-09-09 evening: commentary LLM switched from OpenCode Zen Go (glm-5.3-flash, ~20-50s latency, needed x-opencode-session header) to **Dee… (2026-09-09)
 - [Risk map SVG layers share a translate(-168,-119) — apply it when extracting paths or labels misalign](learnings/risk-map-svg-layers-share-a-translate-168-119.md) — While building the Risk 42 TV world map (2026-09-09): \`docs/risk/risk-territory-board.svg\` puts ALL its content layers (countries, labels, t… (2026-09-09)
 - [TV cast pages freeze in background tabs — document.hidden pauses polling and commentary](learnings/tv-cast-pages-freeze-in-background-tabs-document.md) — All three TV cast routes — \`src/routes/match/[id]/tv/+page.svelte\` (classic), \`src/routes/match/conquest/[id]/tv/+page.svelte\` (T&T), \`src/r… (2026-09-09)
+- [Neo ref-clicks silently no-op on some SvelteKit buttons — use evaluate el.click()](learnings/neo-ref-clicks-silently-no-op-on-some-sveltekit.md) — During the 2026-09-09 playtest sessions, driving the real app through BrowserOS neo's CDP-based \`input().click(ref)\` **failed silently** on … (2026-09-09)
 - [Commentary pipeline: ~25s real cost vs 20s timeout — raise/parallelize](learnings/commentary-pipeline-25s-real-cost-vs-20s-timeout.md) — Measured while playtesting all game modes on 2026-09-09: the 4-segment commentary pipeline (glm-5.3-flash LLM call + 4 sequential ElevenLabs… (2026-09-09)
 - [scrollbar-gutter: stable reserves 15px that window.innerWidth counts — measure the host box](learnings/scrollbar-gutter-stable-reserves-15px.md) — The gotcha (2026-09-09)
-- [Plain \`let\` assigned in async onMount never re-renders — must be $state](learnings/plain-let-onmount-needs-state.md) — The gotcha (2026-09-09)
-- [risk-territory-board.svg palette: fills live in layer2, join to territories by centroid containment](learnings/risk-territory-board-svg-palette-in-layer2.md) — The world map for the Risk 42 TV view (\`docs/risk/risk-territory-board.svg\`, a copy of \`risk-board.svg\`) carries its **per-territory tints i… (2026-09-09)
-- [Top-level return in a CJS script skips the file write — silent no-op](learnings/top-level-return-in-a-cjs-script-skips-the-file.md) — Gotcha (2026-09-08)
-- [Flipped labels: negate radial offset on left half](learnings/flipped-labels-negate-radial-offset-on-left-half.md) — Gotcha (2026-09-08)
-- [SVG path parsing: arc arguments are not points — tokenize by command, never by coordinate-pair regex](learnings/svg-path-parsing-arc-arguments-are-not-points.md) — Gotcha (2026-09-08)
 
 ## Architecture
 
@@ -6739,6 +7116,8 @@ _Concrete named things will be listed here._
 - [Risk 42 end screens & Teruglezen drawer](./risk-42-end-screens-teruglezen-drawer.md) - The game-over surfaces for [Risk 42](../concepts/risk-42-proposed-game-mode.md), shipped during the session-6 prod playtest (2026-09-10, commits \`5e6dc11\` + \`bf
 - [Risk 42 engine (risk-engine.ts)](./risk-42-engine-risk-engine-ts.md) - The pure, TDD'd game engine implementing [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md) — Risk 42 played on the standard dartboard wher
 - [Risk 42 playable game (risk-setup + Fun tab + /match/risk + RiskBoard)](./risk-42-playable-game-risk-setup-fun-tab-match.md) - The playable cut of [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md): the pure setup module, the Fun-tab format picker, and the live game
+- [Turns API (matches/[id]/turns)](./turns-api-matches-id-turns.md) - Turns API
+- [Profile Editing (player name + sign-in email)](./profile-editing-player-name-sign-in-email.md) - Profile Editing (player name + sign-in email)
 `,
   "pages/entities/live-match-page.md": `---
 type: Entity
@@ -6766,13 +7145,16 @@ Every dart thrown flows through this page. Its layout branches on roster size, a
 - **Layouts** (see the cards-around-the-board decision — side columns render for **every** player count):
     - **1–2 players**: 3-column bento grid — full-size [playerpanel](./playerpanel.md) scoreboards in side columns around the center board; solo adds a muted mirror
     - **3–6 players**: same bento grid with **condensed** PlayerPanel cards — first half of players stacked left, second half right, board/input centered (\`col-span-6\`); e.g. 6 players = 3+3, 3 players = 2+1. Cards stack taller as count grows; mobile order stays players → board
-- **Data**: REST endpoints under \`src/routes/api/matches/[id]/\` (legs, turns, players)
+- **Data**: REST endpoints under \`src/routes/api/matches/[id]/\` (legs, [turns API](./turns-api-matches-id-turns.md), players)
+- **State loading**: the entire onMount body (fetch match → legs → turns → rebuild \`matchState\`/\`allMatchTurns\`/stats) lives in \`async function loadMatch()\` (since 2026-10-28) — the exact refresh-resume path, re-run after a turn edit so remaining scores, throw order, averages and checkout suggestions are re-derived from the persisted turns
+- **Edit last turn (2026-10-28)**: pencil icon on [playerpanel](./playerpanel.md) opens an in-page edit dialog (numpad-style segment × multiplier entry, 3 slots pre-filled from the stored darts); Save PATCHes the [turns API](./turns-api-matches-id-turns.md), then calls \`loadMatch()\` to rebuild from state. Edits that would check out are blocked client-side (shared scoring-engine preview) and rejected server-side
 
 ## Lifecycle
 
 - First added: with the app's core match flow (setup → live scorer → history)
 - Significant changes: 2026-09-07 — dual layout introduced: condensed standings strip for 3–6 players, side scoreboards retained for 1–2 (previously all roster sizes used looping side panels)
 - Significant changes: 2026-09-07 — dual layout reversed: standings strip removed, condensed PlayerPanel cards flank the board for 3–6 players too
+- Significant changes: 2026-10-28 — onMount loader extracted to \`loadMatch()\`; pencil edit-last-turn dialog added (PATCH turns + full state rebuild)
 `,
   "pages/entities/llm-commentary-trebles-territories.md": `---
 type: Entity
@@ -6788,7 +7170,7 @@ The in-game AI commentary/interview broadcast layer: an LLM writes Dutch comment
 
 ## Details
 
-- **Endpoint**: \`https://opencode.ai/zen/go/v1/chat/completions\` (OpenCode Zen Go) — see the [endpoint-headers learning](../../learnings/opencode-zen-go-needs-session-header.md); model \`glm-5.3-flash\`; API key in \`.env\` under \`OPENCODE_API\`; wrapped by \`src/lib/server/opencode.ts\`.
+- **Endpoint**: since 2026-09-09 evening, DeepSeek \`deepseek-v4-flash\` (see the [model-swap learning](../../learnings/commentary-llm-deepseek-v4-flash.md); ~1s latency) — replaced OpenCode Zen Go \`glm-5.3-flash\`, which needed the [session-header workaround](../../learnings/opencode-zen-go-needs-session-header.md); API key in \`.env\`; wrapped by \`src/lib/server/opencode.ts\`.
 - **Cadence**: every N turns (default 2) — N is the LLM aggregation window.
 - **Trigger material**: score events, territories claimed/lost, Shanghai feats, Bull Altar resurrections, domination runs — the same event stream the audio caller uses.
 - **Original persona spec** (2026-09-07, superseded): PDC-style sport commentary × British humor × TV chef quotes with Muppet Show stingers. The 2026-09-08 grill rounds replaced this with **Dutch spectator personas** (Ome Gerrit, Jasmien, …) rendered on the TV second screen — see [spectator-interviews-trebles-territories](./spectator-interviews-trebles-territories.md) and [commentary-gated-on-2nd-screen](../../decisions/commentary-gated-on-2nd-screen.md).
@@ -6861,7 +7243,8 @@ A reusable scoreboard panel component for the live match scorer, extracted from 
 ## Details
 
 - **Location**: \`src/lib/components/ui/PlayerPanel.svelte\` (exported from the UI barrel)
-- **Interface**: props for a single player's scoreboard + stats + last-3-turns block + undo/delete affordance (\`showDeleteConfirm\`, \`onDeleteLastTurn\`); a \`condensed\` mode renders a single compact card instead — name + active ▶ indicator, undo control with inline confirm, large remaining score (emerald when active), one bottom row \`S sets · L legs · Avg match-3-dart · Darts this-leg\`
+- **Interface**: props for a single player's scoreboard + stats + last-3-turns block + undo/delete/edit affordances (\`showDeleteConfirm\`, \`onDeleteLastTurn\`, \`onEditLastTurn\`); a \`condensed\` mode renders a single compact card instead — name + active ▶ indicator, undo control with inline confirm, large remaining score (emerald when active), one bottom row \`S sets · L legs · Avg match-3-dart · Darts this-leg\`
+- **Edit affordance (2026-10-28)**: a pencil icon (blue hover) sits next to the trash in both variants — condensed header and the full card's last-turn row — calling \`onEditLastTurn(turnId)\`; both icons are wrapped in the shared \`Tooltip\` component (the two adjacent native \`title=\` trash attributes were converted as part of that change)
 - **Used by**: [live-match-page](./live-match-page.md) — all layouts: full-size in the 1–2 player side columns (solo mirror is separate inline markup), condensed in the 3–6 player side columns (see the cards-around-the-board decision)
 
 ## Lifecycle
@@ -6869,6 +7252,38 @@ A reusable scoreboard panel component for the live match scorer, extracted from 
 - First added: created when the live scorer was made player-count-generic (any roster size up to 6 rendered fully). The match engine and turn rotation were already generic; only the UI hardcoded slots.
 - Significant changes: 2026-09-07 — scoped to 1–2 player layouts when the dual-layout redesign moved 3–6 players to the standings strip; dead \`compact\` prop removed.
 - Significant changes: 2026-09-07 — dual layout reversed: condensed mode added, standings strip removed; panels flank the board for all 1–6 players again.
+- Significant changes: 2026-10-28 — pencil edit affordance added next to trash (both card variants), \`onEditLastTurn\` prop, icons moved to shared Tooltip.
+`,
+  "pages/entities/profile-editing-player-name-sign-in-email.md": `---
+type: Entity
+title: Profile Editing (player name + sign-in email)
+description: Profile Editing (player name + sign-in email)
+timestamp: "2026-10-28T20:03:52.545Z"
+---
+
+# Profile Editing (player name + sign-in email)
+
+# Profile Editing (player name + sign-in email)
+
+Signed-in players can change their own display name and the email address they sign in with. Shipped 2026-10-28 (commit \`e404b7c\`).
+
+## Details
+
+- **Identity model** (recon finding): there is no server auth — the signed-in email (raw \`darts_email\` string in local/session storage) **is** the \`accountId\` (lowercased) on \`players\`, \`matches\` and \`account_settings\`. \`players.playerEmail\` is a separate per-player contact email that was already PATCHable.
+- **Name edit**: \`PATCH /api/players/[id]\` accepts \`{ name }\` — non-empty, ≤100 chars, no duplicate live name within the account (protects match-setup's reuse-players-by-name dedupe); updates only \`players.name\`.
+- **Sign-in email edit**: \`PATCH /api/account/email\` — format-validated, no-ops when unchanged, **409** when the new email already keys any account data, else re-keys \`players.accountId\` + \`matches.accountId\` + \`account_settings.accountId\` in one Drizzle transaction (404 when the account has no rows).
+- **Pure validation module**: \`src/lib/account/profile.ts\` — \`validateProfileName\`, \`validateAccountEmail\`, \`accountEmailsSame\`; tested by \`src/lib/account/profile.test.ts\` (vitest node env — the established workaround for \`$env\`/DB imports in tests).
+- **Store**: \`src/lib/stores/email.ts\` — \`accountsStore.rename\` + \`emailStore.renameEmail(old, new)\` migrate the raw \`darts_email\` key AND the JSON saved-accounts list, preserving remember-mode (remembered → localStorage + list; session-only → sessionStorage only).
+- **Profile page**: \`src/routes/players/[id]/+page.svelte\` — pencil-icon inline editors (pencil → input + confirm/cancel) for name and — on the signed-in player's own profile only — the sign-in email; 400/409 surface as inline messages. Shared \`Tooltip\`, \`$page\` from \`$app/stores\`, \`$emailStore\` for the own-profile check.
+
+## Relationships
+
+- [email-store-email-ts](./email-store-email-ts.md) — the identity store that gains the rename
+- [live-match-page](./live-match-page.md) — sibling example of the pencil-icon inline-editor pattern (edit-last-turn)
+
+## Lifecycle
+
+- First added: 2026-10-28, commit \`e404b7c\` (feat: edit player name and email address).
 `,
   "pages/entities/recap-video-pipeline-trebles-territories.md": `---
 type: Entity
@@ -7046,7 +7461,7 @@ The **implemented** mid-game TV broadcast: at every-N-turn boundaries an LLM wri
 - **Commentators**: Leo (\`GiGOaehga8enaTnFQvb4\`) and Theodore (\`AgeYjqDIfXtkcA3mOcsH\`) swap roles per boundary — odd: Leo asks / Theodore analyses; even: swapped. Spectator voices never use a commentator voice.
 - **Scope (settled round 4)**: all match types — see [commentary-gated-on-open-2nd-screen-pause-button-all-match-t](../../decisions/commentary-gated-on-2nd-screen.md).
 - **Gating (settled round 4)**: generated only while a 2nd screen is open and not paused; the TV pause button stops all generation, including audio spend.
-- **Cadence (settled round 4)**: every N turns, default 2 — N is also the LLM aggregation window. Control lives on the TV view, persisted per match.
+- **Cadence (2026-10-28)**: every N turns, default **3** (\`DEFAULT_COMMENTARY_CADENCE\`, commit \`4dcb93d\` — was 2) — N is also the LLM aggregation window. Control lives on the TV view, persisted per match. Boundaries that arrive while a broadcast is generating/playing are queued (\`enqueueBoundaries\`, newest-win, capped at 2) so none are silently dropped.
 - **Failure (settled round 4)**: dismissible toast on the TV, auto-hides after 30 s; the game never waits on commentary.
 - **Question pool (Q13)**: per-player 1–2 curated options, randomly surfaced — see [interview-questions-per-player-curated](../../decisions/interview-questions-per-player-curated.md).
 - **Voices (Q14, amended by PR #10)**: ElevenLabs live TTS — two swapping commentators (Leo/Theodore); spectators = random Dutch voice, never either commentator's — see [interviews-elevenlabs-live-tts](../../decisions/interviews-elevenlabs-live-tts.md) and the [4-segment decision](../../decisions/commentary-becomes-a-4-segment-broadcast.md). Kokoro ruled out (English-only — [webspeech-only-dutch-tts](../../learnings/webspeech-only-dutch-tts.md)).
@@ -7064,6 +7479,41 @@ The **implemented** mid-game TV broadcast: at every-N-turn boundaries an LLM wri
 - First added: spec'd during the 2026-09-08 grill interview rounds 2–4 (Q13–Q16 all settled).
 - 2026-09-09: **implemented on master** — \`4f9d3fa\` cadence + Dutch interview prompt modules (TDD), \`ee717b7\` ElevenLabs client, \`38ba2c9\` generate endpoint, \`3c6803c\` TV integration.
 - 2026-09-09: **4-segment broadcast + Leo/Theodore role swap** — PR #10 (\`7e53dc0\`, worktree \`kees-commentator-analysis\`): analyst analysis + cliffhanger segments, \`priorLines\` window, migration \`0008\`, 199 unit tests green.
+- 2026-10-28: cadence default 2 → 3 and a defensive 3-sentence post-trim on every segment (\`commentary-trim.ts\`, \`trimInterview\` in the POST handler) so LLM overruns can't stretch TTS/broadcast — commit \`4dcb93d\`.
+`,
+  "pages/entities/turns-api-matches-id-turns.md": `---
+type: Entity
+title: "Turns API (matches/[id]/turns)"
+description: Turns API
+timestamp: "2026-10-28T20:03:31.367Z"
+---
+
+# Turns API (matches/[id]/turns)
+
+# Turns API
+
+The REST endpoints for match turns: \`src/routes/api/matches/[id]/turns/+server.ts\` — every persisted dart of a classic match lives here. The match page (see [live-match-page](./live-match-page.md)) reads turns from it on every load and writes through on every submitted turn.
+
+## Details
+
+- **Location**: \`src/routes/api/matches/[id]/turns/+server.ts\` — note \`params.id\` on this route is the **match id**
+- **Turn row shape** (\`darts.turns\` table, see \`src/lib/db/schema.ts\`): \`legId\`, \`playerId\`, \`turnNumber\`, \`dart1/2/3{Score,Multiplier,Segment}\` (smallint; miss = segment 0/multiplier 0/score 0), \`totalScore\`, \`remainingScore\`, \`isBust\`, \`dartsThrown\` (1–3, misses count). DB checks: multiplier ∈ 0–3, dartsThrown 1–3.
+- **GET**: \`?legId=\` returns one leg's turns; without it, all turns of the match (chronological — callers rely on the last element being the latest).
+- **POST**: persists a submitted turn (the match page sends the full row, mirroring \`submitTurn\`'s output).
+- **DELETE** \`?id=<turnId>\`: removes a turn. **History**: the handler used to resolve the id as \`params.id || url.searchParams.get("id")\` — the match id always won the \`||\`, so the endpoint returned \`200 {success:true}\` while deleting nothing (found in the 2026-10-28 delete-turn test campaign, [learning](../../learnings/turns-delete-endpoint-silently-no-ops-params-id-match-id-sha.md)). Fixed in \`bf1803e\`: the turn id comes exclusively from the query param.
+- **PATCH** (added \`bf1803e\`, 2026-10-28): edits the darts of the **latest turn of an in-progress leg**. Body/query: \`turnId\` + \`darts: [{segment, multiplier}]\` (1–3) + \`dartsThrown\`. The server never trusts client totals — it validates via the pure module \`src/lib/game/turn-edit.ts\` and recomputes \`totalScore\`/\`remainingScore\`/\`isBust\` with the scoring engine (\`detectBust\`/\`detectCheckout\`) from the previous turn's \`remainingScore\`. Rejections (400): finished leg (\`legs.winnerId\` set), non-in-progress match, non-latest turn of the leg, illegal darts (segment 0/1–20/25 only, no bull treble, miss ⇔ multiplier 0, ≤3 darts, ≤180 total), and **any edit that would check out** — leg completion (winnerId, next leg, counters) is the live submit flow's job, not a row update.
+- **Edit UI**: pencil icon on [playerpanel](./playerpanel.md) → in-page dialog on the [live match page](./live-match-page.md) → PATCH → full \`loadMatch()\` rebuild so all stats stay derived from state.
+
+## Relationships
+
+- [live-match-page](./live-match-page.md) — the only UI consumer (GET/POST/DELETE/PATCH)
+- [playerpanel](./playerpanel.md) — hosts the delete/edit affordances that call DELETE/PATCH
+- [test-suite](../artifacts/test-suite.md) — \`src/lib/game/turn-edit.test.ts\` covers the PATCH validation rules (13 tests)
+
+## Lifecycle
+
+- First added: with the core match flow (GET/POST/DELETE).
+- 2026-10-28 (\`bf1803e\`): DELETE id-resolution bug fixed (turn id from query param only); PATCH turn-edit endpoint + \`turn-edit.ts\` validation module added.
 `,
   "pages/entities/tv-second-screen-cast-views.md": `---
 type: Entity
@@ -7140,6 +7590,8 @@ Knowledge graph: concepts, entities, and artifacts that make up this project.
 - [In-game session testing reports (docs/in-game-session-testing/)](./artifacts/in-game-session-testing-reports-docs-in-game.md) — Four full playtest session reports from 2026-09-09, played through the real UI (BrowserOS neo against the dev server, master \`46a429e\`) with the TV second scree
 - [Risk 42 end screens & Teruglezen drawer](./entities/risk-42-end-screens-teruglezen-drawer.md) — The game-over surfaces for [Risk 42](../concepts/risk-42-proposed-game-mode.md), shipped during the session-6 prod playtest (2026-09-10, commits \`5e6dc11\` + \`bf
 - [PR #17 three-axis code review](./artifacts/pr-17-three-axis-code-review.md) — PR #17 three-axis code review
+- [Turns API (matches/[id]/turns)](./entities/turns-api-matches-id-turns.md) — Turns API
+- [Profile Editing (player name + sign-in email)](./entities/profile-editing-player-name-sign-in-email.md) — Profile Editing (player name + sign-in email)
 `,
   "pages/TEMPLATES.md": `---
 type: Concept
@@ -7265,6 +7717,31 @@ timestamp: "2026-10-24T22:23:39.630Z"
 
 **Fix direction for the flagged site:** derive \`endStats.dead\` from state deltas (darts consumed while dead) instead of log matching.
 `,
+  "rules/engine-invariant-sweeps-plain-asserts-assert.md": `---
+type: Rule
+title: "Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets"
+description: The guideline
+tags: [testing, tdd, game-engine, invariant-sweep, performance]
+timestamp: "2026-09-09T10:19:19.055Z"
+---
+
+# Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets
+
+## The guideline
+
+When writing simulation/invariant sweeps over a game engine (e.g. the 100-game sweep in \`risk-engine.test.ts\`, the 40-game sweep in the conquest engine tests):
+
+1. **Plain-JS assertions, not vitest \`expect\` matchers.** Throw on violation inside the loop. The M1.7 sweep spent **59 seconds in matcher overhead** alone; converted to plain \`assert\`/\`throw\` the whole suite ran 188 tests in ~2.2s. \`expect\` is per-test infrastructure — sweeps are loops.
+2. **Hard-assert termination only where it's mathematically due.** The clock horn must fire; a 2-player random walk must end. But "random play converges to domination" is *emergent*, not guaranteed — 3/10 convergence under a churning random bot is churn, not an engine bug. **Log rates for emergent properties, assert the theorems.**
+3. **Validate winners against the contract set, not incidental order.** After a bull tiebreak, the winner must come from the **score-tied leader set** — \`standings()[0]\` can differ because its secondary sort reorders ties. Asserting \`winner === standings[0]\` is a false red; asserting "no winner" on distinct distances is a false red the other way.
+4. **Give the sweep an explicit timeout** — once it stops failing early, the full run can outrun vitest's 5s default — and trim the churn budget rather than the coverage.
+
+## When it applies
+
+Any red-is-a-bug-hunt sweep (M1.7-style) or long random simulation in the test suite. Fixture-level unit tests can keep using \`expect\` normally.
+
+Evidence: Risk 42 M1.7, 2026-09-09 — sweep went 59s → ~2.2s and three false reds were replaced with the real contract assertions.
+`,
   "rules/index.md": `# Rules
 
 - [Never hardcode player slots in match UI](./never-hardcode-player-slots-in-match-ui.md) - Guideline
@@ -7327,6 +7804,31 @@ Evidence: \`conquest-setup.ts\` + Fun tab + \`/match/conquest\` (shipped), \`ris
 
 Related: [[logic-todos-must-use-tdd-skill]], [[conquest-setup-fun-tab-conquest-setup-ts]]
 `,
+  "rules/prove-overlays-never-block-gameplay-live-dom.md": `---
+type: Rule
+title: "Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert"
+description: The guideline
+timestamp: "2026-09-09T21:12:32.448Z"
+---
+
+# Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert
+
+## The guideline
+
+When UI overlays sit on top of a map/board (TV views especially), don't eyeball placement:
+
+1. **Measure first**: extract the real gameplay-element bboxes (\`getBoundingClientRect()\` on every territory/path) from the **live page DOM on the running route**, not from the SVG source — TvStage scaling and safe margins mean source coordinates ≠ rendered coordinates (the same page renders 1529×860 in a test window and 1560×1080 on a real TV).
+2. **Design into the gaps**: place overlays only in margins proven empty by those measurements.
+3. **Assert after**: reload the page and assert every overlay rect intersects **zero** gameplay bboxes. Re-run after any later map or panel change — layout drift is silent.
+
+## When it applies
+
+Any TV/cast view or big-canvas UI where panels float over gameplay geometry (Risk 42 TV today; any future map/board second screen).
+
+## Rationale / evidence
+
+In the Risk 42 TV full-bleed redesign (2026-09-09) the final check ran 4 overlay rects against all 40 territory bboxes in the live DOM and proved 0 intersections — turning "looks fine in a screenshot" into a checkable invariant at a size nobody actually views (window-scaled). See [[risk-42-tv-full-bleed-map-with-overlay-panels-pinned-to-measured-e]].
+`,
   "rules/use-app-stores-page-for-page-state-house-style.md": `---
 type: Rule
 title: Use $app/stores $page for page state — house style
@@ -7376,6 +7878,34 @@ Any hover/focus explanatory hint in Svelte components: table headers, stat label
 ## Evidence
 
 - Stats tab header tooltips in the match scorer UI (turn 2026-09-07).
+`,
+  "rules/when-a-playtest-stalls-under-background-tab.md": `---
+type: Rule
+title: When a playtest stalls under background-tab throttling, finish the game via the engine + PATCH — don't tab-hop
+description: The guideline
+tags: [playtesting, risk-42, throttling, e2e, browser]
+timestamp: "2026-09-09T22:08:48.101Z"
+---
+
+# When a playtest stalls under background-tab throttling, finish the game via the engine + PATCH — don't tab-hop
+
+## The guideline
+
+When a live (dev or prod) playtest of a Risk 42 / conquest game stalls because the browser tab got background-throttled (timers stretch to ~22–25s/turn under "intensive throttling"), **don't tab-hop** — finish the game server-side via the engine:
+
+1. Load the persisted game state (the same GET the app does).
+2. Compute the remaining turns with the pure engine (\`applyDart\` in \`src/lib/game/risk-engine.ts\`).
+3. PATCH/PUT the result back in **exactly the same JSON shape the app sends**.
+
+## When it applies
+
+Any playtest or E2E session driving the real app in a browser where the game tab loses focus (writing a report in another tab while a long hunt runs, etc.). Opening a fresh tab only helps while the tab counts as "new" — it's a losing race.
+
+## Rationale / evidence
+
+- Session 6, game 8 (6P Domination hunt) crawled at 25/40 under intensive throttling and stalled completely; a fresh-tab resume bought a few turns then re-throttled.
+- Finishing via engine + PATCH produced a fully legal end state (same seams the app uses, no fabricated data), letting the 6P end screen and standings be validated without fake seeding.
+- Related: [[../learnings/tv-cast-pages-freeze-in-background-tabs-document-hidden-paus]] (throttling also pauses TV polling/commentary) and [[../learnings/tv-commentary-hangs-on-one-segment-audio-events-never-fire-i]] (throttled windows also break audio events).
 `,
 };
 
@@ -7433,15 +7963,18 @@ var WIKI_PAGES = [
   { path: "decisions/tv-cast-pages-render-on-a-fixed-1920-1080-tvstage.md", label: "TV cast pages render on a fixed 1920×1080 TvStage canvas, scaled to fit — no viewport breakpoints", group: "Decisions" },
   { path: "decisions/tv-mode-url-tab-cast-polling.md", label: "TV spectator mode: URL + tab-cast, 1s polling, public-by-link, room-first", group: "Decisions" },
   { path: "decisions/tvstage-fills-the-viewport-independent-x-y-scale.md", label: "TvStage fills the viewport (independent x/y scale) — letterboxing dropped", group: "Decisions" },
+  { path: "decisions/wiki-scope-product-knowledge-only-all-dev-process-content-re.md", label: "Wiki scope: product knowledge only — all dev-process content removed", group: "Decisions" },
   { path: "decisions/board-mapping-azimuthal-hungarian.md", label: "World map → dartboard mapping via azimuthal projection + Hungarian assignment (bull = Black Sea)", group: "Decisions" },
   { path: "learnings/risk-name-collision-new-game-exploration.md", label: "\"Risk\" name collision: new game exploration (Sep 2026) is distinct from the Risk-darts proposal that became Trebles & Territories", group: "Learnings" },
   { path: "learnings/env-dynamic-private-vitest-split.md", label: "$env/dynamic/private doesn't resolve in vitest — split the pure logic into its own module", group: "Learnings" },
   { path: "learnings/abandon-match-is-instant-with-no-confirmation.md", label: "Abandon match is instant with no confirmation", group: "Learnings" },
   { path: "learnings/bank-folded-in-at-handover-loses-provenance-carry.md", label: "Bank folded in at handover loses provenance — carry it on the object (turn.carried)", group: "Learnings" },
   { path: "learnings/wikilinks-bare-slug-breaks-cross-folder.md", label: "Bare [[slug]] wikilinks in wiki_note_page break cross-folder — use explicit relative paths", group: "Learnings" },
+  { path: "learnings/bulk-deleting-wiki-concepts-strands-links-grep-short-slugs-t.md", label: "Bulk-deleting wiki concepts strands links — grep short slugs too and let wiki_validate catch the rest", group: "Learnings" },
   { path: "learnings/commentary-llm-deepseek-v4-flash.md", label: "Commentary LLM = DeepSeek deepseek-v4-flash (from glm-5.3-flash); ~1s LLM latency", group: "Learnings" },
   { path: "learnings/commentary-pipeline-25s-real-cost-vs-20s-timeout.md", label: "Commentary pipeline: ~25s real cost vs 20s timeout — raise/parallelize", group: "Learnings" },
   { path: "learnings/conquest-state-client-side-only.md", label: "Conquest state is client-side only — nothing for a 2nd screen to poll", group: "Learnings" },
+  { path: "learnings/copy-env-into-a-fresh-worktree-before-starting.md", label: "Copy .env into a fresh worktree BEFORE starting the dev server — Vite loads it at startup only", group: "Learnings" },
   { path: "learnings/dartboard-svg-paths-encode-box-identity-read.md", label: "Dartboard SVG paths encode box identity — read (number, ring) from geometry, don't hand-map", group: "Learnings" },
   { path: "learnings/darts-email-localstorage-stores-raw-email.md", label: "darts_email localStorage key stores the email raw, not JSON", group: "Learnings" },
   { path: "learnings/db-push-ignores-darts-schema.md", label: "db:push ignores the darts schema — migrations are file-as-record, applied directly", group: "Learnings" },
@@ -7449,18 +7982,27 @@ var WIKI_PAGES = [
   { path: "learnings/no-top-level-state-var-svelte2tsx.md", label: "Don't name a top-level Svelte 5 variable `state` — svelte2tsx collision", group: "Learnings" },
   { path: "learnings/double-in-is-a-dead-toggle-saved-and-loaded-never-enforced-i.md", label: "Double-in is a dead toggle — saved and loaded, never enforced in scoring", group: "Learnings" },
   { path: "learnings/emailgate-remember-me-already-ships.md", label: "EmailGate remember-me already ships — email persists, gate skips, saved accounts exist", group: "Learnings" },
+  { path: "learnings/engine-test-helpers-must-adapt-to-live-dart.md", label: "Engine test helpers must adapt to live dart budgets — income mechanics break fixed throw counts", group: "Learnings" },
   { path: "learnings/flipped-labels-negate-radial-offset-on-left-half.md", label: "Flipped labels: negate radial offset on left half", group: "Learnings" },
+  { path: "learnings/fresh-sveltekit-worktree-needs-svelte-kit-sync.md", label: "Fresh SvelteKit worktree needs `svelte-kit sync` before tests run", group: "Learnings" },
+  { path: "learnings/game-engine-tests-filler-darts-must-be-misses-and.md", label: "Game-engine tests: filler darts must be misses, and fixtures obey the rules they enforce", group: "Learnings" },
   { path: "learnings/godaddy-apex-domain-a-record-to-edge-ip.md", label: "GoDaddy apex domain on Railway: A record to live edge IP, not the documented one", group: "Learnings" },
   { path: "learnings/godaddy-dns-can-t-serve-a-railway-apex-domain.md", label: "GoDaddy DNS can't serve a Railway apex domain", group: "Learnings" },
   { path: "learnings/inputmode-lives-in-per-origin-localstorage-same-repo-on-diff.md", label: "inputMode lives in per-origin localStorage — same repo on different ports shows different scorer state", group: "Learnings" },
+  { path: "learnings/junctioned-node-modules-needs-vite-server-fs-allow.md", label: "Junctioned node_modules needs Vite server.fs.allow — client entry 403s otherwise", group: "Learnings" },
   { path: "learnings/index.md", label: "Learnings", group: "Learnings" },
   { path: "learnings/match-api-unauthenticated.md", label: "Match API is unauthenticated — the share link is the key", group: "Learnings" },
+  { path: "learnings/merged-pr-leftovers-block-the-pull.md", label: "Merged-PR leftovers in the main tree block the pull — verify identical, then discard", group: "Learnings" },
   { path: "learnings/miss-turns-must-persist-with-dartsthrown-1.md", label: "Miss turns must persist with dartsThrown ≥ 1", group: "Learnings" },
+  { path: "learnings/neo-ref-clicks-silently-no-op-on-some-sveltekit.md", label: "Neo ref-clicks silently no-op on some SvelteKit buttons — use evaluate el.click()", group: "Learnings" },
   { path: "learnings/numpad-multiplier-relabels-number-buttons-t20-d20-and-the-se.md", label: "Numpad multiplier relabels number buttons (T20/D20) — and the selection persists across turns", group: "Learnings" },
   { path: "learnings/webspeech-only-dutch-tts.md", label: "Only webSpeech TTS speaks Dutch — kokoro is English-only, ElevenLabs is pre-generated clips", group: "Learnings" },
   { path: "learnings/opencode-zen-go-needs-session-header.md", label: "OpenCode zen/go LLM endpoint needs x-opencode-session header + custom User-Agent", group: "Learnings" },
   { path: "learnings/patching-board-svgs-replace-existing-attributes.md", label: "Patching board SVGs: replace existing attributes, never append duplicates", group: "Learnings" },
   { path: "learnings/plain-let-onmount-needs-state.md", label: "Plain `let` assigned in async onMount never re-renders — must be $state", group: "Learnings" },
+  { path: "learnings/playwright-hit-target-fails-at-bull-center.md", label: "Playwright hit-target check fails at the bull's center — the 50 ring paints on top; click the 25 ring off-center", group: "Learnings" },
+  { path: "learnings/playwright-reuses-orphaned-dev-servers.md", label: "Playwright reuses orphaned dev servers — E2E can silently test master code, not your worktree", group: "Learnings" },
+  { path: "learnings/railway-auto-deploy-can-silently-skip-a-master-push-verify-t.md", label: "Railway auto-deploy can silently skip a master push — verify timestamp vs latest commit, fallback is railway up", group: "Learnings" },
   { path: "learnings/refresh-resume-needs-chronological-turn-order.md", label: "Refresh-resume depends on chronological turn order and persisted firstThrowerId", group: "Learnings" },
   { path: "learnings/risk-42-adjacency-table-drifts-from-classic-risk.md", label: "Risk 42 adjacency table drifts from classic Risk by 3 edges — edge-sampling tests can't catch membership drift", group: "Learnings" },
   { path: "learnings/risk-board-svg-attribute-order.md", label: "Risk board SVGs: path attribute order varies — extract element-wise, not by regex lookahead", group: "Learnings" },
@@ -7468,18 +8010,22 @@ var WIKI_PAGES = [
   { path: "learnings/risk-territory-board-svg-palette-in-layer2.md", label: "risk-territory-board.svg palette: fills live in layer2, join to territories by centroid containment", group: "Learnings" },
   { path: "learnings/scrollbar-gutter-stable-reserves-15px.md", label: "scrollbar-gutter: stable reserves 15px that window.innerWidth counts — measure the host box", group: "Learnings" },
   { path: "learnings/session-only-logins-not-in-accounts-list.md", label: "Session-only logins are absent from the saved-accounts list — don't gate account switching on it", group: "Learnings" },
+  { path: "learnings/squash-merged-branch-commit-ahead-unmerged.md", label: "Squash-merged branch: commit-ahead ≠ unmerged — prove with git cherry", group: "Learnings" },
   { path: "learnings/ssr-pages-are-empty-shells-emailgate.md", label: "SSR pages are empty shells — EmailGate gates all rendering client-side", group: "Learnings" },
   { path: "learnings/startrisk-clears-risk42-state-not-game-id.md", label: "startRisk clears risk42_state but not risk42_game_id — new game silently resumes the old one", group: "Learnings" },
   { path: "learnings/structuredclone-can-t-clone-svelte-5-state.md", label: "structuredClone can't clone Svelte 5 $state proxies — pass $state.snapshot() at the engine boundary", group: "Learnings" },
   { path: "learnings/svg-path-parsing-arc-arguments-are-not-points.md", label: "SVG path parsing: arc arguments are not points — tokenize by command, never by coordinate-pair regex", group: "Learnings" },
+  { path: "learnings/sync-infinite-loop-in-a-test-helper-hangs-vitest.md", label: "Sync infinite loop in a test helper hangs vitest with no timeout", group: "Learnings" },
   { path: "learnings/tooltips-must-use-fixed-positioning.md", label: "Tooltips must use fixed positioning to escape overflow clipping", group: "Learnings" },
   { path: "learnings/top-level-return-in-a-cjs-script-skips-the-file.md", label: "Top-level return in a CJS script skips the file write — silent no-op", group: "Learnings" },
   { path: "learnings/ts-can-t-narrow-state-in-closures.md", label: "TS can't narrow $state inside closures — use $derived.by with local capture", group: "Learnings" },
   { path: "learnings/turns-delete-endpoint-silently-no-ops-params-id-match-id-sha.md", label: "Turns DELETE endpoint silently no-ops — params.id (match id) shadows the turn-id query param", group: "Learnings" },
   { path: "learnings/tv-cast-pages-freeze-in-background-tabs-document.md", label: "TV cast pages freeze in background tabs — document.hidden pauses polling and commentary", group: "Learnings" },
   { path: "learnings/tv-commentary-hangs-on-one-segment-audio-events.md", label: "TV commentary hangs on one segment: audio events never fire in throttled windows — race every segment against a reading-time cap", group: "Learnings" },
+  { path: "learnings/vitest-can-t-see-type-holes-esbuild-strips-types.md", label: "Vitest can't see type holes — esbuild strips types; svelte-check is the only net", group: "Learnings" },
   { path: "learnings/wedge-index-from-a-seg-path-s-m-point-needs-a-9.md", label: "Wedge index from a seg path's M point needs a +9° half-wedge shift", group: "Learnings" },
   { path: "learnings/wiki-search-misses-recent-concepts.md", label: "wiki_search misses recently-written concepts — verify with wiki_validate or ls before writing", group: "Learnings" },
+  { path: "learnings/wiki-recap-staged-files-sweep-into-the-next-commit.md", label: "Wiki-recap staged files sweep into the next commit", group: "Learnings" },
   { path: "pages/TEMPLATES.md", label: "Page Templates", group: "Pages" },
   { path: "pages/index.md", label: "Pages", group: "Pages" },
   { path: "pages/artifacts/index.md", label: "Artifacts", group: "Pages / Artifacts" },
@@ -7509,17 +8055,22 @@ var WIKI_PAGES = [
   { path: "pages/entities/llm-commentary-trebles-territories.md", label: "LLM Commentary (Trebles & Territories)", group: "Pages / Entities" },
   { path: "pages/entities/match-stats-tab.md", label: "Match Stats Tab", group: "Pages / Entities" },
   { path: "pages/entities/playerpanel.md", label: "PlayerPanel", group: "Pages / Entities" },
+  { path: "pages/entities/profile-editing-player-name-sign-in-email.md", label: "Profile Editing (player name + sign-in email)", group: "Pages / Entities" },
   { path: "pages/entities/recap-video-pipeline-trebles-territories.md", label: "Recap Video Pipeline (Trebles & Territories)", group: "Pages / Entities" },
   { path: "pages/entities/risk-42-end-screens-teruglezen-drawer.md", label: "Risk 42 end screens & Teruglezen drawer", group: "Pages / Entities" },
   { path: "pages/entities/risk-42-engine-risk-engine-ts.md", label: "Risk 42 engine (risk-engine.ts)", group: "Pages / Entities" },
   { path: "pages/entities/risk-42-playable-game-risk-setup-fun-tab-match.md", label: "Risk 42 playable game (risk-setup + Fun tab + /match/risk + RiskBoard)", group: "Pages / Entities" },
   { path: "pages/entities/spectator-interviews-trebles-territories.md", label: "Spectator Interviews (Trebles & Territories)", group: "Pages / Entities" },
+  { path: "pages/entities/turns-api-matches-id-turns.md", label: "Turns API (matches/[id]/turns)", group: "Pages / Entities" },
   { path: "pages/entities/tv-second-screen-cast-views.md", label: "TV second screen (cast views)", group: "Pages / Entities" },
   { path: "rules/board-svgs-are-generated.md", label: "Board SVGs are generated — edit the regenerator, never the output", group: "Rules" },
   { path: "rules/derive-stats-from-state-deltas-never-by-substring.md", label: "Derive stats from state deltas, never by substring-matching log copy", group: "Rules" },
+  { path: "rules/engine-invariant-sweeps-plain-asserts-assert.md", label: "Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets", group: "Rules" },
   { path: "rules/never-hardcode-player-slots-in-match-ui.md", label: "Never hardcode player slots in match UI", group: "Rules" },
   { path: "rules/new-game-modes-follow-the-conquest-cut-pure-setup.md", label: "New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board", group: "Rules" },
+  { path: "rules/prove-overlays-never-block-gameplay-live-dom.md", label: "Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert", group: "Rules" },
   { path: "rules/index.md", label: "Rules", group: "Rules" },
   { path: "rules/use-app-stores-page-for-page-state-house-style.md", label: "Use $app/stores $page for page state — house style", group: "Rules" },
-  { path: "rules/use-tooltip-not-native-title.md", label: "Use the Tooltip component, not native title attributes", group: "Rules" }
+  { path: "rules/use-tooltip-not-native-title.md", label: "Use the Tooltip component, not native title attributes", group: "Rules" },
+  { path: "rules/when-a-playtest-stalls-under-background-tab.md", label: "When a playtest stalls under background-tab throttling, finish the game via the engine + PATCH — don't tab-hop", group: "Rules" }
 ];

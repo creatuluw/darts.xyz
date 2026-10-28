@@ -35,3 +35,5 @@ Knowledge graph: concepts, entities, and artifacts that make up this project.
 - [In-game session testing reports (docs/in-game-session-testing/)](./artifacts/in-game-session-testing-reports-docs-in-game.md) — Four full playtest session reports from 2026-09-09, played through the real UI (BrowserOS neo against the dev server, master `46a429e`) with the TV second scree
 - [Risk 42 end screens & Teruglezen drawer](./entities/risk-42-end-screens-teruglezen-drawer.md) — The game-over surfaces for [Risk 42](../concepts/risk-42-proposed-game-mode.md), shipped during the session-6 prod playtest (2026-09-10, commits `5e6dc11` + `bf
 - [PR #17 three-axis code review](./artifacts/pr-17-three-axis-code-review.md) — PR #17 three-axis code review
+- [Turns API (matches/[id]/turns)](./entities/turns-api-matches-id-turns.md) — Turns API
+- [Profile Editing (player name + sign-in email)](./entities/profile-editing-player-name-sign-in-email.md) — Profile Editing (player name + sign-in email)

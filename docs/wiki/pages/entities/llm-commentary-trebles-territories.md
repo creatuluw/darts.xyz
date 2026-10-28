@@ -12,7 +12,7 @@ The in-game AI commentary/interview broadcast layer: an LLM writes Dutch comment
 
 ## Details
 
-- **Endpoint**: `https://opencode.ai/zen/go/v1/chat/completions` (OpenCode Zen Go) — see the [endpoint-headers learning](../../learnings/opencode-zen-go-needs-session-header.md); model `glm-5.3-flash`; API key in `.env` under `OPENCODE_API`; wrapped by `src/lib/server/opencode.ts`.
+- **Endpoint**: since 2026-09-09 evening, DeepSeek `deepseek-v4-flash` (see the [model-swap learning](../../learnings/commentary-llm-deepseek-v4-flash.md); ~1s latency) — replaced OpenCode Zen Go `glm-5.3-flash`, which needed the [session-header workaround](../../learnings/opencode-zen-go-needs-session-header.md); API key in `.env`; wrapped by `src/lib/server/opencode.ts`.
 - **Cadence**: every N turns (default 2) — N is the LLM aggregation window.
 - **Trigger material**: score events, territories claimed/lost, Shanghai feats, Bull Altar resurrections, domination runs — the same event stream the audio caller uses.
 - **Original persona spec** (2026-09-07, superseded): PDC-style sport commentary × British humor × TV chef quotes with Muppet Show stingers. The 2026-09-08 grill rounds replaced this with **Dutch spectator personas** (Ome Gerrit, Jasmien, …) rendered on the TV second screen — see [spectator-interviews-trebles-territories](./spectator-interviews-trebles-territories.md) and [commentary-gated-on-2nd-screen](../../decisions/commentary-gated-on-2nd-screen.md).

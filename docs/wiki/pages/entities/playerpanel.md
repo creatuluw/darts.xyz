@@ -13,7 +13,8 @@ A reusable scoreboard panel component for the live match scorer, extracted from 
 ## Details
 
 - **Location**: `src/lib/components/ui/PlayerPanel.svelte` (exported from the UI barrel)
-- **Interface**: props for a single player's scoreboard + stats + last-3-turns block + undo/delete affordance (`showDeleteConfirm`, `onDeleteLastTurn`); a `condensed` mode renders a single compact card instead — name + active ▶ indicator, undo control with inline confirm, large remaining score (emerald when active), one bottom row `S sets · L legs · Avg match-3-dart · Darts this-leg`
+- **Interface**: props for a single player's scoreboard + stats + last-3-turns block + undo/delete/edit affordances (`showDeleteConfirm`, `onDeleteLastTurn`, `onEditLastTurn`); a `condensed` mode renders a single compact card instead — name + active ▶ indicator, undo control with inline confirm, large remaining score (emerald when active), one bottom row `S sets · L legs · Avg match-3-dart · Darts this-leg`
+- **Edit affordance (2026-10-28)**: a pencil icon (blue hover) sits next to the trash in both variants — condensed header and the full card's last-turn row — calling `onEditLastTurn(turnId)`; both icons are wrapped in the shared `Tooltip` component (the two adjacent native `title=` trash attributes were converted as part of that change)
 - **Used by**: [live-match-page](./live-match-page.md) — all layouts: full-size in the 1–2 player side columns (solo mirror is separate inline markup), condensed in the 3–6 player side columns (see the cards-around-the-board decision)
 
 ## Lifecycle
@@ -21,3 +22,4 @@ A reusable scoreboard panel component for the live match scorer, extracted from 
 - First added: created when the live scorer was made player-count-generic (any roster size up to 6 rendered fully). The match engine and turn rotation were already generic; only the UI hardcoded slots.
 - Significant changes: 2026-09-07 — scoped to 1–2 player layouts when the dual-layout redesign moved 3–6 players to the standings strip; dead `compact` prop removed.
 - Significant changes: 2026-09-07 — dual layout reversed: condensed mode added, standings strip removed; panels flank the board for all 1–6 players again.
+- Significant changes: 2026-10-28 — pencil edit affordance added next to trash (both card variants), `onEditLastTurn` prop, icons moved to shared Tooltip.

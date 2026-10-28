@@ -23,7 +23,7 @@ The **implemented** mid-game TV broadcast: at every-N-turn boundaries an LLM wri
 - **Commentators**: Leo (`GiGOaehga8enaTnFQvb4`) and Theodore (`AgeYjqDIfXtkcA3mOcsH`) swap roles per boundary — odd: Leo asks / Theodore analyses; even: swapped. Spectator voices never use a commentator voice.
 - **Scope (settled round 4)**: all match types — see [commentary-gated-on-open-2nd-screen-pause-button-all-match-t](../../decisions/commentary-gated-on-2nd-screen.md).
 - **Gating (settled round 4)**: generated only while a 2nd screen is open and not paused; the TV pause button stops all generation, including audio spend.
-- **Cadence (settled round 4)**: every N turns, default 2 — N is also the LLM aggregation window. Control lives on the TV view, persisted per match.
+- **Cadence (2026-10-28)**: every N turns, default **3** (`DEFAULT_COMMENTARY_CADENCE`, commit `4dcb93d` — was 2) — N is also the LLM aggregation window. Control lives on the TV view, persisted per match. Boundaries that arrive while a broadcast is generating/playing are queued (`enqueueBoundaries`, newest-win, capped at 2) so none are silently dropped.
 - **Failure (settled round 4)**: dismissible toast on the TV, auto-hides after 30 s; the game never waits on commentary.
 - **Question pool (Q13)**: per-player 1–2 curated options, randomly surfaced — see [interview-questions-per-player-curated](../../decisions/interview-questions-per-player-curated.md).
 - **Voices (Q14, amended by PR #10)**: ElevenLabs live TTS — two swapping commentators (Leo/Theodore); spectators = random Dutch voice, never either commentator's — see [interviews-elevenlabs-live-tts](../../decisions/interviews-elevenlabs-live-tts.md) and the [4-segment decision](../../decisions/commentary-becomes-a-4-segment-broadcast.md). Kokoro ruled out (English-only — [webspeech-only-dutch-tts](../../learnings/webspeech-only-dutch-tts.md)).
@@ -41,3 +41,4 @@ The **implemented** mid-game TV broadcast: at every-N-turn boundaries an LLM wri
 - First added: spec'd during the 2026-09-08 grill interview rounds 2–4 (Q13–Q16 all settled).
 - 2026-09-09: **implemented on master** — `4f9d3fa` cadence + Dutch interview prompt modules (TDD), `ee717b7` ElevenLabs client, `38ba2c9` generate endpoint, `3c6803c` TV integration.
 - 2026-09-09: **4-segment broadcast + Leo/Theodore role swap** — PR #10 (`7e53dc0`, worktree `kees-commentator-analysis`): analyst analysis + cliffhanger segments, `priorLines` window, migration `0008`, 199 unit tests green.
+- 2026-10-28: cadence default 2 → 3 and a defensive 3-sentence post-trim on every segment (`commentary-trim.ts`, `trimInterview` in the POST handler) so LLM overruns can't stretch TTS/broadcast — commit `4dcb93d`.

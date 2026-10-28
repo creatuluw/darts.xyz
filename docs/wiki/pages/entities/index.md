@@ -16,3 +16,5 @@ _Concrete named things will be listed here._
 - [Risk 42 end screens & Teruglezen drawer](./risk-42-end-screens-teruglezen-drawer.md) - The game-over surfaces for [Risk 42](../concepts/risk-42-proposed-game-mode.md), shipped during the session-6 prod playtest (2026-09-10, commits `5e6dc11` + `bf
 - [Risk 42 engine (risk-engine.ts)](./risk-42-engine-risk-engine-ts.md) - The pure, TDD'd game engine implementing [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md) — Risk 42 played on the standard dartboard wher
 - [Risk 42 playable game (risk-setup + Fun tab + /match/risk + RiskBoard)](./risk-42-playable-game-risk-setup-fun-tab-match.md) - The playable cut of [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md): the pure setup module, the Fun-tab format picker, and the live game
+- [Turns API (matches/[id]/turns)](./turns-api-matches-id-turns.md) - Turns API
+- [Profile Editing (player name + sign-in email)](./profile-editing-player-name-sign-in-email.md) - Profile Editing (player name + sign-in email)
