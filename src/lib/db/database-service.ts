@@ -1,5 +1,5 @@
 import { getDb, schema } from "./index";
-import { eq, and, desc, sql, inArray, isNull, max } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, isNull, max, ne } from "drizzle-orm";
 
 export class DatabaseService {
   // === PLAYERS ===
@@ -131,6 +131,90 @@ export class DatabaseService {
       .update(schema.players)
       .set({ playerEmail, updatedAt: new Date() })
       .where(eq(schema.players.id, id));
+  }
+
+  /** Rename a player. Match records reference playerId, so history is untouched. */
+  async updatePlayerName(id: string, name: string) {
+    const result = await getDb()
+      .update(schema.players)
+      .set({ name: name.trim(), updatedAt: new Date() })
+      .where(and(eq(schema.players.id, id), isNull(schema.players.deletedAt)))
+      .returning();
+    return result[0] || null;
+  }
+
+  /** True if another live player in the account already uses this name. */
+  async isPlayerNameTakenInAccount(
+    accountId: string,
+    name: string,
+    excludePlayerId: string,
+  ) {
+    const rows = await getDb()
+      .select({ id: schema.players.id })
+      .from(schema.players)
+      .where(
+        and(
+          eq(schema.players.accountId, accountId.toLowerCase()),
+          sql`LOWER(${schema.players.name}) = LOWER(${name})`,
+          isNull(schema.players.deletedAt),
+          ne(schema.players.id, excludePlayerId),
+        ),
+      )
+      .limit(1);
+    return rows.length > 0;
+  }
+
+  /** True if the email already keys any account data (players, matches, settings). */
+  async isAccountEmailInUse(email: string) {
+    const normalized = email.toLowerCase();
+    const playerRows = await getDb()
+      .select({ id: schema.players.id })
+      .from(schema.players)
+      .where(eq(schema.players.accountId, normalized))
+      .limit(1);
+    if (playerRows.length > 0) return true;
+    const matchRows = await getDb()
+      .select({ id: schema.matches.id })
+      .from(schema.matches)
+      .where(eq(schema.matches.accountId, normalized))
+      .limit(1);
+    if (matchRows.length > 0) return true;
+    const settingsRows = await getDb()
+      .select({ id: schema.accountSettings.id })
+      .from(schema.accountSettings)
+      .where(eq(schema.accountSettings.accountId, normalized))
+      .limit(1);
+    return settingsRows.length > 0;
+  }
+
+  /**
+   * Re-key an account onto a new email: the signed-in email IS the accountId,
+   * so players, matches and account settings must all move in one transaction.
+   * Returns the number of rows moved per table.
+   */
+  async changeAccountEmail(oldEmail: string, newEmail: string) {
+    return getDb().transaction(async (tx) => {
+      const playerRows = await tx
+        .update(schema.players)
+        .set({ accountId: newEmail.toLowerCase(), updatedAt: new Date() })
+        .where(eq(schema.players.accountId, oldEmail.toLowerCase()))
+        .returning({ id: schema.players.id });
+      const matchRows = await tx
+        .update(schema.matches)
+        .set({ accountId: newEmail.toLowerCase(), updatedAt: new Date() })
+        .where(eq(schema.matches.accountId, oldEmail.toLowerCase()))
+        .returning({ id: schema.matches.id });
+      const settingsRows = await tx
+        .update(schema.accountSettings)
+        .set({ accountId: newEmail.toLowerCase(), updatedAt: new Date() })
+        .where(eq(schema.accountSettings.accountId, oldEmail.toLowerCase()))
+        .returning({ id: schema.accountSettings.id });
+      return {
+        players: playerRows.length,
+        matches: matchRows.length,
+        settings: settingsRows.length,
+      };
+    });
   }
 
   async softDeletePlayer(id: string) {

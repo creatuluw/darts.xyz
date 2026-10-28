@@ -6,7 +6,14 @@
         DoubleBezel,
         PillButton,
         AnimatedNumber,
+        Tooltip,
     } from "$lib/components/ui";
+    import { emailStore } from "$lib/stores/email";
+    import {
+        PROFILE_NAME_MAX_LENGTH,
+        validateAccountEmail,
+        validateProfileName,
+    } from "$lib/account/profile";
     import {
         IconUser,
         IconTrophy,
@@ -34,6 +41,21 @@
     let editEmail = $state(false);
     let emailInput = $state("");
     let savingEmail = $state(false);
+    let editName = $state(false);
+    let nameInput = $state("");
+    let savingName = $state(false);
+    let nameError = $state("");
+    let editAccountEmail = $state(false);
+    let accountEmailInput = $state("");
+    let savingAccountEmail = $state(false);
+    let accountEmailError = $state("");
+
+    // The signed-in account's email IS the player's accountId (lowercased).
+    let isOwnProfile = $derived(
+        !!player &&
+            !!$emailStore &&
+            player.accountId === $emailStore.toLowerCase(),
+    );
 
     onMount(async () => {
         await loadPlayer();
@@ -87,6 +109,74 @@
     function startEditEmail() {
         emailInput = player?.playerEmail || "";
         editEmail = true;
+    }
+
+    function startEditName() {
+        nameInput = player?.name || "";
+        nameError = "";
+        editName = true;
+    }
+
+    async function handleSaveName() {
+        if (!player) return;
+        const check = validateProfileName(nameInput);
+        if (!check.ok) {
+            nameError = check.error;
+            return;
+        }
+        savingName = true;
+        nameError = "";
+        const res = await fetch(`/api/players/${playerId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: check.value }),
+        });
+        savingName = false;
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            nameError = data.error || "Could not save name";
+            return;
+        }
+        player = await res.json();
+        editName = false;
+    }
+
+    function startEditAccountEmail() {
+        accountEmailInput = $emailStore;
+        accountEmailError = "";
+        editAccountEmail = true;
+    }
+
+    async function handleSaveAccountEmail() {
+        const current = $emailStore;
+        const check = validateAccountEmail(accountEmailInput);
+        if (!check.ok) {
+            accountEmailError = check.error;
+            return;
+        }
+        if (current && check.value === current.toLowerCase()) {
+            editAccountEmail = false;
+            return;
+        }
+        savingAccountEmail = true;
+        accountEmailError = "";
+        const res = await fetch("/api/account/email", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ accountId: current, newEmail: accountEmailInput }),
+        });
+        savingAccountEmail = false;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            accountEmailError = data.error || "Could not change email";
+            return;
+        }
+        if (data.changed) {
+            // Keep the signed-in session, darts_email and the saved-accounts
+            // list in sync (remembered AND session-only logins).
+            emailStore.renameEmail(current, data.email);
+        }
+        editAccountEmail = false;
     }
 
     async function handleDelete() {
@@ -143,9 +233,46 @@
         <div class="text-center text-zinc-400 py-24">Loading...</div>
     {:else if player}
         <div class="flex items-center justify-between">
-            <h1 class="font-display font-extrabold text-3xl md:text-4xl">
-                {player.name}
-            </h1>
+            {#if editName}
+                <div class="flex items-center gap-2 flex-1 max-w-md">
+                    <input
+                        type="text"
+                        bind:value={nameInput}
+                        placeholder="Player name"
+                        maxlength={PROFILE_NAME_MAX_LENGTH}
+                        class="flex-1 bg-zinc-50 dark:bg-white/5 rounded-full px-4 py-2 text-xl font-display font-extrabold ring-1 ring-black/6 dark:ring-white/10 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                        onkeydown={(e) => e.key === "Enter" && handleSaveName()}
+                    />
+                    <button
+                        onclick={handleSaveName}
+                        disabled={savingName}
+                        class="p-1.5 rounded-full bg-emerald-500 text-white hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                    >
+                        <IconCheck size={14} />
+                    </button>
+                    <button
+                        onclick={() => (editName = false)}
+                        class="p-1.5 rounded-full bg-zinc-200 dark:bg-white/10 text-zinc-500 hover:bg-zinc-300 dark:hover:bg-white/15 transition-colors"
+                    >
+                        <IconX size={14} />
+                    </button>
+                </div>
+            {:else}
+                <div class="flex items-center gap-2">
+                    <h1 class="font-display font-extrabold text-3xl md:text-4xl">
+                        {player.name}
+                    </h1>
+                    <Tooltip content="Edit name">
+                        <button
+                            onclick={startEditName}
+                            class="text-zinc-400 hover:text-emerald-500 transition-colors p-1"
+                            aria-label="Edit name"
+                        >
+                            <IconPencil size={18} />
+                        </button>
+                    </Tooltip>
+                </div>
+            {/if}
             <button
                 onclick={() => (showDeleteConfirm = true)}
                 class="text-zinc-400 hover:text-red-500 transition-colors p-2"
@@ -155,10 +282,72 @@
             </button>
         </div>
 
+        {#if nameError}
+            <p class="text-red-500 text-xs mt-1.5">{nameError}</p>
+        {/if}
+
         <div class="text-zinc-400 text-sm mt-2 flex items-center gap-2">
             <IconCalendar size={14} />
             Added {new Date(player.createdAt).toLocaleDateString()}
         </div>
+
+        <!-- Sign-in email (account identity) — only on the signed-in player's own profile -->
+        {#if isOwnProfile}
+            <div class="mt-4">
+                {#if editAccountEmail}
+                    <div class="flex items-center gap-2 max-w-sm">
+                        <div class="relative flex-1">
+                            <IconMail
+                                size={14}
+                                class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
+                            />
+                            <input
+                                type="email"
+                                bind:value={accountEmailInput}
+                                placeholder="you@email.com"
+                                class="w-full bg-zinc-50 dark:bg-white/5 rounded-full pl-9 pr-3 py-2 text-sm ring-1 ring-black/6 dark:ring-white/10 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                                onkeydown={(e) =>
+                                    e.key === "Enter" &&
+                                    handleSaveAccountEmail()}
+                            />
+                        </div>
+                        <button
+                            onclick={handleSaveAccountEmail}
+                            disabled={savingAccountEmail}
+                            class="p-1.5 rounded-full bg-emerald-500 text-white hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                        >
+                            <IconCheck size={14} />
+                        </button>
+                        <button
+                            onclick={() => (editAccountEmail = false)}
+                            class="p-1.5 rounded-full bg-zinc-200 dark:bg-white/10 text-zinc-500 hover:bg-zinc-300 dark:hover:bg-white/15 transition-colors"
+                        >
+                            <IconX size={14} />
+                        </button>
+                    </div>
+                {:else}
+                    <Tooltip content="Edit sign-in email">
+                        <button
+                            onclick={startEditAccountEmail}
+                            class="flex items-center gap-1.5 text-sm transition-colors cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                        >
+                            <IconMail size={14} />
+                            <span class="font-mono">{$emailStore}</span>
+                            <IconPencil size={10} class="opacity-40" />
+                        </button>
+                    </Tooltip>
+                {/if}
+                {#if accountEmailError}
+                    <p class="text-red-500 text-xs mt-1.5">
+                        {accountEmailError}
+                    </p>
+                {/if}
+                <p class="text-[10px] text-zinc-400 mt-1.5 pl-1">
+                    Sign-in email — your players, matches and settings travel
+                    with it.
+                </p>
+            </div>
+        {/if}
 
         <!-- Player Email -->
         <div class="mt-4">

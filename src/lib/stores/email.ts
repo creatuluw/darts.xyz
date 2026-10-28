@@ -101,6 +101,15 @@ function createAccountsStore() {
         return updated;
       });
     },
+    /** Replace an email in the accounts list in place (keeps list order) */
+    rename: (oldEmail: string, newEmail: string) => {
+      store.update((list) => {
+        if (!list.includes(oldEmail)) return list;
+        const updated = list.map((e) => (e === oldEmail ? newEmail : e));
+        writeJSON(ACCOUNTS_KEY, updated);
+        return updated;
+      });
+    },
     /** Remove all darts-related keys from localStorage */
     clearAll: () => {
       if (isBrowser()) {
@@ -158,6 +167,34 @@ function createEmailStore() {
     switchTo: (email: string) => {
       persistActive(email, true);
       store.set(email);
+    },
+    /**
+     * Change the signed-in email in place, preserving how it was persisted:
+     * a remembered login migrates localStorage + the accounts list; a
+     * session-only login (absent from the accounts list) moves sessionStorage
+     * only. No-op if oldEmail is not the active login.
+     */
+    renameEmail: (oldEmail: string, newEmail: string) => {
+      if (oldEmail === newEmail) return;
+      const remembered = readRaw("local", ACTIVE_KEY);
+      const session = readRaw("session", ACTIVE_KEY);
+      if (session !== oldEmail && remembered !== oldEmail) return;
+      if (remembered === oldEmail) {
+        try {
+          localStorage.setItem(ACTIVE_KEY, newEmail);
+        } catch {
+          // ignore storage errors
+        }
+        accountsStore.rename(oldEmail, newEmail);
+      }
+      if (session === oldEmail) {
+        try {
+          sessionStorage.setItem(ACTIVE_KEY, newEmail);
+        } catch {
+          // ignore storage errors
+        }
+      }
+      store.set(newEmail);
     },
     /** Sign out: remove this account from the instance and switch away */
     signOut: (email: string) => {
