@@ -79,7 +79,7 @@
                 <div class="flex items-center justify-between mb-1">
                     <span
                         class="font-medium flex items-center gap-2 {isActive
-                            ? 'text-4xl font-black text-emerald-600 dark:text-emerald-400'
+                            ? 'text-2xl font-bold text-emerald-600 dark:text-emerald-400'
                             : next
                               ? 'text-2xl font-bold'
                               : 'text-xs'}"
@@ -127,13 +127,9 @@
                     {/if}
                 </div>
                 <div
-                    class="text-center font-display font-black {isActive
-                        ? large
-                            ? 'text-8xl'
-                            : 'text-6xl'
-                        : large
-                          ? 'text-7xl'
-                          : 'text-5xl'} tracking-tight leading-none {isActive
+                    class="text-center font-display font-black {large
+                        ? 'text-7xl'
+                        : 'text-5xl'} tracking-tight leading-none {isActive
                         ? 'text-emerald-600 dark:text-emerald-400'
                         : ''}"
                 >
@@ -181,9 +177,7 @@
     <DoubleBezel>
         <div class="text-center">
             <div
-                class="font-display font-black {isActive
-                    ? 'text-9xl'
-                    : 'text-8xl'} tracking-tight leading-none {isActive
+                class="font-display font-black text-8xl tracking-tight leading-none {isActive
                     ? 'text-emerald-600 dark:text-emerald-400'
                     : ''}"
             >
@@ -191,12 +185,10 @@
             </div>
             <div
                 class="mt-2 font-medium {isActive
-                    ? 'text-4xl font-black'
+                    ? 'text-2xl font-bold text-emerald-700 dark:text-emerald-400'
                     : next
                       ? 'text-2xl font-bold'
-                      : 'text-sm'} {isActive
-                    ? 'text-emerald-700 dark:text-emerald-400'
-                    : ''}"
+                      : 'text-sm'}"
             >
                 {#if isActive}
                     <IconPlayerPlay
