@@ -1,6 +1,5 @@
 # Decisions
 
-- [Adopt Vitest + Playwright test stack with real-DB E2E](./adopt-vitest-playwright-real-db-e2e.md) - Context
 - [Cap match rosters at 6 players, enforced client and server](./cap-match-rosters-at-6-players.md) - Context
 - [Dual-layout live match view: standings strip for 3+ players](./dual-layout-match-view.md) - Context
 - [Cards around the board for all roster sizes (condensed panels for 3–6)](./cards-around-the-board.md) - Decision
@@ -33,15 +32,20 @@
 - [Risk 42 continent income: +1 dart per full continent (Asia +2); budget shown pre-turn](./risk-42-continent-income.md) - Context
 - [Risk 42 game start: random deal of all 40 territories (1 army each), no claiming phase](./risk-42-game-start-random-deal.md) - Context
 - [Risk 42 deal amended: exactly equal deal, 2 armies each, blank leftovers claimable, players pick starter](./risk-42-deal-final-equal-2-armies-blanks.md) - Context
-- [Risk 42 two-screen identity: dartboard to play, world map to spectate](./risk-42-two-screen-identity-dartboard-to-play-world-map-to-s.md) - Context
-- [Risk 42 applyDart seam: DartHit carries singleRing for singles](./risk-42-applydart-seam-darthit-carries-singlering-for-single.md) - Context
-- [Risk 42 v1 persists to sessionStorage (stopgap) — server write-through lands at M3](./risk-42-v1-persists-to-sessionstorage-stopgap-server-write-t.md) - Context
-- [Commentary becomes a 4-segment broadcast with Leo & Theodore swapping roles](./commentary-becomes-a-4-segment-broadcast-with-leo-theodore-s.md) - Context
-- [Risk 42 server persistence rides conquest_games + /api/conquest — sessionStorage stopgap superseded](./risk-42-server-persistence-rides-conquest-games-api-conquest.md) - Context
-- [TV cast pages render on a fixed 1920×1080 TvStage canvas, scaled to fit — no viewport breakpoints](./tv-cast-pages-render-on-a-fixed-1920-1080-tvstage-canvas-sca.md) - Context
-- [TvStage fills the viewport (independent x/y scale) — letterboxing dropped](./tvstage-fills-the-viewport-independent-x-y-scale-letterboxin.md) - Context
-- [Risk 42 wears the classic Risk continent palette everywhere](./risk-42-wears-the-classic-risk-continent-palette-everywhere.md) - Context
-- [Risk 42 TV: full-bleed map with overlay panels pinned to measured-empty margins](./risk-42-tv-full-bleed-map-with-overlay-panels-pinned-to-meas.md) - Context
-- [Commentary API degrades per-segment — TTS failure drops to subtitles, never a whole-request 502](./commentary-api-degrades-per-segment-tts-failure-drops-to-sub.md) - Context
-- [Risk 42 6-player legibility: hue-spread player palette, collision-free chips, podium scrim](./risk-42-6-player-legibility-hue-spread-player-palette-collis.md) - Context
-- [Risk 42 Arsenal becomes a bankable dart economy: bull 25 = +2 darts, bullseye 50 = +3, savable](./risk-42-arsenal-becomes-a-bankable-dart-economy-bull-25-2-da.md) - Context
+- [Risk 42 two-screen identity: dartboard to play, world map to spectate](./risk-42-two-screen-identity-dartboard-to-play.md) - Context
+- [Risk 42 applyDart seam: DartHit carries singleRing for singles](./risk-42-applydart-seam-darthit-singlering.md) - Context
+- [Risk 42 v1 persists to sessionStorage (stopgap) — server write-through lands at M3](./risk-42-v1-persists-to-sessionstorage-stopgap.md) - Context
+- [Commentary becomes a 4-segment broadcast with Leo & Theodore swapping roles](./commentary-becomes-a-4-segment-broadcast.md) - Context
+- [Risk 42 server persistence rides conquest_games + /api/conquest — sessionStorage stopgap superseded](./risk-42-server-persistence-rides-conquest-api.md) - Context
+- [TV cast pages render on a fixed 1920×1080 TvStage canvas, scaled to fit — no viewport breakpoints](./tv-cast-pages-render-on-a-fixed-1920-1080-tvstage.md) - Context
+- [TvStage fills the viewport (independent x/y scale) — letterboxing dropped](./tvstage-fills-the-viewport-independent-x-y-scale.md) - Context
+- [Risk 42 wears the classic Risk continent palette everywhere](./risk-42-wears-the-classic-risk-continent-palette.md) - Context
+- [Risk 42 TV: full-bleed map with overlay panels pinned to measured-empty margins](./risk-42-tv-full-bleed-map-with-overlay-panels.md) - Context
+- [Commentary API degrades per-segment — TTS failure drops to subtitles, never a whole-request 502](./commentary-api-degrades-per-segment-tts-failure.md) - Context
+- [Risk 42 6-player legibility: hue-spread player palette, collision-free chips, podium scrim](./risk-42-6-player-legibility.md) - Context
+- [Risk 42 Arsenal becomes a bankable dart economy: bull 25 = +2 darts, bullseye 50 = +3, savable](./risk-42-arsenal-bankable-dart-economy.md) - Context
+- [Risk 42 reach rule: darts only count on own or adjacent territories](./risk-42-reach-rule-own-or-adjacent.md) - Context
+- [Risk 42 territory cards: conquest earns a card, sets cash in for dart bursts with escalation](./risk-42-territory-cards-conquest-earns-card.md) - Context
+- [Risk 42 card hoarding is unlimited — no mandatory cash-in at 5+ cards](./risk-42-card-hoarding-unlimited.md) - Context
+- [Risk 42 income rework proposed: continent bonus out, max(3, territories/6) darts per turn](./risk-42-income-rework-continent-bonus-out.md) - Context
+- [Wiki scope: product knowledge only — all dev-process content removed](./wiki-scope-product-knowledge-only-all-dev-process-content-re.md) - Context

@@ -14,7 +14,7 @@ The implementation spec for **Risk 42** — the self-contained HTML design docum
 
 - [Risk 42 (proposed game mode)](../concepts/risk-42-proposed-game-mode.md) — the game itself
 - The locked rulings: the Deal (equal split, 2 armies, blanks, players pick starter), two-feeder deposits, mirror combat, Exile & clawback, the Arsenal bulls, continent income, Domination headline + clock alt
-- [Two-screen identity decision](../../decisions/risk-42-two-screen-identity-dartboard-to-play-world-map-to-s.md) — scorer = tinted dartboard, TV = world map, avatars on both
+- [Two-screen identity decision](../../decisions/risk-42-two-screen-identity-dartboard-to-play.md) — scorer = tinted dartboard, TV = world map, avatars on both
 
 ## Sections
 

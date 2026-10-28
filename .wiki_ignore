@@ -14,6 +14,11 @@ __pycache__/
 .DS_Store
 .svelte-kit/
 
+# Orca session artifacts — agent scratch space (BrowserOS neo logs, code-review
+# reports, handoffs). Ephemeral by nature; durable findings get mined into the
+# wiki by the recap agent, the files themselves are not documentation.
+.monster/
+
 # Scratch duplicates of generated Risk boards (Windows explorer copies, superseded experiments)
 docs/risk/risk-dart-board - Copy.svg
 docs/risk/risk-dart-board - Copy (2).svg

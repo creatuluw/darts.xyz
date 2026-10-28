@@ -27,7 +27,7 @@ The game-over surfaces for [Risk 42](../concepts/risk-42-proposed-game-mode.md),
 - [Risk 42 proposed game mode](../concepts/risk-42-proposed-game-mode.md) — the mode these screens terminate
 - [./tv-second-screen-cast-views](./tv-second-screen-cast-views.md) — the TV cast page family the winner overlay belongs to
 - [./llm-commentary-trebles-territories](./llm-commentary-trebles-territories.md) — the commentary system whose segments the drawer replays
-- [In-game session testing reports](../artifacts/in-game-session-testing-reports-docs-in-game-session-testing.md) — validated live in the session-6 report
+- [In-game session testing reports](../artifacts/in-game-session-testing-reports-docs-in-game.md) — validated live in the session-6 report
 
 ## Lifecycle
 

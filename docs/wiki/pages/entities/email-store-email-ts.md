@@ -28,4 +28,3 @@ timestamp: "2026-09-08T11:06:45.079Z"
 - First added: with the EmailGate — localStorage persistence + saved-accounts list
 - 2026-09-08: remember/session semantics added via PR #1 (`feature/remember-me`, pending merge) — see the remember-me decision(../../decisions/remember-me-session-only-login.md)
 - 2026-09-08 (review feedback, same PR): remember checkbox added to the FloatingNav add-account modal too; account switching now always lists every device-registered account except the active one — see [session-only-logins-not-in-accounts-list](../../learnings/session-only-logins-not-in-accounts-list.md)
-- Status note (2026-09-08): that review-feedback commit (`cc9f39b`, FloatingNav remember checkbox + switcher fix) is pushed to `feature/remember-me` but **still not on master** — PR #1's merge predates it. See [merged-pr-doesn-t-empty-the-branch](../../learnings/merged-pr-doesn-t-empty-the-branch.md)

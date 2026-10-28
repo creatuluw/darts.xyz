@@ -42,7 +42,6 @@ E2E creates data under unique `e2e-*@test.local` accounts and archives test play
 ## Relationships
 
 - [e2e-helpers](../entities/e2e-helpers.md) — shared seeding/util module for the E2E specs
-- Implements the [adopt-vitest-playwright-test-stack](../../decisions/adopt-vitest-playwright-real-db-e2e.md) decision (see decisions/)
 - Tests the modules documented under `src/lib/game/` in [file tree](../../architecture/file-tree.md)
 
 ## Lifecycle
