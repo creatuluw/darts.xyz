@@ -515,6 +515,41 @@ export class DatabaseService {
       .orderBy(schema.turns.turnNumber);
   }
 
+  async getTurn(turnId: string) {
+    const result = await getDb()
+      .select()
+      .from(schema.turns)
+      .where(eq(schema.turns.id, turnId))
+      .limit(1);
+    return result[0] || null;
+  }
+
+  async updateTurn(
+    turnId: string,
+    values: {
+      dart1Score: number;
+      dart1Multiplier: number;
+      dart1Segment: number;
+      dart2Score: number;
+      dart2Multiplier: number;
+      dart2Segment: number;
+      dart3Score: number;
+      dart3Multiplier: number;
+      dart3Segment: number;
+      totalScore: number;
+      remainingScore: number;
+      isBust: boolean;
+      dartsThrown: number;
+    },
+  ) {
+    const result = await getDb()
+      .update(schema.turns)
+      .set(values)
+      .where(eq(schema.turns.id, turnId))
+      .returning();
+    return result[0] || null;
+  }
+
   async deleteTurn(turnId: string) {
     await getDb().delete(schema.turns).where(eq(schema.turns.id, turnId));
   }

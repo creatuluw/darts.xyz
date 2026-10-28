@@ -12,6 +12,7 @@
         IconTrash,
         IconExternalLink,
         IconCast,
+        IconX,
     } from "@tabler/icons-svelte";
     import {
         DoubleBezel,
@@ -29,6 +30,7 @@
         getScoreDisplay,
     } from "$lib/game";
     import { processTurn } from "$lib/game/scoring";
+    import { computeEditedTurnOutcome } from "$lib/game/turn-edit";
     import {
         getCheckoutSuggestions,
         canCheckout,
@@ -379,6 +381,17 @@
                 loadingStore.finish("audio");
             });
 
+        await loadMatch();
+        loading = false;
+    });
+
+    /**
+     * Load (or reload) the match from the API — the single source of truth.
+     * Runs on mount and after a turn edit: remaining scores, throw order,
+     * leg/set counters and stats are all replayed from the persisted turns
+     * (the exact refresh-resume path), never patched ad hoc.
+     */
+    async function loadMatch() {
         const res = await fetch(`/api/matches/${matchId}`);
         const data = await res.json();
         matchData = data;
@@ -648,8 +661,7 @@
         }
 
         loadingStore.finish("stats");
-        loading = false;
-    });
+    }
 
     function addDart(segment: number, multiplier: Multiplier) {
         if (activeSlotIndex === -1) return;
@@ -950,6 +962,115 @@
                 ? turns[turns.length - 2].remainingScore
                 : matchState.config.startingScore;
     }
+
+    // === Edit last turn ===
+    let editingTurn = $state<TurnRecord | null>(null);
+    let editSlots = $state<[DartSlot, DartSlot, DartSlot]>([null, null, null]);
+    let editMultiplier = $state<1 | 2 | 3>(1);
+    let editError = $state("");
+    let editSaving = $state(false);
+    let editActiveSlotIndex = $derived(
+        editSlots.findIndex((d) => d === null),
+    );
+    let editedDarts = $derived(
+        editSlots.filter((d): d is DartData => d !== null),
+    );
+    let editedTotal = $derived(
+        editedDarts.reduce((sum, d) => sum + d.score, 0),
+    );
+    // What the edited turn would do to the leg — same scoring engine the
+    // server runs, so the Save button never promises a rejected edit.
+    let editPreview = $derived.by(() => {
+        const ms = matchState;
+        const turn = editingTurn;
+        if (!ms || !turn || editedDarts.length === 0) return null;
+        const turns = ms.currentLeg.turns;
+        const idx = turns.findIndex((t) => t.id === turn.id);
+        const prevRemaining =
+            idx > 0
+                ? turns[idx - 1].remainingScore
+                : ms.config.startingScore;
+        return computeEditedTurnOutcome(prevRemaining, editedDarts);
+    });
+
+    function openEditTurn(turnId: string | null) {
+        const ms = matchState;
+        if (!ms) return;
+        const turns = ms.currentLeg.turns;
+        const last = turns[turns.length - 1];
+        if (!turnId || !last || last.id !== turnId) {
+            addToast("Only the latest turn of the leg can be edited", "error");
+            return;
+        }
+        // Pre-fill the stored darts. Persisted rows drop miss darts from the
+        // darts array (dartsThrown is its own column), so a turn with misses
+        // pre-fills fewer slots — re-enter a miss via the Miss button.
+        editingTurn = last;
+        editSlots = [
+            last.darts[0] ?? null,
+            last.darts[1] ?? null,
+            last.darts[2] ?? null,
+        ];
+        editMultiplier = 1;
+        editError = "";
+    }
+
+    function editAddDart(segment: number, multiplier: Multiplier) {
+        if (editActiveSlotIndex === -1) return;
+        editSlots[editActiveSlotIndex] = {
+            segment,
+            multiplier,
+            score: segment === 0 ? 0 : segment * multiplier,
+        };
+        editSlots = [...editSlots];
+    }
+
+    function editRemoveDartAt(index: number) {
+        editSlots[index] = null;
+        editSlots = [...editSlots];
+    }
+
+    function closeEditTurn() {
+        editingTurn = null;
+    }
+
+    async function saveEditedTurn() {
+        const ms = matchState;
+        const turn = editingTurn;
+        if (!ms || !turn || !turn.id || editedDarts.length === 0 || editSaving)
+            return;
+        editSaving = true;
+        editError = "";
+        try {
+            const res = await fetch(`/api/matches/${matchId}/turns`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    turnId: turn.id,
+                    darts: editedDarts.map((d) => ({
+                        segment: d.segment,
+                        multiplier: d.multiplier,
+                    })),
+                    dartsThrown: editedDarts.length,
+                }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => null);
+                editError = err?.error ?? "The edit was rejected";
+                return;
+            }
+            editingTurn = null;
+            addToast("Turn updated", "success");
+            // Rebuild the entire match from the persisted turns (the exact
+            // refresh-resume path) so remaining scores, throw order, averages
+            // and checkout suggestions stay derived from state.
+            await loadMatch();
+        } catch {
+            editError = "Could not save the edit — check your connection";
+        } finally {
+            editSaving = false;
+        }
+    }
 </script>
 
 <svelte:head>
@@ -1186,6 +1307,7 @@
                                 : p.id !== currentPlayer?.id}
                             bind:showDeleteConfirm
                             onDeleteLastTurn={deleteLastTurn}
+                            onEditLastTurn={openEditTurn}
                         />
                     {/each}
 
@@ -1798,6 +1920,7 @@
                             next={!isMultiGame && p.id !== currentPlayer?.id}
                             bind:showDeleteConfirm
                             onDeleteLastTurn={deleteLastTurn}
+                            onEditLastTurn={openEditTurn}
                         />
                     {/each}
                 </div>
@@ -2066,6 +2189,164 @@
                     </DoubleBezel>
                 </div>
             {/if}
+        </div>
+    </div>
+{/if}
+
+{#if editingTurn}
+    {@const turn = editingTurn}
+    <!-- Edit last turn dialog -->
+    <div
+        class="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Edit turn"
+    >
+        <div
+            class="w-full max-w-sm rounded-xl bg-white dark:bg-zinc-900 border border-[#E2DFD8] dark:border-white/10 shadow-2xl p-4 space-y-3 max-h-[90vh] overflow-y-auto"
+        >
+            <div class="flex items-center justify-between">
+                <span class="font-bold">
+                    Edit turn — {matchState?.players.find(
+                        (p) => p.id === turn.playerId,
+                    )?.name ?? "Player"}
+                </span>
+                <button
+                    onclick={closeEditTurn}
+                    class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+                    aria-label="Close"
+                >
+                    <IconX size={18} />
+                </button>
+            </div>
+
+            <!-- Dart slots + running total (same pattern as the scorer) -->
+            <div class="flex items-center justify-center gap-2 min-h-10">
+                {#each editSlots as dart, i}
+                    {#if dart}
+                        <span
+                            class="inline-flex items-center rounded-[5px] text-xs font-mono bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 w-[6.5rem] h-8"
+                        >
+                            <span
+                                class="w-[75%] inline-flex items-center justify-center gap-1"
+                            >
+                                {dart.multiplier === 3
+                                    ? "T"
+                                    : dart.multiplier === 2
+                                      ? "D"
+                                      : ""}{dart.segment === 25
+                                    ? dart.multiplier === 2
+                                        ? "Bull"
+                                        : "25"
+                                    : dart.segment}
+                                <span class="text-zinc-400 dark:text-zinc-500"
+                                    >({dart.score})</span
+                                >
+                            </span>
+                            <span class="w-[25%] flex justify-center items-center">
+                                <button
+                                    onclick={() => editRemoveDartAt(i)}
+                                    class="flex items-center justify-center w-5 h-5 -ml-[1px] rounded-[3px] text-sm leading-none bg-red-600 text-white hover:bg-red-500 transition-colors cursor-pointer"
+                                    aria-label="Remove dart"
+                                ><span class="mt-[1px]">&times;</span></button
+                                >
+                            </span>
+                        </span>
+                    {:else}
+                        <span
+                            class="inline-flex items-center justify-center rounded-[5px] px-2.5 py-1.5 text-xs font-mono border border-dashed border-zinc-300 dark:border-zinc-600 {i ===
+                            editActiveSlotIndex
+                                ? 'text-zinc-500 dark:text-zinc-400 animate-[pulse-bg_3s_ease-in-out_infinite] bg-zinc-100 dark:bg-white/5'
+                                : 'text-zinc-400 dark:text-zinc-500'} w-[6.5rem] h-8"
+                        >
+                            {i + 1}
+                        </span>
+                    {/if}
+                {/each}
+                <span
+                    class="inline-flex items-center justify-center rounded-[5px] w-[3.5rem] h-8 text-sm font-mono font-bold {editedDarts.length >
+                    0
+                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                        : 'border border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-400 dark:text-zinc-500'}"
+                >
+                    {editedDarts.length > 0 ? editedTotal : "="}
+                </span>
+            </div>
+
+            <!-- Multiplier row -->
+            <div class="flex gap-1.5">
+                <button
+                    onclick={() => (editMultiplier = 1)}
+                    class="flex-1 rounded-md py-2 text-sm font-bold transition-colors text-white dark:text-zinc-900 {editMultiplier === 1 ? 'bg-zinc-800 dark:bg-white' : 'bg-zinc-200 dark:bg-white/20'}"
+                >Single</button>
+                <button
+                    onclick={() => (editMultiplier = 2)}
+                    class="flex-1 rounded-md py-2 text-sm font-bold transition-colors {editMultiplier === 2 ? 'bg-red-600 text-white' : 'bg-red-200 text-red-800 dark:bg-red-900/40 dark:text-red-300'}"
+                >Double</button>
+                <button
+                    onclick={() => (editMultiplier = 3)}
+                    class="flex-1 rounded-md py-2 text-sm font-bold transition-colors {editMultiplier === 3 ? 'bg-green-600 text-white' : 'bg-green-200 text-green-800 dark:bg-green-900/40 dark:text-green-300'}"
+                >Triple</button>
+            </div>
+
+            <!-- Number grid: 1-20 darts order -->
+            <div class="grid grid-cols-5 gap-1.5">
+                {#each [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5] as num}
+                    <button
+                        onclick={() => editAddDart(num, editMultiplier)}
+                        disabled={editedDarts.length >= 3}
+                        class="rounded-md py-2.5 text-sm font-mono font-bold transition-colors cursor-pointer {editMultiplier === 1 ? 'bg-zinc-100 dark:bg-white/10 text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-white/15' : editMultiplier === 2 ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50'} disabled:opacity-30 disabled:pointer-events-none"
+                    >{editMultiplier === 3 ? 'T' : editMultiplier === 2 ? 'D' : ''}{num}</button>
+                {/each}
+            </div>
+
+            <!-- Bull & Miss row -->
+            <div class="flex gap-1.5">
+                <button
+                    onclick={() =>
+                        editAddDart(25, editMultiplier === 1 ? 1 : editMultiplier)}
+                    disabled={editMultiplier === 3 || editedDarts.length >= 3}
+                    class="flex-1 rounded-md py-2.5 text-sm font-bold transition-colors bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                >{editMultiplier === 2 ? 'Bull' : '25'}</button>
+                <button
+                    onclick={() => editAddDart(0, 0 as Multiplier)}
+                    disabled={editedDarts.length >= 3}
+                    class="flex-1 rounded-md py-2.5 text-sm font-bold transition-colors bg-zinc-200 dark:bg-white/10 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-300 dark:hover:bg-white/15 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                >Miss</button>
+            </div>
+
+            <!-- Outcome preview + server error -->
+            <div class="text-xs text-center min-h-5">
+                {#if editPreview?.isCheckout}
+                    <span class="text-red-500 font-bold">
+                        This edit would finish the leg — enter a checkout live instead
+                    </span>
+                {:else if editPreview?.isBust}
+                    <span class="text-red-500"
+                        >→ {editPreview.remainingScore} (bust)</span
+                    >
+                {:else if editPreview}
+                    <span class="text-zinc-400"
+                        >→ {editPreview.remainingScore}</span
+                    >
+                {/if}
+            </div>
+            {#if editError}
+                <div class="text-xs text-red-500 text-center">{editError}</div>
+            {/if}
+
+            <div class="flex items-center justify-end gap-2 pt-1">
+                <button
+                    onclick={closeEditTurn}
+                    class="rounded px-3 py-1.5 text-xs font-bold bg-zinc-100 dark:bg-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/15 transition-colors cursor-pointer"
+                >Cancel</button>
+                <button
+                    onclick={saveEditedTurn}
+                    disabled={editedDarts.length === 0 || editSaving ||
+                        !!editPreview?.isCheckout}
+                    class="rounded px-4 py-1.5 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                >{editSaving ? "Saving…" : "Save turn"}</button>
+            </div>
         </div>
     </div>
 {/if}

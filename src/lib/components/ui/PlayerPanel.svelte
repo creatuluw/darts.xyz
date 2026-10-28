@@ -4,11 +4,13 @@
         IconArrowUp,
         IconArrowDown,
         IconTrash,
+        IconPencil,
         IconExternalLink,
         IconTrophy,
     } from "@tabler/icons-svelte";
     import DoubleBezel from "./DoubleBezel.svelte";
     import AnimatedNumber from "./AnimatedNumber.svelte";
+    import Tooltip from "./Tooltip.svelte";
     import type { PlayerInMatch, TurnRecord } from "$lib/game";
 
     interface PanelStats {
@@ -38,6 +40,7 @@
         next = false,
         showDeleteConfirm = $bindable(false),
         onDeleteLastTurn,
+        onEditLastTurn,
     }: {
         player: PlayerInMatch;
         isActive?: boolean;
@@ -58,6 +61,8 @@
         next?: boolean;
         showDeleteConfirm?: boolean;
         onDeleteLastTurn: () => void;
+        /** Open the edit dialog for this panel's last turn (id may be missing pre-persist) */
+        onEditLastTurn: (turnId: string | null) => void;
     } = $props();
 
     function ordinal(n: number): string {
@@ -117,13 +122,28 @@
                             >
                         </div>
                     {:else}
-                        <button
-                            onclick={() => (showDeleteConfirm = true)}
-                            class="text-zinc-300 hover:text-red-500 transition-colors cursor-pointer"
-                            title="Delete last turn"
-                        >
-                            <IconTrash size={12} />
-                        </button>
+                        <div class="flex items-center gap-1">
+                            <Tooltip content="Edit last turn">
+                                <button
+                                    onclick={() =>
+                                        onEditLastTurn(
+                                            playerTurns[playerTurns.length - 1]?.id ??
+                                                null,
+                                        )}
+                                    class="text-zinc-300 hover:text-blue-500 transition-colors cursor-pointer"
+                                >
+                                    <IconPencil size={12} />
+                                </button>
+                            </Tooltip>
+                            <Tooltip content="Delete last turn">
+                                <button
+                                    onclick={() => (showDeleteConfirm = true)}
+                                    class="text-zinc-300 hover:text-red-500 transition-colors cursor-pointer"
+                                >
+                                    <IconTrash size={12} />
+                                </button>
+                            </Tooltip>
+                        </div>
                     {/if}
                 </div>
                 <div
@@ -426,13 +446,26 @@
                                     >
                                 </div>
                             {:else}
-                                <button
-                                    onclick={() => (showDeleteConfirm = true)}
-                                    class="flex items-center justify-center w-6 h-6 rounded text-zinc-300 hover:text-red-500 transition-colors cursor-pointer"
-                                    title="Delete last turn"
-                                >
-                                    <IconTrash size={12} />
-                                </button>
+                                <div class="flex items-center gap-0.5">
+                                    <Tooltip content="Edit last turn">
+                                        <button
+                                            onclick={() =>
+                                                onEditLastTurn(turn.id ?? null)}
+                                            class="flex items-center justify-center w-6 h-6 rounded text-zinc-300 hover:text-blue-500 transition-colors cursor-pointer"
+                                        >
+                                            <IconPencil size={12} />
+                                        </button>
+                                    </Tooltip>
+                                    <Tooltip content="Delete last turn">
+                                        <button
+                                            onclick={() =>
+                                                (showDeleteConfirm = true)}
+                                            class="flex items-center justify-center w-6 h-6 rounded text-zinc-300 hover:text-red-500 transition-colors cursor-pointer"
+                                        >
+                                            <IconTrash size={12} />
+                                        </button>
+                                    </Tooltip>
+                                </div>
                             {/if}
                         {/if}
                     </div>
