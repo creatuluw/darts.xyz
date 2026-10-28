@@ -1200,14 +1200,14 @@
                     <!-- Dartboard / Numpad Input -->
                     <DoubleBezel>
                         <div class="space-y-0">
-                            {#if inputMode === "board"}
-                                <div class="w-full">
-                                    <Dartboard
-                                        onHit={addDart}
-                                        disabled={currentDarts.length >= 3}
-                                    />
-                                </div>
-                            {:else}
+                            <!-- The official board is always visible; the numpad (if selected) renders below it as a secondary input -->
+                            <div class="w-full">
+                                <Dartboard
+                                    onHit={addDart}
+                                    disabled={currentDarts.length >= 3}
+                                />
+                            </div>
+                            {#if inputMode !== "board"}
                                 <!-- Numpad Input -->
                                 <div class="w-full px-1 py-2 space-y-2">
                                     <!-- Multiplier row -->
