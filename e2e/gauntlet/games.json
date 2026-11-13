@@ -1,0 +1,2547 @@
+{
+  "$comment": "Gauntlet chalkboard v3 — hand-computed expected values. AMENDMENT HISTORY: v1 mixed append/replace edit semantics and chained throws from stale pre-delete scores (proven in gauntlet round 1, fixed in v2); v2 mis-modeled legDarts on deletes and gave Lotto a checkout from 301 (fixed in v3). Rules: 301, straight-in, DOUBLE-OUT (bust if remaining<0, ==1, or ==0 with non-double last dart). 1 leg, 1 set per match. Darts are [segment, multiplier]; Miss = [0,1]. An EDIT REPLACES the current last turn: the player's pre-turn remaining = post-turn remaining of their last PRIOR turn (or the start score if none); the new total is subtracted from that. A DELETE removes the current last turn INCLUDING its darts from legDarts; a 3-slot EDIT keeps legDarts unchanged. expect.remaining is per player index; next = thrower index after the step; legDarts = darts thrown in the leg (bust voids unthrown darts).",
+  "games": [
+    {
+      "id": "G1",
+      "playerCount": 2,
+      "players": [
+        "Ann",
+        "Ben"
+      ],
+      "steps": [
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              301
+            ],
+            "next": 1,
+            "legDarts": 3
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              1
+            ],
+            [
+              19,
+              1
+            ],
+            [
+              18,
+              1
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              244
+            ],
+            "next": 0,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              1
+            ]
+          ],
+          "bust": true,
+          "expect": {
+            "remaining": [
+              121,
+              244
+            ],
+            "next": 1,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "editBlocked",
+          "player": 0,
+          "darts": [
+            [
+              17,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              5,
+              2
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              244
+            ],
+            "next": 1,
+            "legDarts": 9,
+            "note": "editing Ann's bust turn to a 121 checkout (pre-turn remaining 121) must be rejected; state unchanged"
+          }
+        },
+        {
+          "type": "delete",
+          "expect": {
+            "remaining": [
+              121,
+              244
+            ],
+            "next": 0,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              17,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              5,
+              2
+            ]
+          ],
+          "checkout": true,
+          "expect": {
+            "remaining": [
+              0,
+              244
+            ],
+            "next": 0,
+            "legDarts": 9,
+            "matchOver": true,
+            "winner": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "G2",
+      "playerCount": 2,
+      "players": [
+        "Cleo",
+        "Daan"
+      ],
+      "steps": [
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              19,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              130,
+              301
+            ],
+            "next": 1,
+            "legDarts": 3
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              130,
+              121
+            ],
+            "next": 0,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "edit",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              130,
+              127
+            ],
+            "next": 0,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "delete",
+          "expect": {
+            "remaining": [
+              130,
+              301
+            ],
+            "next": 1,
+            "legDarts": 3
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              130,
+              127
+            ],
+            "next": 0,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              1
+            ]
+          ],
+          "bust": true,
+          "expect": {
+            "remaining": [
+              130,
+              127
+            ],
+            "next": 1,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "delete",
+          "expect": {
+            "remaining": [
+              130,
+              127
+            ],
+            "next": 0,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              5,
+              2
+            ]
+          ],
+          "checkout": true,
+          "expect": {
+            "remaining": [
+              0,
+              127
+            ],
+            "next": 0,
+            "legDarts": 9,
+            "matchOver": true,
+            "winner": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "G3",
+      "playerCount": 3,
+      "players": [
+        "Eva",
+        "Finn",
+        "Gijs"
+      ],
+      "steps": [
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              301,
+              301
+            ],
+            "next": 1,
+            "legDarts": 3
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              121,
+              301
+            ],
+            "next": 2,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "throw",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              1
+            ],
+            [
+              20,
+              1
+            ],
+            [
+              20,
+              1
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              121,
+              241
+            ],
+            "next": 0,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "edit",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              121,
+              121
+            ],
+            "next": 0,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "bust": true,
+          "expect": {
+            "remaining": [
+              121,
+              121,
+              121
+            ],
+            "next": 1,
+            "legDarts": 12
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              17,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              5,
+              2
+            ]
+          ],
+          "checkout": true,
+          "expect": {
+            "remaining": [
+              121,
+              0,
+              121
+            ],
+            "next": 1,
+            "legDarts": 15,
+            "matchOver": true,
+            "winner": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "G4",
+      "playerCount": 3,
+      "players": [
+        "Hidde",
+        "Iris",
+        "Joris"
+      ],
+      "steps": [
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              127,
+              301,
+              301
+            ],
+            "next": 1,
+            "legDarts": 3
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              301
+            ],
+            "next": 2,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "throw",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              127
+            ],
+            "next": 0,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "delete",
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              301
+            ],
+            "next": 2,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "throw",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              121
+            ],
+            "next": 0,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "delete",
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              301
+            ],
+            "next": 2,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "throw",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              1
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              161
+            ],
+            "next": 0,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "bust": true,
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              161
+            ],
+            "next": 1,
+            "legDarts": 12
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              19,
+              3
+            ],
+            [
+              5,
+              2
+            ]
+          ],
+          "checkout": true,
+          "expect": {
+            "remaining": [
+              127,
+              0,
+              161
+            ],
+            "next": 1,
+            "legDarts": 15,
+            "matchOver": true,
+            "winner": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "G5",
+      "playerCount": 3,
+      "players": [
+        "Kees",
+        "Lina",
+        "Milan"
+      ],
+      "steps": [
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              181,
+              301,
+              301
+            ],
+            "next": 1,
+            "legDarts": 3
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              181,
+              121,
+              301
+            ],
+            "next": 2,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "edit",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              19,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              181,
+              124,
+              301
+            ],
+            "next": 2,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "throw",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              181,
+              124,
+              121
+            ],
+            "next": 0,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "edit",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              181,
+              124,
+              121
+            ],
+            "next": 0,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "bust": true,
+          "expect": {
+            "remaining": [
+              181,
+              124,
+              121
+            ],
+            "next": 1,
+            "legDarts": 12
+          }
+        },
+        {
+          "type": "delete",
+          "expect": {
+            "remaining": [
+              181,
+              124,
+              121
+            ],
+            "next": 0,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              19,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              4,
+              124,
+              121
+            ],
+            "next": 1,
+            "legDarts": 12
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "bust": true,
+          "expect": {
+            "remaining": [
+              4,
+              124,
+              121
+            ],
+            "next": 2,
+            "legDarts": 15
+          }
+        },
+        {
+          "type": "throw",
+          "player": 2,
+          "darts": [
+            [
+              17,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              5,
+              2
+            ]
+          ],
+          "checkout": true,
+          "expect": {
+            "remaining": [
+              4,
+              124,
+              0
+            ],
+            "next": 2,
+            "legDarts": 18,
+            "matchOver": true,
+            "winner": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "G6",
+      "playerCount": 4,
+      "players": [
+        "Noor",
+        "Otto",
+        "Pim",
+        "Quin"
+      ],
+      "steps": [
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              301,
+              301,
+              301
+            ],
+            "next": 1,
+            "legDarts": 3
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              1
+            ],
+            [
+              20,
+              1
+            ],
+            [
+              20,
+              1
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              241,
+              301,
+              301
+            ],
+            "next": 2,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "throw",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              1
+            ],
+            [
+              20,
+              1
+            ],
+            [
+              20,
+              1
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              241,
+              241,
+              301
+            ],
+            "next": 3,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "throw",
+          "player": 3,
+          "darts": [
+            [
+              20,
+              1
+            ],
+            [
+              20,
+              1
+            ],
+            [
+              20,
+              1
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              241,
+              241,
+              241
+            ],
+            "next": 0,
+            "legDarts": 12
+          }
+        },
+        {
+          "type": "edit",
+          "player": 3,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              241,
+              241,
+              127
+            ],
+            "next": 0,
+            "legDarts": 12
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "bust": true,
+          "expect": {
+            "remaining": [
+              121,
+              241,
+              241,
+              127
+            ],
+            "next": 1,
+            "legDarts": 15
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              61,
+              241,
+              127
+            ],
+            "next": 2,
+            "legDarts": 18
+          }
+        },
+        {
+          "type": "throw",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              61,
+              61,
+              127
+            ],
+            "next": 3,
+            "legDarts": 21
+          }
+        },
+        {
+          "type": "edit",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              61,
+              67,
+              127
+            ],
+            "next": 3,
+            "legDarts": 21
+          }
+        },
+        {
+          "type": "throw",
+          "player": 3,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "bust": true,
+          "expect": {
+            "remaining": [
+              121,
+              61,
+              67,
+              127
+            ],
+            "next": 0,
+            "legDarts": 24
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              17,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              5,
+              2
+            ]
+          ],
+          "checkout": true,
+          "expect": {
+            "remaining": [
+              0,
+              61,
+              67,
+              127
+            ],
+            "next": 0,
+            "legDarts": 27,
+            "matchOver": true,
+            "winner": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "G7",
+      "playerCount": 4,
+      "players": [
+        "Rosa",
+        "Sem",
+        "Ties",
+        "Uma"
+      ],
+      "steps": [
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              127,
+              301,
+              301,
+              301
+            ],
+            "next": 1,
+            "legDarts": 3
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              301,
+              301
+            ],
+            "next": 2,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "throw",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              127,
+              301
+            ],
+            "next": 3,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "throw",
+          "player": 3,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              127,
+              127
+            ],
+            "next": 0,
+            "legDarts": 12
+          }
+        },
+        {
+          "type": "delete",
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              127,
+              301
+            ],
+            "next": 3,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "throw",
+          "player": 3,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              127,
+              121
+            ],
+            "next": 0,
+            "legDarts": 12
+          }
+        },
+        {
+          "type": "delete",
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              127,
+              301
+            ],
+            "next": 3,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "throw",
+          "player": 3,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              127,
+              127
+            ],
+            "next": 0,
+            "legDarts": 12
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "bust": true,
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              127,
+              127
+            ],
+            "next": 1,
+            "legDarts": 15
+          }
+        },
+        {
+          "type": "delete",
+          "expect": {
+            "remaining": [
+              127,
+              127,
+              127,
+              127
+            ],
+            "next": 0,
+            "legDarts": 12
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              19,
+              3
+            ],
+            [
+              5,
+              2
+            ]
+          ],
+          "checkout": true,
+          "expect": {
+            "remaining": [
+              0,
+              127,
+              127,
+              127
+            ],
+            "next": 0,
+            "legDarts": 15,
+            "matchOver": true,
+            "winner": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "G8",
+      "playerCount": 5,
+      "players": [
+        "Vera",
+        "Wim",
+        "Xander",
+        "Yfke",
+        "Zwan"
+      ],
+      "steps": [
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              301,
+              301,
+              301,
+              301
+            ],
+            "next": 1,
+            "legDarts": 3
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              121,
+              301,
+              301,
+              301
+            ],
+            "next": 2,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "throw",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              1
+            ],
+            [
+              20,
+              1
+            ],
+            [
+              20,
+              1
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              121,
+              241,
+              301,
+              301
+            ],
+            "next": 3,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "throw",
+          "player": 3,
+          "darts": [
+            [
+              20,
+              1
+            ],
+            [
+              20,
+              1
+            ],
+            [
+              20,
+              1
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              121,
+              241,
+              241,
+              301
+            ],
+            "next": 4,
+            "legDarts": 12
+          }
+        },
+        {
+          "type": "throw",
+          "player": 4,
+          "darts": [
+            [
+              20,
+              1
+            ],
+            [
+              20,
+              1
+            ],
+            [
+              20,
+              1
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              121,
+              241,
+              241,
+              241
+            ],
+            "next": 0,
+            "legDarts": 15
+          }
+        },
+        {
+          "type": "edit",
+          "player": 4,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              121,
+              241,
+              241,
+              121
+            ],
+            "next": 0,
+            "legDarts": 15
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "bust": true,
+          "expect": {
+            "remaining": [
+              121,
+              121,
+              241,
+              241,
+              121
+            ],
+            "next": 1,
+            "legDarts": 18
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              17,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              5,
+              2
+            ]
+          ],
+          "checkout": true,
+          "expect": {
+            "remaining": [
+              121,
+              0,
+              241,
+              241,
+              121
+            ],
+            "next": 1,
+            "legDarts": 21,
+            "matchOver": true,
+            "winner": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "G9",
+      "playerCount": 6,
+      "players": [
+        "Arjen",
+        "Bram",
+        "Cato",
+        "Dirk",
+        "Emma",
+        "Fardau"
+      ],
+      "steps": [
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              301,
+              301,
+              301,
+              301,
+              301
+            ],
+            "next": 1,
+            "legDarts": 3
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              301,
+              301,
+              301,
+              301
+            ],
+            "next": 2,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "throw",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              127,
+              301,
+              301,
+              301
+            ],
+            "next": 3,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "throw",
+          "player": 3,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              127,
+              127,
+              301,
+              301
+            ],
+            "next": 4,
+            "legDarts": 12
+          }
+        },
+        {
+          "type": "throw",
+          "player": 4,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              127,
+              127,
+              127,
+              301
+            ],
+            "next": 5,
+            "legDarts": 15
+          }
+        },
+        {
+          "type": "delete",
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              127,
+              127,
+              301,
+              301
+            ],
+            "next": 4,
+            "legDarts": 12
+          }
+        },
+        {
+          "type": "throw",
+          "player": 4,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              127,
+              127,
+              127,
+              301
+            ],
+            "next": 5,
+            "legDarts": 15
+          }
+        },
+        {
+          "type": "throw",
+          "player": 5,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              127,
+              127,
+              127,
+              127
+            ],
+            "next": 0,
+            "legDarts": 18
+          }
+        },
+        {
+          "type": "edit",
+          "player": 5,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              127,
+              127,
+              127,
+              121
+            ],
+            "next": 0,
+            "legDarts": 18
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              17,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              5,
+              2
+            ]
+          ],
+          "checkout": true,
+          "expect": {
+            "remaining": [
+              0,
+              127,
+              127,
+              127,
+              127,
+              121
+            ],
+            "next": 0,
+            "legDarts": 21,
+            "matchOver": true,
+            "winner": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "G10",
+      "playerCount": 6,
+      "players": [
+        "Guus",
+        "Hanna",
+        "Ivo",
+        "Jette",
+        "Kai",
+        "Lotto"
+      ],
+      "steps": [
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              301,
+              301,
+              301,
+              301,
+              301
+            ],
+            "next": 1,
+            "legDarts": 3
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              121,
+              301,
+              301,
+              301,
+              301
+            ],
+            "next": 2,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "edit",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              19,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              124,
+              301,
+              301,
+              301,
+              301
+            ],
+            "next": 2,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "delete",
+          "expect": {
+            "remaining": [
+              121,
+              301,
+              301,
+              301,
+              301,
+              301
+            ],
+            "next": 1,
+            "legDarts": 3
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              301,
+              301,
+              301,
+              301
+            ],
+            "next": 2,
+            "legDarts": 6
+          }
+        },
+        {
+          "type": "throw",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              127,
+              301,
+              301,
+              301
+            ],
+            "next": 3,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "edit",
+          "player": 2,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              19,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              124,
+              301,
+              301,
+              301
+            ],
+            "next": 3,
+            "legDarts": 9
+          }
+        },
+        {
+          "type": "throw",
+          "player": 3,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              124,
+              127,
+              301,
+              301
+            ],
+            "next": 4,
+            "legDarts": 12
+          }
+        },
+        {
+          "type": "throw",
+          "player": 4,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              124,
+              127,
+              127,
+              301
+            ],
+            "next": 5,
+            "legDarts": 15
+          }
+        },
+        {
+          "type": "throw",
+          "player": 5,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              18,
+              3
+            ]
+          ],
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              124,
+              127,
+              127,
+              127
+            ],
+            "next": 0,
+            "legDarts": 18
+          }
+        },
+        {
+          "type": "throw",
+          "player": 0,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "bust": true,
+          "expect": {
+            "remaining": [
+              121,
+              127,
+              124,
+              127,
+              127,
+              127
+            ],
+            "next": 1,
+            "legDarts": 21
+          }
+        },
+        {
+          "type": "throw",
+          "player": 1,
+          "darts": [
+            [
+              20,
+              3
+            ],
+            [
+              19,
+              3
+            ],
+            [
+              5,
+              2
+            ]
+          ],
+          "checkout": true,
+          "expect": {
+            "remaining": [
+              121,
+              0,
+              124,
+              127,
+              127,
+              127
+            ],
+            "next": 1,
+            "legDarts": 24,
+            "matchOver": true,
+            "winner": 1
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,559 @@
+{
+  "game": "G1",
+  "playerCount": 2,
+  "players": [
+    "Ann",
+    "Ben"
+  ],
+  "pass": true,
+  "consoleErrors": [],
+  "editClickPath": {
+    "actions": [
+      "pencil (edit last turn)",
+      "Remove dart ×",
+      "Remove dart ×",
+      "Remove dart ×",
+      "Triple (dialog)",
+      "T17 (dialog)",
+      "Triple (dialog)",
+      "T20 (dialog)",
+      "Double (dialog)",
+      "D5 (dialog)",
+      "Cancel"
+    ],
+    "count": 11
+  },
+  "deleteClickPath": {
+    "actions": [
+      "trash (delete last turn)",
+      "Delete (confirm)"
+    ],
+    "count": 2
+  },
+  "steps": [
+    {
+      "index": 0,
+      "type": "throw",
+      "player": 0,
+      "darts": [
+        [
+          20,
+          3
+        ],
+        [
+          20,
+          3
+        ],
+        [
+          20,
+          3
+        ]
+      ],
+      "enteredDarts": [
+        [
+          20,
+          3
+        ],
+        [
+          20,
+          3
+        ],
+        [
+          20,
+          3
+        ]
+      ],
+      "chalkboard": {
+        "remaining": [
+          121,
+          301
+        ],
+        "next": 1,
+        "legDarts": 3
+      },
+      "ui": {
+        "remaining": [
+          121,
+          301
+        ],
+        "next": 1,
+        "legDarts": 3
+      },
+      "api": {
+        "status": "in_progress",
+        "winnerIdx": null,
+        "turnCount": 1,
+        "turns": [
+          {
+            "playerIdx": 0,
+            "remainingScore": 121,
+            "dartsThrown": 3,
+            "isBust": false,
+            "totalScore": 180
+          }
+        ]
+      },
+      "engine": {
+        "remaining": [
+          121,
+          301
+        ],
+        "next": 1,
+        "legDarts": 3,
+        "perTurnRemaining": [
+          121
+        ],
+        "perTurnBust": [
+          false
+        ]
+      },
+      "mismatches": [],
+      "stepPass": true
+    },
+    {
+      "index": 1,
+      "type": "throw",
+      "player": 1,
+      "darts": [
+        [
+          20,
+          1
+        ],
+        [
+          19,
+          1
+        ],
+        [
+          18,
+          1
+        ]
+      ],
+      "enteredDarts": [
+        [
+          20,
+          1
+        ],
+        [
+          19,
+          1
+        ],
+        [
+          18,
+          1
+        ]
+      ],
+      "chalkboard": {
+        "remaining": [
+          121,
+          244
+        ],
+        "next": 0,
+        "legDarts": 6
+      },
+      "ui": {
+        "remaining": [
+          121,
+          244
+        ],
+        "next": 0,
+        "legDarts": 6
+      },
+      "api": {
+        "status": "in_progress",
+        "winnerIdx": null,
+        "turnCount": 2,
+        "turns": [
+          {
+            "playerIdx": 0,
+            "remainingScore": 121,
+            "dartsThrown": 3,
+            "isBust": false,
+            "totalScore": 180
+          },
+          {
+            "playerIdx": 1,
+            "remainingScore": 244,
+            "dartsThrown": 3,
+            "isBust": false,
+            "totalScore": 57
+          }
+        ]
+      },
+      "engine": {
+        "remaining": [
+          121,
+          244
+        ],
+        "next": 0,
+        "legDarts": 6,
+        "perTurnRemaining": [
+          121,
+          244
+        ],
+        "perTurnBust": [
+          false,
+          false
+        ]
+      },
+      "mismatches": [],
+      "stepPass": true
+    },
+    {
+      "index": 2,
+      "type": "throw",
+      "player": 0,
+      "darts": [
+        [
+          20,
+          3
+        ],
+        [
+          20,
+          3
+        ],
+        [
+          20,
+          1
+        ]
+      ],
+      "enteredDarts": [
+        [
+          20,
+          3
+        ],
+        [
+          20,
+          3
+        ],
+        [
+          20,
+          1
+        ]
+      ],
+      "chalkboard": {
+        "remaining": [
+          121,
+          244
+        ],
+        "next": 1,
+        "legDarts": 9
+      },
+      "ui": {
+        "remaining": [
+          121,
+          244
+        ],
+        "next": 1,
+        "legDarts": 9
+      },
+      "api": {
+        "status": "in_progress",
+        "winnerIdx": null,
+        "turnCount": 3,
+        "turns": [
+          {
+            "playerIdx": 0,
+            "remainingScore": 121,
+            "dartsThrown": 3,
+            "isBust": false,
+            "totalScore": 180
+          },
+          {
+            "playerIdx": 1,
+            "remainingScore": 244,
+            "dartsThrown": 3,
+            "isBust": false,
+            "totalScore": 57
+          },
+          {
+            "playerIdx": 0,
+            "remainingScore": 121,
+            "dartsThrown": 3,
+            "isBust": true,
+            "totalScore": 140
+          }
+        ]
+      },
+      "engine": {
+        "remaining": [
+          121,
+          244
+        ],
+        "next": 1,
+        "legDarts": 9,
+        "perTurnRemaining": [
+          121,
+          244,
+          121
+        ],
+        "perTurnBust": [
+          false,
+          false,
+          true
+        ]
+      },
+      "mismatches": [],
+      "stepPass": true
+    },
+    {
+      "index": 3,
+      "type": "editBlocked",
+      "player": 0,
+      "darts": [
+        [
+          17,
+          3
+        ],
+        [
+          20,
+          3
+        ],
+        [
+          5,
+          2
+        ]
+      ],
+      "enteredDarts": [
+        [
+          17,
+          3
+        ],
+        [
+          20,
+          3
+        ],
+        [
+          5,
+          2
+        ]
+      ],
+      "chalkboard": {
+        "remaining": [
+          121,
+          244
+        ],
+        "next": 1,
+        "legDarts": 9,
+        "note": "editing Ann's bust turn to a 121 checkout (pre-turn remaining 121) must be rejected; state unchanged"
+      },
+      "ui": {
+        "remaining": [
+          121,
+          244
+        ],
+        "next": 1,
+        "legDarts": 9
+      },
+      "api": {
+        "status": "in_progress",
+        "winnerIdx": null,
+        "turnCount": 3,
+        "turns": [
+          {
+            "playerIdx": 0,
+            "remainingScore": 121,
+            "dartsThrown": 3,
+            "isBust": false,
+            "totalScore": 180
+          },
+          {
+            "playerIdx": 1,
+            "remainingScore": 244,
+            "dartsThrown": 3,
+            "isBust": false,
+            "totalScore": 57
+          },
+          {
+            "playerIdx": 0,
+            "remainingScore": 121,
+            "dartsThrown": 3,
+            "isBust": true,
+            "totalScore": 140
+          }
+        ]
+      },
+      "engine": {
+        "remaining": [
+          121,
+          244
+        ],
+        "next": 1,
+        "legDarts": 9,
+        "perTurnRemaining": [
+          121,
+          244,
+          121
+        ],
+        "perTurnBust": [
+          false,
+          false,
+          true
+        ]
+      },
+      "mismatches": [],
+      "stepPass": true
+    },
+    {
+      "index": 4,
+      "type": "delete",
+      "player": null,
+      "darts": null,
+      "enteredDarts": null,
+      "chalkboard": {
+        "remaining": [
+          121,
+          244
+        ],
+        "next": 0,
+        "legDarts": 6
+      },
+      "ui": {
+        "remaining": [
+          121,
+          244
+        ],
+        "next": 0,
+        "legDarts": 6
+      },
+      "api": {
+        "status": "in_progress",
+        "winnerIdx": null,
+        "turnCount": 2,
+        "turns": [
+          {
+            "playerIdx": 0,
+            "remainingScore": 121,
+            "dartsThrown": 3,
+            "isBust": false,
+            "totalScore": 180
+          },
+          {
+            "playerIdx": 1,
+            "remainingScore": 244,
+            "dartsThrown": 3,
+            "isBust": false,
+            "totalScore": 57
+          }
+        ]
+      },
+      "engine": {
+        "remaining": [
+          121,
+          244
+        ],
+        "next": 0,
+        "legDarts": 6,
+        "perTurnRemaining": [
+          121,
+          244
+        ],
+        "perTurnBust": [
+          false,
+          false
+        ]
+      },
+      "mismatches": [],
+      "stepPass": true
+    },
+    {
+      "index": 5,
+      "type": "throw",
+      "player": 0,
+      "darts": [
+        [
+          17,
+          3
+        ],
+        [
+          20,
+          3
+        ],
+        [
+          5,
+          2
+        ]
+      ],
+      "enteredDarts": [
+        [
+          17,
+          3
+        ],
+        [
+          20,
+          3
+        ],
+        [
+          5,
+          2
+        ]
+      ],
+      "chalkboard": {
+        "remaining": [
+          0,
+          244
+        ],
+        "next": 0,
+        "legDarts": 9,
+        "matchOver": true,
+        "winner": 0
+      },
+      "ui": {
+        "remaining": [
+          0,
+          244
+        ],
+        "next": 0,
+        "legDarts": 9,
+        "overlaySeen": true
+      },
+      "api": {
+        "status": "completed",
+        "winnerIdx": 0,
+        "turnCount": 3,
+        "turns": [
+          {
+            "playerIdx": 0,
+            "remainingScore": 121,
+            "dartsThrown": 3,
+            "isBust": false,
+            "totalScore": 180
+          },
+          {
+            "playerIdx": 1,
+            "remainingScore": 244,
+            "dartsThrown": 3,
+            "isBust": false,
+            "totalScore": 57
+          },
+          {
+            "playerIdx": 0,
+            "remainingScore": 0,
+            "dartsThrown": 3,
+            "isBust": false,
+            "totalScore": 121
+          }
+        ]
+      },
+      "engine": {
+        "remaining": [
+          0,
+          244
+        ],
+        "next": 0,
+        "legDarts": 9,
+        "perTurnRemaining": [
+          121,
+          244,
+          0
+        ],
+        "perTurnBust": [
+          false,
+          false,
+          false
+        ]
+      },
+      "mismatches": [],
+      "stepPass": true
+    }
+  ]
+}

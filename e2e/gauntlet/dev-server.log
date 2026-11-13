@@ -1,0 +1,201 @@
+
+> dart.monster@0.0.1 dev
+> vite dev --open --port 5199 --no-open
+
+◇ injecting env (8) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+[2m18:47:57[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Forced re-optimization of dependencies
+
+  [32m[1mVITE[22m v7.3.1[39m  [2mready in [0m[1m3267[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5199[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+18:47:59 [vite-plugin-svelte] src/lib/components/ui/AnimatedNumber.svelte:6:30 This reference only captures the initial value of `value`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+18:47:59 [vite-plugin-svelte] src/lib/components/ui/FloatingNav.svelte:338:4 `<div>` with a click or keydown handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:400:0 `<div>` with a touchstart, touchmove, touchend, touchcancel or contextmenu handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:419:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:419:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:430:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:430:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:446:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:446:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:460:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:460:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:475:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:475:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:489:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:489:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:505:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:505:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:520:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:520:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/EmailGate.svelte:140:28 Avoid using autofocus
+https://svelte.dev/e/a11y_autofocus
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/EmailGate.svelte:195:24 Avoid using autofocus
+https://svelte.dev/e/a11y_autofocus
+18:48:28 [vite-plugin-svelte] src/lib/components/ui/SearchSelect.svelte:26:8 `inputRef` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
+https://svelte.dev/e/non_reactive_update
+18:51:47 [vite-plugin-svelte] src/lib/components/ui/EmailGate.svelte:140:28 Avoid using autofocus
+https://svelte.dev/e/a11y_autofocus
+18:51:47 [vite-plugin-svelte] src/lib/components/ui/EmailGate.svelte:195:24 Avoid using autofocus
+https://svelte.dev/e/a11y_autofocus
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/AnimatedNumber.svelte:6:30 This reference only captures the initial value of `value`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/FloatingNav.svelte:338:4 `<div>` with a click or keydown handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:400:0 `<div>` with a touchstart, touchmove, touchend, touchcancel or contextmenu handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:419:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:419:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:430:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:430:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:446:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:446:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:460:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:460:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:475:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:475:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:489:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:489:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:505:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:505:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:520:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:520:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:48 [vite-plugin-svelte] src/lib/components/ui/SearchSelect.svelte:26:8 `inputRef` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
+https://svelte.dev/e/non_reactive_update
+[2m18:51:56[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32m✨ new dependencies optimized: [33m@tabler/icons-svelte[32m[39m
+[2m18:51:56[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32m✨ optimized dependencies changed. reloading[39m
+18:51:56 [vite-plugin-svelte] src/lib/components/ui/EmailGate.svelte:140:28 Avoid using autofocus
+https://svelte.dev/e/a11y_autofocus
+18:51:56 [vite-plugin-svelte] src/lib/components/ui/EmailGate.svelte:195:24 Avoid using autofocus
+https://svelte.dev/e/a11y_autofocus
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/AnimatedNumber.svelte:6:30 This reference only captures the initial value of `value`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/FloatingNav.svelte:338:4 `<div>` with a click or keydown handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:400:0 `<div>` with a touchstart, touchmove, touchend, touchcancel or contextmenu handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:419:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:419:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:430:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:430:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:446:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:446:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:460:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:460:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:475:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:475:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:489:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:489:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:505:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:505:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:520:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:520:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:51:57 [vite-plugin-svelte] src/lib/components/ui/SearchSelect.svelte:26:8 `inputRef` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
+https://svelte.dev/e/non_reactive_update
+[2m18:52:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32m✨ new dependencies optimized: [33mkokoro-js[32m[39m
+[2m18:52:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32m✨ optimized dependencies changed. reloading[39m
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/EmailGate.svelte:140:28 Avoid using autofocus
+https://svelte.dev/e/a11y_autofocus
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/EmailGate.svelte:195:24 Avoid using autofocus
+https://svelte.dev/e/a11y_autofocus
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/AnimatedNumber.svelte:6:30 This reference only captures the initial value of `value`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/FloatingNav.svelte:338:4 `<div>` with a click or keydown handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:400:0 `<div>` with a touchstart, touchmove, touchend, touchcancel or contextmenu handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:419:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:419:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:430:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:430:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:446:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:446:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:460:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:460:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:475:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:475:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:489:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:489:12 `<path>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:505:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:505:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:520:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/Dartboard.svelte:520:8 `<circle>` with a click, mouseenter, mousemove or mouseleave handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+18:52:07 [vite-plugin-svelte] src/lib/components/ui/SearchSelect.svelte:26:8 `inputRef` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
+https://svelte.dev/e/non_reactive_update
+[2m19:05:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocs/wiki/wiki-viewer.html[22m
+[2m19:09:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/routes/match/[id]/+page.svelte, /src/app.css[22m
+[2m19:09:04[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2msrc/lib/game/turn-edit.ts[22m
+[2m19:09:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app.css[22m
+[2m19:09:08[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2msrc/routes/api/matches/[id]/turns/+server.ts[22m
+[2m19:09:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/routes/match/[id]/+page.svelte, /src/app.css[22m
+[2m19:09:16[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2msrc/routes/match/[id]/+page.svelte[22m
+[2m20:01:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app.css[22m
+[2m20:01:35[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2msrc/routes/api/matches/[id]/turns/+server.ts[22m
