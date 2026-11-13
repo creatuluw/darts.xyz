@@ -9,7 +9,7 @@
     "Kai",
     "Lotto"
   ],
-  "pass": true,
+  "pass": false,
   "consoleErrors": [],
   "editClickPath": {
     "actions": [
@@ -273,7 +273,7 @@
       "ui": {
         "remaining": [
           121,
-          124,
+          121,
           301,
           301,
           301,
@@ -296,9 +296,9 @@
           },
           {
             "playerIdx": 1,
-            "remainingScore": 124,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 177
           }
         ]
@@ -323,8 +323,11 @@
           false
         ]
       },
-      "mismatches": [],
-      "stepPass": true
+      "mismatches": [
+        "UI remaining[1] (Hanna): UI=121 chalkboard=124",
+        "API turn[1] remainingScore=121 != ENGINE replay=124"
+      ],
+      "stepPass": false
     },
     {
       "index": 3,
@@ -347,7 +350,7 @@
       "ui": {
         "remaining": [
           121,
-          301,
+          121,
           301,
           301,
           301,
@@ -388,8 +391,10 @@
           false
         ]
       },
-      "mismatches": [],
-      "stepPass": true
+      "mismatches": [
+        "UI remaining[1] (Hanna): UI=121 chalkboard=301"
+      ],
+      "stepPass": false
     },
     {
       "index": 4,
@@ -438,7 +443,7 @@
       "ui": {
         "remaining": [
           121,
-          127,
+          121,
           301,
           301,
           301,
@@ -461,9 +466,9 @@
           },
           {
             "playerIdx": 1,
-            "remainingScore": 127,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 174
           }
         ]
@@ -488,8 +493,11 @@
           false
         ]
       },
-      "mismatches": [],
-      "stepPass": true
+      "mismatches": [
+        "UI remaining[1] (Hanna): UI=121 chalkboard=127",
+        "API turn[1] remainingScore=121 != ENGINE replay=127"
+      ],
+      "stepPass": false
     },
     {
       "index": 5,
@@ -538,7 +546,7 @@
       "ui": {
         "remaining": [
           121,
-          127,
+          121,
           127,
           301,
           301,
@@ -561,9 +569,9 @@
           },
           {
             "playerIdx": 1,
-            "remainingScore": 127,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 174
           },
           {
@@ -597,8 +605,11 @@
           false
         ]
       },
-      "mismatches": [],
-      "stepPass": true
+      "mismatches": [
+        "UI remaining[1] (Hanna): UI=121 chalkboard=127",
+        "API turn[1] remainingScore=121 != ENGINE replay=127"
+      ],
+      "stepPass": false
     },
     {
       "index": 6,
@@ -647,8 +658,8 @@
       "ui": {
         "remaining": [
           121,
-          127,
-          124,
+          121,
+          121,
           301,
           301,
           301
@@ -670,16 +681,16 @@
           },
           {
             "playerIdx": 1,
-            "remainingScore": 127,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 174
           },
           {
             "playerIdx": 2,
-            "remainingScore": 124,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 177
           }
         ]
@@ -706,8 +717,13 @@
           false
         ]
       },
-      "mismatches": [],
-      "stepPass": true
+      "mismatches": [
+        "UI remaining[1] (Hanna): UI=121 chalkboard=127",
+        "UI remaining[2] (Ivo): UI=121 chalkboard=124",
+        "API turn[1] remainingScore=121 != ENGINE replay=127",
+        "API turn[2] remainingScore=121 != ENGINE replay=124"
+      ],
+      "stepPass": false
     },
     {
       "index": 7,
@@ -756,8 +772,8 @@
       "ui": {
         "remaining": [
           121,
-          127,
-          124,
+          121,
+          121,
           127,
           301,
           301
@@ -779,16 +795,16 @@
           },
           {
             "playerIdx": 1,
-            "remainingScore": 127,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 174
           },
           {
             "playerIdx": 2,
-            "remainingScore": 124,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 177
           },
           {
@@ -824,8 +840,13 @@
           false
         ]
       },
-      "mismatches": [],
-      "stepPass": true
+      "mismatches": [
+        "UI remaining[1] (Hanna): UI=121 chalkboard=127",
+        "UI remaining[2] (Ivo): UI=121 chalkboard=124",
+        "API turn[1] remainingScore=121 != ENGINE replay=127",
+        "API turn[2] remainingScore=121 != ENGINE replay=124"
+      ],
+      "stepPass": false
     },
     {
       "index": 8,
@@ -874,8 +895,8 @@
       "ui": {
         "remaining": [
           121,
-          127,
-          124,
+          121,
+          121,
           127,
           127,
           301
@@ -897,16 +918,16 @@
           },
           {
             "playerIdx": 1,
-            "remainingScore": 127,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 174
           },
           {
             "playerIdx": 2,
-            "remainingScore": 124,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 177
           },
           {
@@ -951,8 +972,13 @@
           false
         ]
       },
-      "mismatches": [],
-      "stepPass": true
+      "mismatches": [
+        "UI remaining[1] (Hanna): UI=121 chalkboard=127",
+        "UI remaining[2] (Ivo): UI=121 chalkboard=124",
+        "API turn[1] remainingScore=121 != ENGINE replay=127",
+        "API turn[2] remainingScore=121 != ENGINE replay=124"
+      ],
+      "stepPass": false
     },
     {
       "index": 9,
@@ -1001,8 +1027,8 @@
       "ui": {
         "remaining": [
           121,
-          127,
-          124,
+          121,
+          121,
           127,
           127,
           127
@@ -1024,16 +1050,16 @@
           },
           {
             "playerIdx": 1,
-            "remainingScore": 127,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 174
           },
           {
             "playerIdx": 2,
-            "remainingScore": 124,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 177
           },
           {
@@ -1087,8 +1113,13 @@
           false
         ]
       },
-      "mismatches": [],
-      "stepPass": true
+      "mismatches": [
+        "UI remaining[1] (Hanna): UI=121 chalkboard=127",
+        "UI remaining[2] (Ivo): UI=121 chalkboard=124",
+        "API turn[1] remainingScore=121 != ENGINE replay=127",
+        "API turn[2] remainingScore=121 != ENGINE replay=124"
+      ],
+      "stepPass": false
     },
     {
       "index": 10,
@@ -1137,8 +1168,8 @@
       "ui": {
         "remaining": [
           121,
-          127,
-          124,
+          121,
+          121,
           127,
           127,
           127
@@ -1160,16 +1191,16 @@
           },
           {
             "playerIdx": 1,
-            "remainingScore": 127,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 174
           },
           {
             "playerIdx": 2,
-            "remainingScore": 124,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 177
           },
           {
@@ -1232,8 +1263,13 @@
           true
         ]
       },
-      "mismatches": [],
-      "stepPass": true
+      "mismatches": [
+        "UI remaining[1] (Hanna): UI=121 chalkboard=127",
+        "UI remaining[2] (Ivo): UI=121 chalkboard=124",
+        "API turn[1] remainingScore=121 != ENGINE replay=127",
+        "API turn[2] remainingScore=121 != ENGINE replay=124"
+      ],
+      "stepPass": false
     },
     {
       "index": 11,
@@ -1284,19 +1320,19 @@
       "ui": {
         "remaining": [
           121,
-          0,
-          124,
+          121,
+          121,
           127,
           127,
           127
         ],
-        "next": 1,
+        "next": 2,
         "legDarts": 24,
-        "overlaySeen": true
+        "overlaySeen": false
       },
       "api": {
-        "status": "completed",
-        "winnerIdx": 1,
+        "status": "in_progress",
+        "winnerIdx": null,
         "turnCount": 8,
         "turns": [
           {
@@ -1308,16 +1344,16 @@
           },
           {
             "playerIdx": 1,
-            "remainingScore": 127,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 174
           },
           {
             "playerIdx": 2,
-            "remainingScore": 124,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 177
           },
           {
@@ -1350,9 +1386,9 @@
           },
           {
             "playerIdx": 1,
-            "remainingScore": 0,
+            "remainingScore": 121,
             "dartsThrown": 3,
-            "isBust": false,
+            "isBust": true,
             "totalScore": 127
           }
         ]
@@ -1389,8 +1425,19 @@
           false
         ]
       },
-      "mismatches": [],
-      "stepPass": true
+      "mismatches": [
+        "expected match-over overlay (\"Match complete\") not shown",
+        "expected winner overlay (\"Hanna wins!\") not shown",
+        "UI remaining[1] (Hanna): UI=121 chalkboard=0",
+        "UI remaining[2] (Ivo): UI=121 chalkboard=124",
+        "UI next thrower: UI=2 chalkboard=1",
+        "API turn[1] remainingScore=121 != ENGINE replay=127",
+        "API turn[2] remainingScore=121 != ENGINE replay=124",
+        "API turn[7] remainingScore=121 != ENGINE replay=0",
+        "API match status: API=in_progress chalkboard=completed",
+        "API winnerIdx: API=null chalkboard=1"
+      ],
+      "stepPass": false
     }
   ]
 }

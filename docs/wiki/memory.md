@@ -8,7 +8,7 @@ okf_version: "0.1"
 Auto-generated digest of the most recent conventions, decisions, rules and
 development patterns, plus architecture and global patterns — newest first.
 The actual files live in the wiki subfolders; follow the links (clickable in /wiki).
-Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-11-13T18:05:39.651Z.
+Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-11-13T19:22:56.875Z.
 
 ## Recent Decisions
 
@@ -43,6 +43,7 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-11-13T18
 
 ## Recent Learnings — development patterns
 
+- [Gauntlet failures can be chalk errors — three agreeing axes outrank the hand-scored oracle](learnings/gauntlet-failures-can-be-chalk-errors-three-agreeing-axes-ou.md) — **Found while triaging the 2026-11-13 gauntlet run** (`e2e/gauntlet/`): the run flagged **G6 as a failure — the app was right, the chalk was… (2026-11-13)
 - [Playwright clicks can stall forever on scorer numpad buttons — cap timeout, fall back to el.click()](learnings/playwright-clicks-can-stall-forever-on-scorer-numpad-buttons.md) — **Found while building the 2026-11-13 gauntlet** (`e2e/gauntlet/gauntlet.spec.ts`). Playwright's real `locator.click()` can hang indefinitel… (2026-11-13)
 - [Turn edit computes from the previous thrower's remaining, persisting phantom bust rows](learnings/turn-edit-computes-from-the-previous-thrower-s-remaining-per.md) — **Found by the 2026-11-13 gauntlet run** (`e2e/gauntlet/gauntlet.spec.ts`, evidence in `e2e/gauntlet/reports/G2.json`/`G5.json`/`G10.json`),… (2026-11-13)
 - [deleteLastTurn restores the previous thrower's remaining score — gauntlet-confirmed](learnings/deletelastturn-restores-the-previous-thrower-s-remaining-sco.md) — **Re-confirmed and pinned down by the 2026-11-13 gauntlet run** (`e2e/gauntlet/gauntlet.spec.ts` over `games.json`, reports in `e2e/gauntlet… (2026-11-13)
@@ -62,7 +63,6 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-11-13T18
 - [startRisk clears risk42_state but not risk42_game_id — new game silently resumes the old one](learnings/startrisk-clears-risk42-state-not-game-id.md) — **Found during the Risk 42 prod playtest campaign (2026-09-09/10), logged P1.** (2026-09-09)
 - [Commentary LLM = DeepSeek deepseek-v4-flash (from glm-5.3-flash); ~1s LLM latency](learnings/commentary-llm-deepseek-v4-flash.md) — 2026-09-09 evening: commentary LLM switched from OpenCode Zen Go (glm-5.3-flash, ~20-50s latency, needed x-opencode-session header) to **Dee… (2026-09-09)
 - [Risk map SVG layers share a translate(-168,-119) — apply it when extracting paths or labels misalign](learnings/risk-map-svg-layers-share-a-translate-168-119.md) — While building the Risk 42 TV world map (2026-09-09): `docs/risk/risk-territory-board.svg` puts ALL its content layers (countries, labels, t… (2026-09-09)
-- [TV cast pages freeze in background tabs — document.hidden pauses polling and commentary](learnings/tv-cast-pages-freeze-in-background-tabs-document.md) — All three TV cast routes — `src/routes/match/[id]/tv/+page.svelte` (classic), `src/routes/match/conquest/[id]/tv/+page.svelte` (T&T), `src/r… (2026-09-09)
 
 ## Architecture
 

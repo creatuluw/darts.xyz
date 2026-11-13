@@ -5,7 +5,7 @@
     "Ann",
     "Ben"
   ],
-  "pass": true,
+  "pass": false,
   "consoleErrors": [],
   "editClickPath": {
     "actions": [
@@ -390,8 +390,11 @@
           true
         ]
       },
-      "mismatches": [],
-      "stepPass": true
+      "mismatches": [
+        "blocked edit: Save button was NOT disabled",
+        "blocked edit: checkout warning NOT shown"
+      ],
+      "stepPass": false
     },
     {
       "index": 4,
@@ -409,7 +412,7 @@
       },
       "ui": {
         "remaining": [
-          121,
+          244,
           244
         ],
         "next": 0,
@@ -452,8 +455,10 @@
           false
         ]
       },
-      "mismatches": [],
-      "stepPass": true
+      "mismatches": [
+        "UI remaining[0] (Ann): UI=244 chalkboard=121"
+      ],
+      "stepPass": false
     },
     {
       "index": 5,
@@ -499,16 +504,16 @@
       },
       "ui": {
         "remaining": [
-          0,
+          123,
           244
         ],
-        "next": 0,
+        "next": 1,
         "legDarts": 9,
-        "overlaySeen": true
+        "overlaySeen": false
       },
       "api": {
-        "status": "completed",
-        "winnerIdx": 0,
+        "status": "in_progress",
+        "winnerIdx": null,
         "turnCount": 3,
         "turns": [
           {
@@ -527,7 +532,7 @@
           },
           {
             "playerIdx": 0,
-            "remainingScore": 0,
+            "remainingScore": 123,
             "dartsThrown": 3,
             "isBust": false,
             "totalScore": 121
@@ -552,8 +557,16 @@
           false
         ]
       },
-      "mismatches": [],
-      "stepPass": true
+      "mismatches": [
+        "expected match-over overlay (\"Match complete\") not shown",
+        "expected winner overlay (\"Ann wins!\") not shown",
+        "UI remaining[0] (Ann): UI=123 chalkboard=0",
+        "UI next thrower: UI=1 chalkboard=0",
+        "API turn[2] remainingScore=123 != ENGINE replay=0",
+        "API match status: API=in_progress chalkboard=completed",
+        "API winnerIdx: API=null chalkboard=0"
+      ],
+      "stepPass": false
     }
   ]
 }
