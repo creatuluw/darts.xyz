@@ -8,7 +8,7 @@ okf_version: "0.1"
 Auto-generated digest of the most recent conventions, decisions, rules and
 development patterns, plus architecture and global patterns — newest first.
 The actual files live in the wiki subfolders; follow the links (clickable in /wiki).
-Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-10-28T20:04:09.952Z.
+Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-11-13T18:05:39.651Z.
 
 ## Recent Decisions
 
@@ -30,6 +30,7 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-10-28T20
 
 ## Active Rules
 
+- [Never trust client-submitted scores — recompute at the API boundary](rules/never-trust-client-scores.md) — **Guideline:** When a client submits changes that touch derived game state (turn scores, conquest state, stats), never persist client-comput… (2026-11-13)
 - [Derive stats from state deltas, never by substring-matching log copy](rules/derive-stats-from-state-deltas-never-by-substring.md) — **Guideline:** Never derive a gameplay stat by scanning or substring-matching human-readable log lines. Count from state deltas (or engine r… (2026-10-24)
 - [When a playtest stalls under background-tab throttling, finish the game via the engine + PATCH — don't tab-hop](rules/when-a-playtest-stalls-under-background-tab.md) — The guideline (2026-09-09)
 - [Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert](rules/prove-overlays-never-block-gameplay-live-dom.md) — The guideline (2026-09-09)
@@ -42,6 +43,9 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-10-28T20
 
 ## Recent Learnings — development patterns
 
+- [Playwright clicks can stall forever on scorer numpad buttons — cap timeout, fall back to el.click()](learnings/playwright-clicks-can-stall-forever-on-scorer-numpad-buttons.md) — **Found while building the 2026-11-13 gauntlet** (`e2e/gauntlet/gauntlet.spec.ts`). Playwright's real `locator.click()` can hang indefinitel… (2026-11-13)
+- [Turn edit computes from the previous thrower's remaining, persisting phantom bust rows](learnings/turn-edit-computes-from-the-previous-thrower-s-remaining-per.md) — **Found by the 2026-11-13 gauntlet run** (`e2e/gauntlet/gauntlet.spec.ts`, evidence in `e2e/gauntlet/reports/G2.json`/`G5.json`/`G10.json`),… (2026-11-13)
+- [deleteLastTurn restores the previous thrower's remaining score — gauntlet-confirmed](learnings/deletelastturn-restores-the-previous-thrower-s-remaining-sco.md) — **Re-confirmed and pinned down by the 2026-11-13 gauntlet run** (`e2e/gauntlet/gauntlet.spec.ts` over `games.json`, reports in `e2e/gauntlet… (2026-11-13)
 - [Wiki-recap staged files sweep into the next commit](learnings/wiki-recap-staged-files-sweep-into-the-next-commit.md) — **The gotcha:** the wiki-recap subagent writes docs/wiki/ files at the end of turns and leaves them staged in the git index. A later `git ad… (2026-10-28)
 - [Railway auto-deploy can silently skip a master push — verify timestamp vs latest commit, fallback is railway up](learnings/railway-auto-deploy-can-silently-skip-a-master-push-verify-t.md) — **Found on 2026-10-28** while checking whether PR #18 (`7d01bcf`, "always show the dartboard on the Board tab") was live. (2026-10-28)
 - [Bulk-deleting wiki concepts strands links — grep short slugs too and let wiki_validate catch the rest](learnings/bulk-deleting-wiki-concepts-strands-links-grep-short-slugs-t.md) — **The gotcha:** deleting a wiki concept file does NOT clean up references to it. Folder indexes (`rules/index.md`, `decisions/index.md`, …) … (2026-10-28)
@@ -59,9 +63,6 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-10-28T20
 - [Commentary LLM = DeepSeek deepseek-v4-flash (from glm-5.3-flash); ~1s LLM latency](learnings/commentary-llm-deepseek-v4-flash.md) — 2026-09-09 evening: commentary LLM switched from OpenCode Zen Go (glm-5.3-flash, ~20-50s latency, needed x-opencode-session header) to **Dee… (2026-09-09)
 - [Risk map SVG layers share a translate(-168,-119) — apply it when extracting paths or labels misalign](learnings/risk-map-svg-layers-share-a-translate-168-119.md) — While building the Risk 42 TV world map (2026-09-09): `docs/risk/risk-territory-board.svg` puts ALL its content layers (countries, labels, t… (2026-09-09)
 - [TV cast pages freeze in background tabs — document.hidden pauses polling and commentary](learnings/tv-cast-pages-freeze-in-background-tabs-document.md) — All three TV cast routes — `src/routes/match/[id]/tv/+page.svelte` (classic), `src/routes/match/conquest/[id]/tv/+page.svelte` (T&T), `src/r… (2026-09-09)
-- [Neo ref-clicks silently no-op on some SvelteKit buttons — use evaluate el.click()](learnings/neo-ref-clicks-silently-no-op-on-some-sveltekit.md) — During the 2026-09-09 playtest sessions, driving the real app through BrowserOS neo's CDP-based `input().click(ref)` **failed silently** on … (2026-09-09)
-- [Commentary pipeline: ~25s real cost vs 20s timeout — raise/parallelize](learnings/commentary-pipeline-25s-real-cost-vs-20s-timeout.md) — Measured while playtesting all game modes on 2026-09-09: the 4-segment commentary pipeline (glm-5.3-flash LLM call + 4 sequential ElevenLabs… (2026-09-09)
-- [scrollbar-gutter: stable reserves 15px that window.innerWidth counts — measure the host box](learnings/scrollbar-gutter-stable-reserves-15px.md) — The gotcha (2026-09-09)
 
 ## Architecture
 

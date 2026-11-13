@@ -6,3 +6,4 @@
 - [Board SVGs are generated — edit the regenerator, never the output](./board-svgs-are-generated.md) - Guideline
 - [New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board](./new-game-modes-follow-the-conquest-cut-pure-setup.md) - The rule
 - [Derive stats from state deltas, never by substring-matching log copy](./derive-stats-from-state-deltas-never-by-substring.md) - **Guideline:** Never derive a gameplay stat by scanning or substring-matching human-readable log lines. Count from state deltas (or engine return values) instea
+- [Never trust client-submitted scores — recompute at the API boundary](./never-trust-client-scores.md) - **Guideline:** When a client submits changes that touch derived game state (turn scores, conquest state, stats), never persist client-computed totals. Treat the

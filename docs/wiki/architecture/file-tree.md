@@ -1545,6 +1545,12 @@ timestamp: "2026-09-07T19:11:02.020Z"
 │   ├── 0003_players_account_id.sql — Migration adding players.account_id column + index
 │   ├── 0004_account_settings.sql — Migration creating account_settings table
 │   ├── 0005_verification_tokens.sql — Migration creating verification_tokens table (email verification)
+├── e2e/ — Playwright E2E specs (run with `npm run test:e2e`; shared helpers in helpers.ts; pages, api-match-flow, match-ui, conquest-api, tv-classic, tv-commentary, tv-conquest, commentary-api, risk-persist)
+│   ├── gauntlet/ — Turn edit/delete scoring gauntlet (browser-driven test campaign against the hand-scored chalkboard)
+│   │   ├── games.json — The chalkboard: 10 hand-computed games (301, straight-in/double-out, 1 leg × 1 set, 2–6 players) where every step carries exact expect values (per-player remaining, next thrower, legDarts). IMMUTABLE — if a game fails, the app or the runner is wrong; never edit this file to make tests pass
+│   │   ├── gauntlet.spec.ts — Data-driven Playwright spec: for each game it creates players/match via e2e helpers, drives all throws/edits/deletes through the real scorer UI (numpad, edit dialog, delete confirm), and after EVERY step captures three views of state — UI DOM (AnimatedNumber-polled remaining, emerald active panel, per-panel Darts counters), API (GET match + turns), and an engine replay of the effective turn list through src/lib/game/scoring.ts — comparing all three against the chalkboard; writes per-game reports to reports/<GID>.json including console errors (zero tolerated) and click-path lengths for one edit and one delete
+│   │   ├── reports/ — Per-game JSON reports (per-step chalkboard/ui/api/engine + mismatches + stepPass, consoleErrors[], editClickPath, deleteClickPath)
+│   │   └── dev-server.log — Log of the gauntlet's manually-started dev server (port 5199) — gitignored output, safe to delete
 ├── godaddy-cli/ — Vendored third-party Go CLI (github.com/Cabemo/godaddy-cli) used to manage GoDaddy domains/DNS from the terminal
 │   ├── .git/ — Git repository metadata
 │   │   ├── hooks/ — Sample git hooks (inactive defaults from git init)
@@ -2698,7 +2704,9 @@ timestamp: "2026-09-07T19:11:02.020Z"
 ├── drizzle.config.ts — Drizzle Kit config — postgresql dialect, schema at src/lib/db/schema.ts, migrations into drizzle/, targets the `darts` schema
 ├── nul — Stray Windows artifact (accidental `> NUL` redirect) — safe to delete
 ├── package-lock.json — npm lockfile pinning the dependency tree
-├── package.json — npm manifest — scripts (dev/build/check, db:init/push/studio/verify), deps: SvelteKit 2, Svelte 5, Tailwind v4, Drizzle ORM, kokoro-js, emailjs, postgres
+├── package.json — npm manifest — scripts (dev/build/check, db:init/push/studio/verify, test:unit/test:e2e), deps: SvelteKit 2, Svelte 5, Tailwind v4, Drizzle ORM, kokoro-js, emailjs, postgres
+├── playwright.config.ts — Playwright E2E config — webServer boots `npm run dev` on port 5174 (COMMENTARY_FAKE=1), workers: 1 (tests share the live DB), chromium only
+├── playwright.gauntlet.config.ts — Gauntlet-only Playwright config — testDir e2e/gauntlet, baseURL port 5199, NO webServer block (the dev server is started manually and owned outside Playwright so a stale orphaned server is never reused), 300s per-test timeout
 ├── prompts.md — Developer prompt log — feature requests and rule decisions applied during development (turn alternation, UI tweaks)
 ├── README.md — Project readme — features, install, project structure, API reference, game rules, data models
 ├── svelte.config.js — SvelteKit config — adapter-node output, Svelte 5 runes mode forced outside node_modules

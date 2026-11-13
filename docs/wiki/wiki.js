@@ -1547,6 +1547,12 @@ timestamp: "2026-09-07T19:11:02.020Z"
 │   ├── 0003_players_account_id.sql — Migration adding players.account_id column + index
 │   ├── 0004_account_settings.sql — Migration creating account_settings table
 │   ├── 0005_verification_tokens.sql — Migration creating verification_tokens table (email verification)
+├── e2e/ — Playwright E2E specs (run with \`npm run test:e2e\`; shared helpers in helpers.ts; pages, api-match-flow, match-ui, conquest-api, tv-classic, tv-commentary, tv-conquest, commentary-api, risk-persist)
+│   ├── gauntlet/ — Turn edit/delete scoring gauntlet (browser-driven test campaign against the hand-scored chalkboard)
+│   │   ├── games.json — The chalkboard: 10 hand-computed games (301, straight-in/double-out, 1 leg × 1 set, 2–6 players) where every step carries exact expect values (per-player remaining, next thrower, legDarts). IMMUTABLE — if a game fails, the app or the runner is wrong; never edit this file to make tests pass
+│   │   ├── gauntlet.spec.ts — Data-driven Playwright spec: for each game it creates players/match via e2e helpers, drives all throws/edits/deletes through the real scorer UI (numpad, edit dialog, delete confirm), and after EVERY step captures three views of state — UI DOM (AnimatedNumber-polled remaining, emerald active panel, per-panel Darts counters), API (GET match + turns), and an engine replay of the effective turn list through src/lib/game/scoring.ts — comparing all three against the chalkboard; writes per-game reports to reports/<GID>.json including console errors (zero tolerated) and click-path lengths for one edit and one delete
+│   │   ├── reports/ — Per-game JSON reports (per-step chalkboard/ui/api/engine + mismatches + stepPass, consoleErrors[], editClickPath, deleteClickPath)
+│   │   └── dev-server.log — Log of the gauntlet's manually-started dev server (port 5199) — gitignored output, safe to delete
 ├── godaddy-cli/ — Vendored third-party Go CLI (github.com/Cabemo/godaddy-cli) used to manage GoDaddy domains/DNS from the terminal
 │   ├── .git/ — Git repository metadata
 │   │   ├── hooks/ — Sample git hooks (inactive defaults from git init)
@@ -2700,7 +2706,9 @@ timestamp: "2026-09-07T19:11:02.020Z"
 ├── drizzle.config.ts — Drizzle Kit config — postgresql dialect, schema at src/lib/db/schema.ts, migrations into drizzle/, targets the \`darts\` schema
 ├── nul — Stray Windows artifact (accidental \`> NUL\` redirect) — safe to delete
 ├── package-lock.json — npm lockfile pinning the dependency tree
-├── package.json — npm manifest — scripts (dev/build/check, db:init/push/studio/verify), deps: SvelteKit 2, Svelte 5, Tailwind v4, Drizzle ORM, kokoro-js, emailjs, postgres
+├── package.json — npm manifest — scripts (dev/build/check, db:init/push/studio/verify, test:unit/test:e2e), deps: SvelteKit 2, Svelte 5, Tailwind v4, Drizzle ORM, kokoro-js, emailjs, postgres
+├── playwright.config.ts — Playwright E2E config — webServer boots \`npm run dev\` on port 5174 (COMMENTARY_FAKE=1), workers: 1 (tests share the live DB), chromium only
+├── playwright.gauntlet.config.ts — Gauntlet-only Playwright config — testDir e2e/gauntlet, baseURL port 5199, NO webServer block (the dev server is started manually and owned outside Playwright so a stale orphaned server is never reused), 300s per-test timeout
 ├── prompts.md — Developer prompt log — feature requests and rule decisions applied during development (turn alternation, UI tweaks)
 ├── README.md — Project readme — features, install, project structure, API reference, game rules, data models
 ├── svelte.config.js — SvelteKit config — adapter-node output, Svelte 5 runes mode forced outside node_modules
@@ -4731,7 +4739,7 @@ okf_version: "0.1"
 <!-- wiki-nav:start -->
 ## Navigation map
 
-Auto-generated detailed index of every docs/wiki/ concept — the map the LLM uses to locate information. 133 concept(s). Regenerated on init and on wiki_mark_synced. Generated 2026-10-28T18:45:15.946Z.
+Auto-generated detailed index of every docs/wiki/ concept — the map the LLM uses to locate information. 154 concept(s). Regenerated on init and on wiki_mark_synced. Generated 2026-10-28T20:04:09.789Z.
 
 Each entry: [title](concept-id.md) — description. Links are clickable in /wiki; pass the concept-id (link target minus .md) to wiki_get.
 
@@ -4770,11 +4778,13 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [LLM Commentary (Trebles & Territories)](pages/entities/llm-commentary-trebles-territories.md) — The in-game AI commentary/interview broadcast layer: an LLM writes Dutch commentary and spectator interviews at every-N-turn boundaries, voiced and subtitled on
 - [Match Stats Tab](pages/entities/match-stats-tab.md) — All-players statistics table in the live match UI, plus the leg/match average displays shipped with it.
 - [PlayerPanel](pages/entities/playerpanel.md) — A reusable scoreboard panel component for the live match scorer, rendered around the board for every roster size (full-size for 1–2 players, condensed cards for 3–6).
+- [Profile Editing (player name + sign-in email)](pages/entities/profile-editing-player-name-sign-in-email.md) — Profile Editing (player name + sign-in email)
 - [Recap Video Pipeline (Trebles & Territories)](pages/entities/recap-video-pipeline-trebles-territories.md) — The planned Morning-After recap feature for Trebles & Territories: the day after a game, each match gets an LLM-generated recap video, and players who stored an email address receive a link to it.
 - [Risk 42 end screens & Teruglezen drawer](pages/entities/risk-42-end-screens-teruglezen-drawer.md) — The game-over surfaces for [Risk 42](../concepts/risk-42-proposed-game-mode.md), shipped during the session-6 prod playtest (2026-09-10, commits \`5e6dc11\` + \`bf
 - [Risk 42 engine (risk-engine.ts)](pages/entities/risk-42-engine-risk-engine-ts.md) — The pure, TDD'd game engine implementing [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md) — Risk 42 played on the standard dartboard wher
 - [Risk 42 playable game (risk-setup + Fun tab + /match/risk + RiskBoard)](pages/entities/risk-42-playable-game-risk-setup-fun-tab-match.md) — The playable cut of [risk-42-proposed-game-mode](../concepts/risk-42-proposed-game-mode.md): the pure setup module, the Fun-tab format picker, and the live game
 - [Spectator Interviews (Trebles & Territories)](pages/entities/spectator-interviews-trebles-territories.md) — Spectator Interviews (Trebles & Territories)
+- [Turns API (matches/[id]/turns)](pages/entities/turns-api-matches-id-turns.md) — Turns API
 - [TV second screen (cast views)](pages/entities/tv-second-screen-cast-views.md) — Read-only big-screen views of a live match, meant for tab-casting to a TV in the room: one route each for classic matches, conquest, and **Risk 42**. The scorer
 - [Page Templates](pages/TEMPLATES.md) — Reference templates for Concept, Entity, and Artifact pages. Follow these when using wiki_note_page.
 
@@ -4828,41 +4838,56 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [TV cast pages render on a fixed 1920×1080 TvStage canvas, scaled to fit — no viewport breakpoints](decisions/tv-cast-pages-render-on-a-fixed-1920-1080-tvstage.md) — Context
 - [TV spectator mode: URL + tab-cast, 1s polling, public-by-link, room-first](decisions/tv-mode-url-tab-cast-polling.md) — Context
 - [TvStage fills the viewport (independent x/y scale) — letterboxing dropped](decisions/tvstage-fills-the-viewport-independent-x-y-scale.md) — Context
+- [Wiki scope: product knowledge only — all dev-process content removed](decisions/wiki-scope-product-knowledge-only-all-dev-process-content-re.md) — Context
 
 ### Rules
 
 - [Board SVGs are generated — edit the regenerator, never the output](rules/board-svgs-are-generated.md) — Guideline
 - [Derive stats from state deltas, never by substring-matching log copy](rules/derive-stats-from-state-deltas-never-by-substring.md) — **Guideline:** Never derive a gameplay stat by scanning or substring-matching human-readable log lines. Count from state deltas (or engine return values) instea
+- [Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets](rules/engine-invariant-sweeps-plain-asserts-assert.md) — The guideline
 - [Never hardcode player slots in match UI](rules/never-hardcode-player-slots-in-match-ui.md) — Guideline
 - [New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board](rules/new-game-modes-follow-the-conquest-cut-pure-setup.md) — The rule
+- [Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert](rules/prove-overlays-never-block-gameplay-live-dom.md) — The guideline
 - [Use $app/stores $page for page state — house style](rules/use-app-stores-page-for-page-state-house-style.md) — Rule
 - [Use the Tooltip component, not native title attributes](rules/use-tooltip-not-native-title.md) — Guideline
+- [When a playtest stalls under background-tab throttling, finish the game via the engine + PATCH — don't tab-hop](rules/when-a-playtest-stalls-under-background-tab.md) — The guideline
 
 ### Learnings
 
 - [Abandon match is instant with no confirmation](learnings/abandon-match-is-instant-with-no-confirmation.md) — **Found during the 2026-10-28 four-game test sweep** (Game 2, 3-player 301).
 - [Bank folded in at handover loses provenance — carry it on the object (turn.carried)](learnings/bank-folded-in-at-handover-loses-provenance-carry.md) — **The gotcha:** in Risk 42 the engine adds the player's saved-dart bank to the next turn's budget *at handover* — so by the time the UI renders the pre-turn gat
+- [Bulk-deleting wiki concepts strands links — grep short slugs too and let wiki_validate catch the rest](learnings/bulk-deleting-wiki-concepts-strands-links-grep-short-slugs-t.md) — **The gotcha:** deleting a wiki concept file does NOT clean up references to it. Folder indexes (\`rules/index.md\`, \`decisions/index.md\`, …) keep stale entries, 
 - [Commentary LLM = DeepSeek deepseek-v4-flash (from glm-5.3-flash); ~1s LLM latency](learnings/commentary-llm-deepseek-v4-flash.md) — 2026-09-09 evening: commentary LLM switched from OpenCode Zen Go (glm-5.3-flash, ~20-50s latency, needed x-opencode-session header) to **DeepSeek** (\`https://ap
 - [Commentary pipeline: ~25s real cost vs 20s timeout — raise/parallelize](learnings/commentary-pipeline-25s-real-cost-vs-20s-timeout.md) — Measured while playtesting all game modes on 2026-09-09: the 4-segment commentary pipeline (glm-5.3-flash LLM call + 4 sequential ElevenLabs TTS synthesizes) ta
 - [Conquest state is client-side only — nothing for a 2nd screen to poll](learnings/conquest-state-client-side-only.md) — The fact
+- [Copy .env into a fresh worktree BEFORE starting the dev server — Vite loads it at startup only](learnings/copy-env-into-a-fresh-worktree-before-starting.md) — Symptom
 - [Dartboard SVG paths encode box identity — read (number, ring) from geometry, don't hand-map](learnings/dartboard-svg-paths-encode-box-identity-read.md) — The fact
 - [darts_email localStorage key stores the email raw, not JSON](learnings/darts-email-localstorage-stores-raw-email.md) — The \`darts_email\` localStorage key stores the email as a **raw string** — \`getEmail\`/\`setEmail\` do not JSON-encode it. This differs from the accounts key, which
 - [db:push ignores the darts schema — migrations are file-as-record, applied directly](learnings/db-push-ignores-darts-schema.md) — \`drizzle-kit push\` (npm \`db:push\`) only manages the **\`public\`** schema — it silently ignores the \`darts\` schema, so a push can "succeed" while the table never 
 - [deleteLastTurn UI: shared confirm state + restore uses the wrong player's remaining score](learnings/deletelastturn-ui-shared-confirm-state-restore-uses-the-wron.md) — **Found during the 2026-10-28 neo-browser delete-turn test campaign**, verified live in both a 2-player and a 3-player match. The trash-icon delete on PlayerPan
 - [Double-in is a dead toggle — saved and loaded, never enforced in scoring](learnings/double-in-is-a-dead-toggle-saved-and-loaded-never-enforced-i.md) — **Found during the 2026-10-28 four-game test sweep** (Game 3: 701 double-in, 2 players) — highest-severity finding of the sweep.
 - [EmailGate remember-me already ships — email persists, gate skips, saved accounts exist](learnings/emailgate-remember-me-already-ships.md) — A feature request to "remember the email on the EmailGate" (2026-09, worktree \`kees-remember-me\`) turned out to be **already shipped in master** — recon before
+- [Engine test helpers must adapt to live dart budgets — income mechanics break fixed throw counts](learnings/engine-test-helpers-must-adapt-to-live-dart.md) — Engine test helpers must adapt to live dart budgets — income mechanics break fixed throw counts
 - [$env/dynamic/private doesn't resolve in vitest — split the pure logic into its own module](learnings/env-dynamic-private-vitest-split.md) — Vitest can't resolve \`$env/dynamic/private\` — importing it in a module under test fails at import time.
 - [Flipped labels: negate radial offset on left half](learnings/flipped-labels-negate-radial-offset-on-left-half.md) — Gotcha
+- [Fresh SvelteKit worktree needs \`svelte-kit sync\` before tests run](learnings/fresh-sveltekit-worktree-needs-svelte-kit-sync.md) — Gotcha from the Risk 42 M1 build (2026-09-09): a freshly created SvelteKit worktree (deps junctioned from the main checkout) is **missing the generated \`.svelte
+- [Game-engine tests: filler darts must be misses, and fixtures obey the rules they enforce](learnings/game-engine-tests-filler-darts-must-be-misses-and.md) — Caught red-handed twice during the Risk 42 M1 TDD cycles (2026-09-09), both produced false reds (and one false green that slipped into a commit and had to be am
 - [GoDaddy apex domain on Railway: A record to live edge IP, not the documented one](learnings/godaddy-apex-domain-a-record-to-edge-ip.md) — The pattern (snooze.monster / dart.monster, Sep 2026)
 - [GoDaddy DNS can't serve a Railway apex domain](learnings/godaddy-dns-can-t-serve-a-railway-apex-domain.md) — The gotcha
 - [inputMode lives in per-origin localStorage — same repo on different ports shows different scorer state](learnings/inputmode-lives-in-per-origin-localstorage-same-repo-on-diff.md) — **The gotcha:** a user report of "the dartboard is broken on the same repo, other port" turned out to be **per-origin localStorage divergence**, not a code bug.
+- [Junctioned node_modules needs Vite server.fs.allow — client entry 403s otherwise](learnings/junctioned-node-modules-needs-vite-server-fs-allow.md) — The fact
 - [Match API is unauthenticated — the share link is the key](learnings/match-api-unauthenticated.md) — The fact
+- [Merged-PR leftovers in the main tree block the pull — verify identical, then discard](learnings/merged-pr-leftovers-block-the-pull.md) — Merged-PR leftovers in the main tree block the post-cleanup pull
 - [Miss turns must persist with dartsThrown ≥ 1](learnings/miss-turns-must-persist-with-dartsthrown-1.md) — The turns table / API has a constraint that \`dartsThrown >= 1\`. A miss (all three darts off the board) is still a turn and must be persisted with \`dartsThrown\`
+- [Neo ref-clicks silently no-op on some SvelteKit buttons — use evaluate el.click()](learnings/neo-ref-clicks-silently-no-op-on-some-sveltekit.md) — During the 2026-09-09 playtest sessions, driving the real app through BrowserOS neo's CDP-based \`input().click(ref)\` **failed silently** on several SvelteKit bu
 - [Don't name a top-level Svelte 5 variable \`state\` — svelte2tsx collision](learnings/no-top-level-state-var-svelte2tsx.md) — Naming a top-level Svelte 5 component variable \`state\` trips a svelte2tsx collision (the compiler's own \`state\` concept) and fails \`svelte-check\`. The conquest
 - [Numpad multiplier relabels number buttons (T20/D20) — and the selection persists across turns](learnings/numpad-multiplier-relabels-number-buttons-t20-d20-and-the-se.md) — **Found during the 2026-10-28 four-game test sweep**, driving the live scorer via browser automation.
 - [OpenCode zen/go LLM endpoint needs x-opencode-session header + custom User-Agent](learnings/opencode-zen-go-needs-session-header.md) — The OpenCode Zen Go chat-completions endpoint (\`https://opencode.ai/zen/go/v1/chat/completions\`) rejects plain requests — it requires BOTH:
 - [Patching board SVGs: replace existing attributes, never append duplicates](learnings/patching-board-svgs-replace-existing-attributes.md) — Gotcha
 - [Plain \`let\` assigned in async onMount never re-renders — must be $state](learnings/plain-let-onmount-needs-state.md) — The gotcha
+- [Playwright hit-target check fails at the bull's center — the 50 ring paints on top; click the 25 ring off-center](learnings/playwright-hit-target-fails-at-bull-center.md) — **The gotcha:** in the dartboard SVG the bullseye (50) is painted **on top of** the single bull (25). A Playwright click aimed at the exact center of the bull t
+- [Playwright reuses orphaned dev servers — E2E can silently test master code, not your worktree](learnings/playwright-reuses-orphaned-dev-servers.md) — The fact
+- [Railway auto-deploy can silently skip a master push — verify timestamp vs latest commit, fallback is railway up](learnings/railway-auto-deploy-can-silently-skip-a-master-push-verify-t.md) — **Found on 2026-10-28** while checking whether PR #18 (\`7d01bcf\`, "always show the dartboard on the Board tab") was live.
 - [Refresh-resume depends on chronological turn order and persisted firstThrowerId](learnings/refresh-resume-needs-chronological-turn-order.md) — Refreshing the browser mid-leg (resume logic in \`src/routes/match/[id]/+page.svelte\`) silently depends on two implicit contracts. Breaking either reproduces the
 - [Risk 42 adjacency table drifts from classic Risk by 3 edges — edge-sampling tests can't catch membership drift](learnings/risk-42-adjacency-table-drifts-from-classic-risk.md) — **Found in the 2026-10-24 three-axis code review** of PR #17 (commit 2c4d474) — Spec axis, should-fix/high.
 - [Risk board SVGs: path attribute order varies — extract element-wise, not by regex lookahead](learnings/risk-board-svg-attribute-order.md) — Gotcha
@@ -4871,18 +4896,22 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [risk-territory-board.svg palette: fills live in layer2, join to territories by centroid containment](learnings/risk-territory-board-svg-palette-in-layer2.md) — The world map for the Risk 42 TV view (\`docs/risk/risk-territory-board.svg\`, a copy of \`risk-board.svg\`) carries its **per-territory tints in the \`layer2\` fill
 - [scrollbar-gutter: stable reserves 15px that window.innerWidth counts — measure the host box](learnings/scrollbar-gutter-stable-reserves-15px.md) — The gotcha
 - [Session-only logins are absent from the saved-accounts list — don't gate account switching on it](learnings/session-only-logins-not-in-accounts-list.md) — Gotcha
+- [Squash-merged branch: commit-ahead ≠ unmerged — prove with git cherry](learnings/squash-merged-branch-commit-ahead-unmerged.md) — Squash-merged branch: commit-ahead ≠ unmerged
 - [SSR pages are empty shells — EmailGate gates all rendering client-side](learnings/ssr-pages-are-empty-shells-emailgate.md) — Gotcha
 - [startRisk clears risk42_state but not risk42_game_id — new game silently resumes the old one](learnings/startrisk-clears-risk42-state-not-game-id.md) — **Found during the Risk 42 prod playtest campaign (2026-09-09/10), logged P1.**
 - [structuredClone can't clone Svelte 5 $state proxies — pass $state.snapshot() at the engine boundary](learnings/structuredclone-can-t-clone-svelte-5-state.md) — Gotcha
 - [SVG path parsing: arc arguments are not points — tokenize by command, never by coordinate-pair regex](learnings/svg-path-parsing-arc-arguments-are-not-points.md) — Gotcha
+- [Sync infinite loop in a test helper hangs vitest with no timeout](learnings/sync-infinite-loop-in-a-test-helper-hangs-vitest.md) — The symptom
 - [Tooltips must use fixed positioning to escape overflow clipping](learnings/tooltips-must-use-fixed-positioning.md) — Gotcha
 - [Top-level return in a CJS script skips the file write — silent no-op](learnings/top-level-return-in-a-cjs-script-skips-the-file.md) — Gotcha
 - [TS can't narrow $state inside closures — use $derived.by with local capture](learnings/ts-can-t-narrow-state-in-closures.md) — Gotcha
 - [Turns DELETE endpoint silently no-ops — params.id (match id) shadows the turn-id query param](learnings/turns-delete-endpoint-silently-no-ops-params-id-match-id-sha.md) — **Found during the 2026-10-28 neo-browser delete-turn test campaign** (2-player match \`96c568e8\`, 3-player match \`02cae89f\`).
 - [TV cast pages freeze in background tabs — document.hidden pauses polling and commentary](learnings/tv-cast-pages-freeze-in-background-tabs-document.md) — All three TV cast routes — \`src/routes/match/[id]/tv/+page.svelte\` (classic), \`src/routes/match/conquest/[id]/tv/+page.svelte\` (T&T), \`src/routes/match/risk/[id
 - [TV commentary hangs on one segment: audio events never fire in throttled windows — race every segment against a reading-time cap](learnings/tv-commentary-hangs-on-one-segment-audio-events.md) — Discovered during the 2026-09-09/10 prod playtest campaign (session 6): the TV commentary broadcast could hang forever on ONE segment. Root cause chain:
+- [Vitest can't see type holes — esbuild strips types; svelte-check is the only net](learnings/vitest-can-t-see-type-holes-esbuild-strips-types.md) — The gotcha
 - [Only webSpeech TTS speaks Dutch — kokoro is English-only, ElevenLabs is pre-generated clips](learnings/webspeech-only-dutch-tts.md) — Only webSpeech TTS speaks Dutch
 - [Wedge index from a seg path's M point needs a +9° half-wedge shift](learnings/wedge-index-from-a-seg-path-s-m-point-needs-a-9.md) — Gotcha
+- [Wiki-recap staged files sweep into the next commit](learnings/wiki-recap-staged-files-sweep-into-the-next-commit.md) — **The gotcha:** the wiki-recap subagent writes docs/wiki/ files at the end of turns and leaves them staged in the git index. A later \`git add <my-file>\` + \`git 
 - [wiki_search misses recently-written concepts — verify with wiki_validate or ls before writing](learnings/wiki-search-misses-recent-concepts.md) — Discovered while recapping the Risk-darts rollback turn: \`wiki_search("risk territory")\` and \`wiki_search("heat economies")\` both returned **no results**, yet \`
 - [Bare [[slug]] wikilinks in wiki_note_page break cross-folder — use explicit relative paths](learnings/wikilinks-bare-slug-breaks-cross-folder.md) — The gotcha
 <!-- wiki-nav:end -->
@@ -5106,6 +5135,26 @@ The journal is **stale by design in this repo**: migrations 0002–0007 were nev
 2. Apply the SQL directly to the DB (e.g. \`psql\` / script), NOT via \`drizzle-kit migrate\` — the journal gaps would make it try to replay/conflict
 
 Symptom of getting it wrong: table missing after a "successful" push; direct \`SELECT\` confirms absence.
+`,
+  "learnings/deletelastturn-restores-the-previous-thrower-s-remaining-sco.md": `---
+type: Learning
+title: deleteLastTurn restores the previous thrower's remaining score — gauntlet-confirmed
+description: **Re-confirmed and pinned down by the 2026-11-13 gauntlet run** (\`e2e/gauntlet/gauntlet.spec.ts\` over \`games.json\`, reports in \`e2e/gauntlet/reports/G*.json\`), 
+tags: [testing, scoring, bug, playwright, delete-turn]
+timestamp: "2026-11-13T18:05:01.911Z"
+---
+
+# deleteLastTurn restores the previous thrower's remaining score — gauntlet-confirmed
+
+**Re-confirmed and pinned down by the 2026-11-13 gauntlet run** (\`e2e/gauntlet/gauntlet.spec.ts\` over \`games.json\`, reports in \`e2e/gauntlet/reports/G*.json\`), first found in the 2026-10-28 neo-browser delete-turn campaign.
+
+**The bug** (\`deleteLastTurn\` in \`src/routes/match/[id]/+page.svelte\`): after deleting the last turn, the deleted player's remaining score is restored from \`turns[turns.length - 2].remainingScore\` — but that is the turn BEFORE the deleted one, which belongs to the **previous thrower**, not the deleted player. The deleted player therefore inherits the previous thrower's remaining score. Correct restore = the player's own previous remaining (their own earlier turn's remainingScore, or startingScore).
+
+**3-axis evidence shape** (G1 step 4, report \`G1.json\`): chalkboard + API rows + engine replay all say \`[121, 244]\`; the UI shows \`[244, 244]\` — Ann takes Ben's 244. Server-side state stays correct (the API row is genuinely deleted); only the UI state is corrupted, and \`loadMatch()\` (triggered by any later edit) heals it.
+
+**Cascade signature**: after the corrupted delete, the player's next throw is computed from the wrong remaining — e.g. G1 step 5: Ann (UI 244, true 121) throws the 121 checkout → app scores 244−121=123, no checkout, match never completes. Also produces "bust-masked" steps where the corrupted remaining numerically equals the chalkboard (bust keeps it unchanged) so a step can pass while the persisted row is a bust a clean replay wouldn't produce (G4, G7).
+
+**Coincidental passes**: G7 step 10's delete "passed" only because the previous thrower's remaining (127) happened to equal the deleted player's true remaining (127). A green delete step is not proof of correctness — check whether previous-thrower and own remaining coincide.
 `,
   "learnings/deletelastturn-ui-shared-confirm-state-restore-uses-the-wron.md": `---
 type: Learning
@@ -5341,7 +5390,10 @@ Railway's TLS cert flow for an apex domain **requires the root to be a CNAME (fl
 - [inputMode lives in per-origin localStorage — same repo on different ports shows different scorer state](./inputmode-lives-in-per-origin-localstorage-same-repo-on-diff.md) - **The gotcha:** a user report of "the dartboard is broken on the same repo, other port" turned out to be **per-origin localStorage divergence**, not a code bug.
 - [Bulk-deleting wiki concepts strands links — grep short slugs too and let wiki_validate catch the rest](./bulk-deleting-wiki-concepts-strands-links-grep-short-slugs-t.md) - **The gotcha:** deleting a wiki concept file does NOT clean up references to it. Folder indexes (\`rules/index.md\`, \`decisions/index.md\`, …) keep stale entries,
 - [Railway auto-deploy can silently skip a master push — verify timestamp vs latest commit, fallback is railway up](./railway-auto-deploy-can-silently-skip-a-master-push-verify-t.md) - **Found on 2026-10-28** while checking whether PR #18 (\`7d01bcf\`, "always show the dartboard on the Board tab") was live.
-- [Wiki-recap staged files sweep into the next commit](./wiki-recap-staged-files-sweep-into-the-next-commit.md) - **The gotcha:** the wiki-recap subagent writes docs/wiki/ files at the end of turns and leaves them staged in the git index. A later \`git add <my-file>\` + \`git 
+- [Wiki-recap staged files sweep into the next commit](./wiki-recap-staged-files-sweep-into-the-next-commit.md) - **The gotcha:** the wiki-recap subagent writes docs/wiki/ files at the end of turns and leaves them staged in the git index. A later \`git add <my-file>\` + \`git
+- [deleteLastTurn restores the previous thrower's remaining score — gauntlet-confirmed](./deletelastturn-restores-the-previous-thrower-s-remaining-sco.md) - **Re-confirmed and pinned down by the 2026-11-13 gauntlet run** (\`e2e/gauntlet/gauntlet.spec.ts\` over \`games.json\`, reports in \`e2e/gauntlet/reports/G*.json\`),
+- [Turn edit computes from the previous thrower's remaining, persisting phantom bust rows](./turn-edit-computes-from-the-previous-thrower-s-remaining-per.md) - **Found by the 2026-11-13 gauntlet run** (\`e2e/gauntlet/gauntlet.spec.ts\`, evidence in \`e2e/gauntlet/reports/G2.json\`/\`G5.json\`/\`G10.json\`), new as of 2026-11-1
+- [Playwright clicks can stall forever on scorer numpad buttons — cap timeout, fall back to el.click()](./playwright-clicks-can-stall-forever-on-scorer-numpad-buttons.md) - **Found while building the 2026-11-13 gauntlet** (\`e2e/gauntlet/gauntlet.spec.ts\`). Playwright's real \`locator.click()\` can hang indefinitely on the live scorer
 `,
   "learnings/inputmode-lives-in-per-origin-localstorage-same-repo-on-diff.md": `---
 type: Learning
@@ -5566,6 +5618,22 @@ Any module-level component variable that the template reads and that is assigned
 - [[tv-second-screen-cast-views]] — the cast screens the button opens (classic + conquest).
 - [[conquest-engine-and-live-game]] — the page where this bit.
 - Note: \`/match/risk\` intentionally has **no** cast button yet — Risk 42 state is sessionStorage-only ([[risk-42-v1-persists-to-sessionstorage-stopgap]]), so a second screen has nothing to poll until server write-through lands at M3.
+`,
+  "learnings/playwright-clicks-can-stall-forever-on-scorer-numpad-buttons.md": `---
+type: Learning
+title: Playwright clicks can stall forever on scorer numpad buttons — cap timeout, fall back to el.click()
+description: **Found while building the 2026-11-13 gauntlet** (\`e2e/gauntlet/gauntlet.spec.ts\`). Playwright's real \`locator.click()\` can hang indefinitely on the live scorer
+tags: [playwright, testing, gotcha, ui]
+timestamp: "2026-11-13T18:05:21.371Z"
+---
+
+# Playwright clicks can stall forever on scorer numpad buttons — cap timeout, fall back to el.click()
+
+**Found while building the 2026-11-13 gauntlet** (\`e2e/gauntlet/gauntlet.spec.ts\`). Playwright's real \`locator.click()\` can hang indefinitely on the live scorer's numpad buttons: the click log shows the button "visible, enabled and stable", then stalls at "scrolling into view if needed" until the test timeout — seen on G1's very first T20 click while the identical flow worked in other games (racy, layout-dependent).
+
+**The fix**: never click scorer buttons with an unbounded actionability wait. \`act.click()\` tries \`locator.click({ timeout: 6000 })\` and on failure falls back to \`locator.evaluate((el) => el HTMLElement).click())\` — a DOM click that fires Svelte's \`onclick\` exactly like a user click but bypasses the scroll/hit-target machinery. Same pattern as the earlier "Neo ref-clicks silently no-op on some SvelteKit buttons — use evaluate el.click()" gotcha, but this one bites native Playwright clicks too.
+
+**Also**: cap every real click's timeout (6s here) so one stall costs seconds, not the whole 300s test budget.
 `,
   "learnings/playwright-hit-target-fails-at-bull-center.md": `---
 type: Learning
@@ -6057,6 +6125,28 @@ Seen in the live scorer when computing the throw rotation (\`leftPlayers\`/\`rig
 
 All Svelte 5 runes components in this repo (\`src/lib/...\`, \`src/routes/...\`). If \`svelte-check\` complains about narrowing inside a closure over \`$state\`, reach for \`$derived.by\` + local capture before casting.
 `,
+  "learnings/turn-edit-computes-from-the-previous-thrower-s-remaining-per.md": `---
+type: Learning
+title: Turn edit computes from the previous thrower's remaining, persisting phantom bust rows
+description: **Found by the 2026-11-13 gauntlet run** (\`e2e/gauntlet/gauntlet.spec.ts\`, evidence in \`e2e/gauntlet/reports/G2.json\`/\`G5.json\`/\`G10.json\`), new as of 2026-11-1
+tags: [scoring, bug, api, turn-edit, testing]
+timestamp: "2026-11-13T18:05:14.220Z"
+---
+
+# Turn edit computes from the previous thrower's remaining, persisting phantom bust rows
+
+**Found by the 2026-11-13 gauntlet run** (\`e2e/gauntlet/gauntlet.spec.ts\`, evidence in \`e2e/gauntlet/reports/G2.json\`/\`G5.json\`/\`G10.json\`), new as of 2026-11-13 — distinct from the delete-restore bug.
+
+**The bug** (both ends compute the same way — \`PATCH /api/matches/[id]/turns\` in \`src/routes/api/matches/[id]/turns/+server.ts\` and \`editPreview\` in \`src/routes/match/[id]/+page.svelte\`): the edited turn's outcome is computed from \`legTurns[legTurns.length - 2].remainingScore\` — the remaining score on the turn BEFORE the edited one, which belongs to the **previous thrower** — instead of the edited player's OWN remaining before their turn (their own prior turn's remainingScore, or startingScore).
+
+**Observed behavior** (G2 step 3: Daan 301, threw T20 T20 T18 = 174 → true remaining 127; edit to T20 T20 T19 = 177): server computes 130 (Cleo's remaining, the previous thrower's) − 177 → negative → persists \`isBust: true, remainingScore: 130\`. UI after \`loadMatch()\` shows 130. Clean replay (chalkboard + \`src/lib/game/scoring.ts\`) says 127.
+
+**3-axis signature**: API row remainingScore + UI (after edit) diverge from an engine replay of the effective turn list; the persisted row carries \`isBust: true\` where the player's own chain gives a normal score. In G6/G8/G9 the app's prev-thrower value coincided with the chalkboard (both axes green, engine axis red) — the corruption hides until the throw order makes the two chains differ.
+
+**Cascade**: the persisted bust row re-chains every later comparison; edits made while corrupted state is on screen compute from the turns array (correct) but persist prev-thrower math, so one edit can poison the leg for the rest of the game (G5: Lina edit → 4 instead of 124; Milan edit → 4 instead of 121; final checkout never happens).
+
+**The fix shape**: prevRemaining for an edited turn at index i must come from the edited player's own chain — \`turns[i-2]\` when the same player threw turn i−2, else startingScore (equivalently: the player's most recent own turn before i). Same rule applies to \`deleteLastTurn\`'s restore (see delete-last-turn-restore learning).
+`,
   "learnings/turns-delete-endpoint-silently-no-ops-params-id-match-id-sha.md": `---
 type: Learning
 title: Turns DELETE endpoint silently no-ops — params.id (match id) shadows the turn-id query param
@@ -6271,7 +6361,7 @@ okf_version: "0.1"
 Auto-generated digest of the most recent conventions, decisions, rules and
 development patterns, plus architecture and global patterns — newest first.
 The actual files live in the wiki subfolders; follow the links (clickable in /wiki).
-Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-10-28T20:03:52.591Z.
+Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-11-13T18:05:21.424Z.
 
 ## Recent Decisions
 
@@ -6293,6 +6383,7 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-10-28T20
 
 ## Active Rules
 
+- [Never trust client-submitted scores — recompute at the API boundary](rules/never-trust-client-scores.md) — **Guideline:** When a client submits changes that touch derived game state (turn scores, conquest state, stats), never persist client-comput… (2026-11-13)
 - [Derive stats from state deltas, never by substring-matching log copy](rules/derive-stats-from-state-deltas-never-by-substring.md) — **Guideline:** Never derive a gameplay stat by scanning or substring-matching human-readable log lines. Count from state deltas (or engine r… (2026-10-24)
 - [When a playtest stalls under background-tab throttling, finish the game via the engine + PATCH — don't tab-hop](rules/when-a-playtest-stalls-under-background-tab.md) — The guideline (2026-09-09)
 - [Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert](rules/prove-overlays-never-block-gameplay-live-dom.md) — The guideline (2026-09-09)
@@ -6305,6 +6396,9 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-10-28T20
 
 ## Recent Learnings — development patterns
 
+- [Playwright clicks can stall forever on scorer numpad buttons — cap timeout, fall back to el.click()](learnings/playwright-clicks-can-stall-forever-on-scorer-numpad-buttons.md) — **Found while building the 2026-11-13 gauntlet** (\`e2e/gauntlet/gauntlet.spec.ts\`). Playwright's real \`locator.click()\` can hang indefinitel… (2026-11-13)
+- [Turn edit computes from the previous thrower's remaining, persisting phantom bust rows](learnings/turn-edit-computes-from-the-previous-thrower-s-remaining-per.md) — **Found by the 2026-11-13 gauntlet run** (\`e2e/gauntlet/gauntlet.spec.ts\`, evidence in \`e2e/gauntlet/reports/G2.json\`/\`G5.json\`/\`G10.json\`),… (2026-11-13)
+- [deleteLastTurn restores the previous thrower's remaining score — gauntlet-confirmed](learnings/deletelastturn-restores-the-previous-thrower-s-remaining-sco.md) — **Re-confirmed and pinned down by the 2026-11-13 gauntlet run** (\`e2e/gauntlet/gauntlet.spec.ts\` over \`games.json\`, reports in \`e2e/gauntlet… (2026-11-13)
 - [Wiki-recap staged files sweep into the next commit](learnings/wiki-recap-staged-files-sweep-into-the-next-commit.md) — **The gotcha:** the wiki-recap subagent writes docs/wiki/ files at the end of turns and leaves them staged in the git index. A later \`git ad… (2026-10-28)
 - [Railway auto-deploy can silently skip a master push — verify timestamp vs latest commit, fallback is railway up](learnings/railway-auto-deploy-can-silently-skip-a-master-push-verify-t.md) — **Found on 2026-10-28** while checking whether PR #18 (\`7d01bcf\`, "always show the dartboard on the Board tab") was live. (2026-10-28)
 - [Bulk-deleting wiki concepts strands links — grep short slugs too and let wiki_validate catch the rest](learnings/bulk-deleting-wiki-concepts-strands-links-grep-short-slugs-t.md) — **The gotcha:** deleting a wiki concept file does NOT clean up references to it. Folder indexes (\`rules/index.md\`, \`decisions/index.md\`, …) … (2026-10-28)
@@ -6322,9 +6416,6 @@ Regenerated on every wiki write and on wiki_mark_synced. Generated 2026-10-28T20
 - [Commentary LLM = DeepSeek deepseek-v4-flash (from glm-5.3-flash); ~1s LLM latency](learnings/commentary-llm-deepseek-v4-flash.md) — 2026-09-09 evening: commentary LLM switched from OpenCode Zen Go (glm-5.3-flash, ~20-50s latency, needed x-opencode-session header) to **Dee… (2026-09-09)
 - [Risk map SVG layers share a translate(-168,-119) — apply it when extracting paths or labels misalign](learnings/risk-map-svg-layers-share-a-translate-168-119.md) — While building the Risk 42 TV world map (2026-09-09): \`docs/risk/risk-territory-board.svg\` puts ALL its content layers (countries, labels, t… (2026-09-09)
 - [TV cast pages freeze in background tabs — document.hidden pauses polling and commentary](learnings/tv-cast-pages-freeze-in-background-tabs-document.md) — All three TV cast routes — \`src/routes/match/[id]/tv/+page.svelte\` (classic), \`src/routes/match/conquest/[id]/tv/+page.svelte\` (T&T), \`src/r… (2026-09-09)
-- [Neo ref-clicks silently no-op on some SvelteKit buttons — use evaluate el.click()](learnings/neo-ref-clicks-silently-no-op-on-some-sveltekit.md) — During the 2026-09-09 playtest sessions, driving the real app through BrowserOS neo's CDP-based \`input().click(ref)\` **failed silently** on … (2026-09-09)
-- [Commentary pipeline: ~25s real cost vs 20s timeout — raise/parallelize](learnings/commentary-pipeline-25s-real-cost-vs-20s-timeout.md) — Measured while playtesting all game modes on 2026-09-09: the 4-segment commentary pipeline (glm-5.3-flash LLM call + 4 sequential ElevenLabs… (2026-09-09)
-- [scrollbar-gutter: stable reserves 15px that window.innerWidth counts — measure the host box](learnings/scrollbar-gutter-stable-reserves-15px.md) — The gotcha (2026-09-09)
 
 ## Architecture
 
@@ -6723,6 +6814,7 @@ The automated test layer for dart.monster: Vitest unit tests over the pure game 
 - **e2e/tv-classic.spec.ts** / **e2e/tv-conquest.spec.ts** — TV cast views (classic + conquest)
 - **e2e/commentary-api.spec.ts** — commentary boundary API incl. analyst segments (\`analystVoice\` one of the two commentators)
 - **e2e/risk-persist.spec.ts** — Risk 42 write-through persistence
+- **e2e/gauntlet/gauntlet.spec.ts** — turn edit/delete scoring gauntlet: 10 hand-scored games (\`games.json\`, immutable) driven through the real scorer UI; after every step it compares UI DOM, API turns and an engine replay (\`src/lib/game/scoring.ts\`) against the chalkboard and freezes per-game evidence into \`e2e/gauntlet/reports/<GID>.json\`. Runs on its own config (\`playwright.gauntlet.config.ts\`, port 5199, manually-started dev server)
 
 ## Isolation
 
@@ -6738,6 +6830,7 @@ E2E creates data under unique \`e2e-*@test.local\` accounts and archives test pl
 - First added: 2026-09 — initial suite (67 unit tests) built in one pass; component-level Svelte tests deliberately skipped (logic covered by unit, UI by E2E)
 - 2026-09-08 — conquest tests added (67 → 112); whole suite committed on \`feature/trebles-territories\` as PR #2. E2E specs deliberately contain no conquest references (clean split).
 - 2026-09-09 — merged to master with the conquest/risk/TV/commentary waves (PRs #10, #13, #14): +6 e2e specs (conquest-api, tv-classic, commentary-api, risk-persist, tv-commentary, tv-conquest) and the risk-engine/risk-setup/commentary unit tests.
+- 2026-11-13 — gauntlet added (e2e/gauntlet): browser-driven edit/delete scoring campaign over the immutable games.json chalkboard. First full run surfaced two scorer state bugs with 3-axis evidence — deleteLastTurn restores the previous thrower's remaining score (UI only), and turn edits (PATCH /api/matches/[id]/turns + dialog preview) compute from the previous turn's remaining score instead of the edited player's own pre-turn remaining, persisting bust rows that diverge from a clean replay. See learnings: delete-last-turn-restore and turn-edit-previous-thrower-chain.
 `,
   "pages/artifacts/trebles-and-territories-player-manual.md": `---
 type: Artifact
@@ -7750,6 +7843,7 @@ Evidence: Risk 42 M1.7, 2026-09-09 — sweep went 59s → ~2.2s and three false 
 - [Board SVGs are generated — edit the regenerator, never the output](./board-svgs-are-generated.md) - Guideline
 - [New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board](./new-game-modes-follow-the-conquest-cut-pure-setup.md) - The rule
 - [Derive stats from state deltas, never by substring-matching log copy](./derive-stats-from-state-deltas-never-by-substring.md) - **Guideline:** Never derive a gameplay stat by scanning or substring-matching human-readable log lines. Count from state deltas (or engine return values) instea
+- [Never trust client-submitted scores — recompute at the API boundary](./never-trust-client-scores.md) - **Guideline:** When a client submits changes that touch derived game state (turn scores, conquest state, stats), never persist client-computed totals. Treat the
 `,
   "rules/never-hardcode-player-slots-in-match-ui.md": `---
 type: Rule
@@ -7775,6 +7869,33 @@ The match engine (\`src/lib/game/match-engine.ts\`) and thrower rotation are ful
 ## Consequence
 
 Roster can be 1–6 players (see the match player limit decision); UI must render correctly for every size, using condensed [[playerpanel]] cards for 3+ (see the cards-around-the-board decision).
+`,
+  "rules/never-trust-client-scores.md": `---
+type: Rule
+title: Never trust client-submitted scores — recompute at the API boundary
+description: "**Guideline:** When a client submits changes that touch derived game state (turn scores, conquest state, stats), never persist client-computed totals. Treat the"
+tags: [api, trust-boundary, scoring, validation]
+timestamp: "2026-11-13T17:28:16.308Z"
+---
+
+# Never trust client-submitted scores — recompute at the API boundary
+
+**Guideline:** When a client submits changes that touch derived game state (turn scores, conquest state, stats), never persist client-computed totals. Treat the client payload as raw input only, and recompute all derived values server-side with the pure game-engine modules in \`src/lib/game/\`.
+
+## When it applies
+
+- Any write endpoint that mutates scoring state — the \`darts.turns\` rows today, conquest/live-game state tomorrow.
+- Established by the turns PATCH endpoint (\`bf1803e\`, 2026-10-28): it validates raw darts via \`src/lib/game/turn-edit.ts\` (segment 0/1–20/25 only, no bull treble, miss ⇔ multiplier 0, ≤3 darts, ≤180 total) and recomputes \`totalScore\`/\`remainingScore\`/\`isBust\` with the scoring engine from the previous turn's \`remainingScore\`. Client-submitted totals are ignored.
+
+## Key corollaries
+
+- Reject (400) state transitions that belong to a different flow: an edit that would check out is refused — leg completion (winnerId, next leg, counters) stays the live submit flow's job, not a row update.
+- Only the latest turn of a leg is editable: later turns chain their remaining scores off it, so editing earlier rows would orphan the chain.
+- Resolve route params explicitly — on \`matches/[id]/turns\`, \`params.id\` is the **match id**. The old DELETE handler fell back to it (\`params.id || query.id\`), silently deleting nothing while returning 200. No fallback chains on identity params; see \`docs/wiki/learnings/turns-delete-endpoint-silently-no-ops-params-id-match-id-sha.md\`.
+
+## Rationale
+
+The client cannot be trusted: stale UI state, fat-fingered payloads, or deliberately manipulated requests. Recomputing keeps DB rows identical to what the engine would have produced, and every stats surface derives from those rows. Documented endpoint detail: \`docs/wiki/pages/entities/turns-api-matches-id-turns.md\`.
 `,
   "rules/new-game-modes-follow-the-conquest-cut-pure-setup.md": `---
 type: Rule
@@ -7978,6 +8099,7 @@ var WIKI_PAGES = [
   { path: "learnings/dartboard-svg-paths-encode-box-identity-read.md", label: "Dartboard SVG paths encode box identity — read (number, ring) from geometry, don't hand-map", group: "Learnings" },
   { path: "learnings/darts-email-localstorage-stores-raw-email.md", label: "darts_email localStorage key stores the email raw, not JSON", group: "Learnings" },
   { path: "learnings/db-push-ignores-darts-schema.md", label: "db:push ignores the darts schema — migrations are file-as-record, applied directly", group: "Learnings" },
+  { path: "learnings/deletelastturn-restores-the-previous-thrower-s-remaining-sco.md", label: "deleteLastTurn restores the previous thrower's remaining score — gauntlet-confirmed", group: "Learnings" },
   { path: "learnings/deletelastturn-ui-shared-confirm-state-restore-uses-the-wron.md", label: "deleteLastTurn UI: shared confirm state + restore uses the wrong player's remaining score", group: "Learnings" },
   { path: "learnings/no-top-level-state-var-svelte2tsx.md", label: "Don't name a top-level Svelte 5 variable `state` — svelte2tsx collision", group: "Learnings" },
   { path: "learnings/double-in-is-a-dead-toggle-saved-and-loaded-never-enforced-i.md", label: "Double-in is a dead toggle — saved and loaded, never enforced in scoring", group: "Learnings" },
@@ -8000,6 +8122,7 @@ var WIKI_PAGES = [
   { path: "learnings/opencode-zen-go-needs-session-header.md", label: "OpenCode zen/go LLM endpoint needs x-opencode-session header + custom User-Agent", group: "Learnings" },
   { path: "learnings/patching-board-svgs-replace-existing-attributes.md", label: "Patching board SVGs: replace existing attributes, never append duplicates", group: "Learnings" },
   { path: "learnings/plain-let-onmount-needs-state.md", label: "Plain `let` assigned in async onMount never re-renders — must be $state", group: "Learnings" },
+  { path: "learnings/playwright-clicks-can-stall-forever-on-scorer-numpad-buttons.md", label: "Playwright clicks can stall forever on scorer numpad buttons — cap timeout, fall back to el.click()", group: "Learnings" },
   { path: "learnings/playwright-hit-target-fails-at-bull-center.md", label: "Playwright hit-target check fails at the bull's center — the 50 ring paints on top; click the 25 ring off-center", group: "Learnings" },
   { path: "learnings/playwright-reuses-orphaned-dev-servers.md", label: "Playwright reuses orphaned dev servers — E2E can silently test master code, not your worktree", group: "Learnings" },
   { path: "learnings/railway-auto-deploy-can-silently-skip-a-master-push-verify-t.md", label: "Railway auto-deploy can silently skip a master push — verify timestamp vs latest commit, fallback is railway up", group: "Learnings" },
@@ -8019,6 +8142,7 @@ var WIKI_PAGES = [
   { path: "learnings/tooltips-must-use-fixed-positioning.md", label: "Tooltips must use fixed positioning to escape overflow clipping", group: "Learnings" },
   { path: "learnings/top-level-return-in-a-cjs-script-skips-the-file.md", label: "Top-level return in a CJS script skips the file write — silent no-op", group: "Learnings" },
   { path: "learnings/ts-can-t-narrow-state-in-closures.md", label: "TS can't narrow $state inside closures — use $derived.by with local capture", group: "Learnings" },
+  { path: "learnings/turn-edit-computes-from-the-previous-thrower-s-remaining-per.md", label: "Turn edit computes from the previous thrower's remaining, persisting phantom bust rows", group: "Learnings" },
   { path: "learnings/turns-delete-endpoint-silently-no-ops-params-id-match-id-sha.md", label: "Turns DELETE endpoint silently no-ops — params.id (match id) shadows the turn-id query param", group: "Learnings" },
   { path: "learnings/tv-cast-pages-freeze-in-background-tabs-document.md", label: "TV cast pages freeze in background tabs — document.hidden pauses polling and commentary", group: "Learnings" },
   { path: "learnings/tv-commentary-hangs-on-one-segment-audio-events.md", label: "TV commentary hangs on one segment: audio events never fire in throttled windows — race every segment against a reading-time cap", group: "Learnings" },
@@ -8067,6 +8191,7 @@ var WIKI_PAGES = [
   { path: "rules/derive-stats-from-state-deltas-never-by-substring.md", label: "Derive stats from state deltas, never by substring-matching log copy", group: "Rules" },
   { path: "rules/engine-invariant-sweeps-plain-asserts-assert.md", label: "Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets", group: "Rules" },
   { path: "rules/never-hardcode-player-slots-in-match-ui.md", label: "Never hardcode player slots in match UI", group: "Rules" },
+  { path: "rules/never-trust-client-scores.md", label: "Never trust client-submitted scores — recompute at the API boundary", group: "Rules" },
   { path: "rules/new-game-modes-follow-the-conquest-cut-pure-setup.md", label: "New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board", group: "Rules" },
   { path: "rules/prove-overlays-never-block-gameplay-live-dom.md", label: "Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert", group: "Rules" },
   { path: "rules/index.md", label: "Rules", group: "Rules" },

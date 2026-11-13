@@ -7,7 +7,7 @@ okf_version: "0.1"
 <!-- wiki-nav:start -->
 ## Navigation map
 
-Auto-generated detailed index of every docs/wiki/ concept — the map the LLM uses to locate information. 154 concept(s). Regenerated on init and on wiki_mark_synced. Generated 2026-10-28T20:04:09.789Z.
+Auto-generated detailed index of every docs/wiki/ concept — the map the LLM uses to locate information. 158 concept(s). Regenerated on init and on wiki_mark_synced. Generated 2026-11-13T18:05:39.486Z.
 
 Each entry: [title](concept-id.md) — description. Links are clickable in /wiki; pass the concept-id (link target minus .md) to wiki_get.
 
@@ -114,6 +114,7 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [Derive stats from state deltas, never by substring-matching log copy](rules/derive-stats-from-state-deltas-never-by-substring.md) — **Guideline:** Never derive a gameplay stat by scanning or substring-matching human-readable log lines. Count from state deltas (or engine return values) instea
 - [Engine invariant sweeps: plain asserts, assert theorems not emergence, validate against contract sets](rules/engine-invariant-sweeps-plain-asserts-assert.md) — The guideline
 - [Never hardcode player slots in match UI](rules/never-hardcode-player-slots-in-match-ui.md) — Guideline
+- [Never trust client-submitted scores — recompute at the API boundary](rules/never-trust-client-scores.md) — **Guideline:** When a client submits changes that touch derived game state (turn scores, conquest state, stats), never persist client-computed totals. Treat the
 - [New game modes follow the conquest cut: pure setup module + Fun-tab card + own route/board](rules/new-game-modes-follow-the-conquest-cut-pure-setup.md) — The rule
 - [Prove overlays never block gameplay: live-DOM bbox measurement + zero-intersection assert](rules/prove-overlays-never-block-gameplay-live-dom.md) — The guideline
 - [Use $app/stores $page for page state — house style](rules/use-app-stores-page-for-page-state-house-style.md) — Rule
@@ -132,6 +133,7 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [Dartboard SVG paths encode box identity — read (number, ring) from geometry, don't hand-map](learnings/dartboard-svg-paths-encode-box-identity-read.md) — The fact
 - [darts_email localStorage key stores the email raw, not JSON](learnings/darts-email-localstorage-stores-raw-email.md) — The `darts_email` localStorage key stores the email as a **raw string** — `getEmail`/`setEmail` do not JSON-encode it. This differs from the accounts key, which
 - [db:push ignores the darts schema — migrations are file-as-record, applied directly](learnings/db-push-ignores-darts-schema.md) — `drizzle-kit push` (npm `db:push`) only manages the **`public`** schema — it silently ignores the `darts` schema, so a push can "succeed" while the table never 
+- [deleteLastTurn restores the previous thrower's remaining score — gauntlet-confirmed](learnings/deletelastturn-restores-the-previous-thrower-s-remaining-sco.md) — **Re-confirmed and pinned down by the 2026-11-13 gauntlet run** (`e2e/gauntlet/gauntlet.spec.ts` over `games.json`, reports in `e2e/gauntlet/reports/G*.json`),
 - [deleteLastTurn UI: shared confirm state + restore uses the wrong player's remaining score](learnings/deletelastturn-ui-shared-confirm-state-restore-uses-the-wron.md) — **Found during the 2026-10-28 neo-browser delete-turn test campaign**, verified live in both a 2-player and a 3-player match. The trash-icon delete on PlayerPan
 - [Double-in is a dead toggle — saved and loaded, never enforced in scoring](learnings/double-in-is-a-dead-toggle-saved-and-loaded-never-enforced-i.md) — **Found during the 2026-10-28 four-game test sweep** (Game 3: 701 double-in, 2 players) — highest-severity finding of the sweep.
 - [EmailGate remember-me already ships — email persists, gate skips, saved accounts exist](learnings/emailgate-remember-me-already-ships.md) — A feature request to "remember the email on the EmailGate" (2026-09, worktree `kees-remember-me`) turned out to be **already shipped in master** — recon before
@@ -153,6 +155,7 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [OpenCode zen/go LLM endpoint needs x-opencode-session header + custom User-Agent](learnings/opencode-zen-go-needs-session-header.md) — The OpenCode Zen Go chat-completions endpoint (`https://opencode.ai/zen/go/v1/chat/completions`) rejects plain requests — it requires BOTH:
 - [Patching board SVGs: replace existing attributes, never append duplicates](learnings/patching-board-svgs-replace-existing-attributes.md) — Gotcha
 - [Plain `let` assigned in async onMount never re-renders — must be $state](learnings/plain-let-onmount-needs-state.md) — The gotcha
+- [Playwright clicks can stall forever on scorer numpad buttons — cap timeout, fall back to el.click()](learnings/playwright-clicks-can-stall-forever-on-scorer-numpad-buttons.md) — **Found while building the 2026-11-13 gauntlet** (`e2e/gauntlet/gauntlet.spec.ts`). Playwright's real `locator.click()` can hang indefinitely on the live scorer
 - [Playwright hit-target check fails at the bull's center — the 50 ring paints on top; click the 25 ring off-center](learnings/playwright-hit-target-fails-at-bull-center.md) — **The gotcha:** in the dartboard SVG the bullseye (50) is painted **on top of** the single bull (25). A Playwright click aimed at the exact center of the bull t
 - [Playwright reuses orphaned dev servers — E2E can silently test master code, not your worktree](learnings/playwright-reuses-orphaned-dev-servers.md) — The fact
 - [Railway auto-deploy can silently skip a master push — verify timestamp vs latest commit, fallback is railway up](learnings/railway-auto-deploy-can-silently-skip-a-master-push-verify-t.md) — **Found on 2026-10-28** while checking whether PR #18 (`7d01bcf`, "always show the dartboard on the Board tab") was live.
@@ -173,6 +176,7 @@ Each entry: [title](concept-id.md) — description. Links are clickable in /wiki
 - [Tooltips must use fixed positioning to escape overflow clipping](learnings/tooltips-must-use-fixed-positioning.md) — Gotcha
 - [Top-level return in a CJS script skips the file write — silent no-op](learnings/top-level-return-in-a-cjs-script-skips-the-file.md) — Gotcha
 - [TS can't narrow $state inside closures — use $derived.by with local capture](learnings/ts-can-t-narrow-state-in-closures.md) — Gotcha
+- [Turn edit computes from the previous thrower's remaining, persisting phantom bust rows](learnings/turn-edit-computes-from-the-previous-thrower-s-remaining-per.md) — **Found by the 2026-11-13 gauntlet run** (`e2e/gauntlet/gauntlet.spec.ts`, evidence in `e2e/gauntlet/reports/G2.json`/`G5.json`/`G10.json`), new as of 2026-11-1
 - [Turns DELETE endpoint silently no-ops — params.id (match id) shadows the turn-id query param](learnings/turns-delete-endpoint-silently-no-ops-params-id-match-id-sha.md) — **Found during the 2026-10-28 neo-browser delete-turn test campaign** (2-player match `96c568e8`, 3-player match `02cae89f`).
 - [TV cast pages freeze in background tabs — document.hidden pauses polling and commentary](learnings/tv-cast-pages-freeze-in-background-tabs-document.md) — All three TV cast routes — `src/routes/match/[id]/tv/+page.svelte` (classic), `src/routes/match/conquest/[id]/tv/+page.svelte` (T&T), `src/routes/match/risk/[id
 - [TV commentary hangs on one segment: audio events never fire in throttled windows — race every segment against a reading-time cap](learnings/tv-commentary-hangs-on-one-segment-audio-events.md) — Discovered during the 2026-09-09/10 prod playtest campaign (session 6): the TV commentary broadcast could hang forever on ONE segment. Root cause chain:

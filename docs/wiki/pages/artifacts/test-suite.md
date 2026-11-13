@@ -34,6 +34,7 @@ The automated test layer for dart.monster: Vitest unit tests over the pure game 
 - **e2e/tv-classic.spec.ts** / **e2e/tv-conquest.spec.ts** — TV cast views (classic + conquest)
 - **e2e/commentary-api.spec.ts** — commentary boundary API incl. analyst segments (`analystVoice` one of the two commentators)
 - **e2e/risk-persist.spec.ts** — Risk 42 write-through persistence
+- **e2e/gauntlet/gauntlet.spec.ts** — turn edit/delete scoring gauntlet: 10 hand-scored games (`games.json`, immutable) driven through the real scorer UI; after every step it compares UI DOM, API turns and an engine replay (`src/lib/game/scoring.ts`) against the chalkboard and freezes per-game evidence into `e2e/gauntlet/reports/<GID>.json`. Runs on its own config (`playwright.gauntlet.config.ts`, port 5199, manually-started dev server)
 
 ## Isolation
 
@@ -49,3 +50,4 @@ E2E creates data under unique `e2e-*@test.local` accounts and archives test play
 - First added: 2026-09 — initial suite (67 unit tests) built in one pass; component-level Svelte tests deliberately skipped (logic covered by unit, UI by E2E)
 - 2026-09-08 — conquest tests added (67 → 112); whole suite committed on `feature/trebles-territories` as PR #2. E2E specs deliberately contain no conquest references (clean split).
 - 2026-09-09 — merged to master with the conquest/risk/TV/commentary waves (PRs #10, #13, #14): +6 e2e specs (conquest-api, tv-classic, commentary-api, risk-persist, tv-commentary, tv-conquest) and the risk-engine/risk-setup/commentary unit tests.
+- 2026-11-13 — gauntlet added (e2e/gauntlet): browser-driven edit/delete scoring campaign over the immutable games.json chalkboard. First full run surfaced two scorer state bugs with 3-axis evidence — deleteLastTurn restores the previous thrower's remaining score (UI only), and turn edits (PATCH /api/matches/[id]/turns + dialog preview) compute from the previous turn's remaining score instead of the edited player's own pre-turn remaining, persisting bust rows that diverge from a clean replay. See learnings: delete-last-turn-restore and turn-edit-previous-thrower-chain.
