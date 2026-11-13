@@ -5,7 +5,7 @@
     "Ann",
     "Ben"
   ],
-  "pass": false,
+  "pass": true,
   "consoleErrors": [],
   "editClickPath": {
     "actions": [
@@ -390,11 +390,8 @@
           true
         ]
       },
-      "mismatches": [
-        "blocked edit: Save button was NOT disabled",
-        "blocked edit: checkout warning NOT shown"
-      ],
-      "stepPass": false
+      "mismatches": [],
+      "stepPass": true
     },
     {
       "index": 4,
@@ -412,7 +409,7 @@
       },
       "ui": {
         "remaining": [
-          244,
+          121,
           244
         ],
         "next": 0,
@@ -455,10 +452,8 @@
           false
         ]
       },
-      "mismatches": [
-        "UI remaining[0] (Ann): UI=244 chalkboard=121"
-      ],
-      "stepPass": false
+      "mismatches": [],
+      "stepPass": true
     },
     {
       "index": 5,
@@ -504,16 +499,16 @@
       },
       "ui": {
         "remaining": [
-          123,
+          0,
           244
         ],
-        "next": 1,
+        "next": 0,
         "legDarts": 9,
-        "overlaySeen": false
+        "overlaySeen": true
       },
       "api": {
-        "status": "in_progress",
-        "winnerIdx": null,
+        "status": "completed",
+        "winnerIdx": 0,
         "turnCount": 3,
         "turns": [
           {
@@ -532,7 +527,7 @@
           },
           {
             "playerIdx": 0,
-            "remainingScore": 123,
+            "remainingScore": 0,
             "dartsThrown": 3,
             "isBust": false,
             "totalScore": 121
@@ -557,16 +552,8 @@
           false
         ]
       },
-      "mismatches": [
-        "expected match-over overlay (\"Match complete\") not shown",
-        "expected winner overlay (\"Ann wins!\") not shown",
-        "UI remaining[0] (Ann): UI=123 chalkboard=0",
-        "UI next thrower: UI=1 chalkboard=0",
-        "API turn[2] remainingScore=123 != ENGINE replay=0",
-        "API match status: API=in_progress chalkboard=completed",
-        "API winnerIdx: API=null chalkboard=0"
-      ],
-      "stepPass": false
+      "mismatches": [],
+      "stepPass": true
     }
   ]
 }
