@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
 	validateEditedDarts,
 	computeEditedTurnOutcome,
+	computePrevRemainingForPlayer,
 } from "./turn-edit";
 import type { DartData } from "./types";
 
@@ -135,5 +136,48 @@ describe("computeEditedTurnOutcome", () => {
 			isBust: true,
 			isCheckout: false,
 		});
+	});
+});
+
+describe("computePrevRemainingForPlayer", () => {
+	// A 2-player leg from 301: p1 throws 180, p2 throws 60, p1 busts (180),
+	// p2 busts (60). Persisted rows in turn order:
+	const turns = [
+		{ playerId: "p1", remainingScore: 121 },
+		{ playerId: "p2", remainingScore: 241 },
+		{ playerId: "p1", remainingScore: 121 }, // bust keeps 121
+		{ playerId: "p2", remainingScore: 241 }, // bust keeps 241
+	];
+
+	it("uses the same player's last prior remaining, not the previous row", () => {
+		// Editing turn 4 (p2): the previous row is p1's 121 — wrong chain.
+		expect(computePrevRemainingForPlayer(turns, 3, "p2", 301)).toBe(241);
+	});
+
+	it("falls back to the leg starting score on the player's first turn", () => {
+		expect(computePrevRemainingForPlayer(turns, 1, "p2", 301)).toBe(301);
+		expect(computePrevRemainingForPlayer(turns, 0, "p1", 301)).toBe(301);
+	});
+
+	it("skips over other players' rows in a 3-player rotation", () => {
+		const three = [
+			{ playerId: "a", remainingScore: 241 },
+			{ playerId: "b", remainingScore: 261 },
+			{ playerId: "c", remainingScore: 271 },
+			{ playerId: "a", remainingScore: 201 },
+			{ playerId: "b", remainingScore: 221 },
+		];
+		// Editing turn 5 (b, idx 4): skip a and c — b's own last PRIOR row is
+		// idx 1 (261); the 221 row is the edited turn itself and is skipped.
+		expect(computePrevRemainingForPlayer(three, 4, "b", 301)).toBe(261);
+		// Editing turn 4 (a, idx 3): a's own last prior remaining is 241 — the
+		// 201 row is the edited turn ITSELF (its post-turn value) and is skipped.
+		expect(computePrevRemainingForPlayer(three, 3, "a", 301)).toBe(241);
+	});
+
+	it("treats a bust row's unchanged remaining as the pre-turn score", () => {
+		// p1 busts on turn 3 (row keeps 121): editing a hypothetical later p1
+		// turn must chain from 121 — exactly what the bust row persists.
+		expect(computePrevRemainingForPlayer(turns, 4, "p1", 301)).toBe(121);
 	});
 });

@@ -30,7 +30,10 @@
         getScoreDisplay,
     } from "$lib/game";
     import { processTurn } from "$lib/game/scoring";
-    import { computeEditedTurnOutcome } from "$lib/game/turn-edit";
+    import {
+        computeEditedTurnOutcome,
+        computePrevRemainingForPlayer,
+    } from "$lib/game/turn-edit";
     import {
         getCheckoutSuggestions,
         canCheckout,
@@ -944,23 +947,24 @@
 
         const lastTurn = turns[turns.length - 1];
         if (lastTurn.id) {
-            await fetch(`/api/matches/${matchId}/turns?id=${lastTurn.id}`, {
-                method: "DELETE",
-            });
+            const res = await fetch(
+                `/api/matches/${matchId}/turns?id=${lastTurn.id}`,
+                { method: "DELETE" },
+            );
+            if (!res.ok) {
+                addToast(
+                    "Could not delete the turn — check your connection",
+                    "error",
+                );
+                return;
+            }
         }
 
-        matchState.currentLeg.turns = turns.slice(0, -1);
-        allMatchTurns = allMatchTurns.slice(0, -1);
-
-        const lastPlayerIdx = matchState.players.findIndex(
-            (p) => p.id === lastTurn.playerId,
-        );
-        matchState.currentLeg.currentPlayerIndex = lastPlayerIdx;
-
-        matchState.players[lastPlayerIdx].remainingScore =
-            turns.length > 1
-                ? turns[turns.length - 2].remainingScore
-                : matchState.config.startingScore;
+        // Rebuild the entire match from the persisted turns (the exact
+        // refresh-resume path) so remaining scores, throw order, stats and
+        // checkout suggestions are re-derived from state — never patched
+        // ad hoc (patching restored the PREVIOUS thrower's remaining).
+        await loadMatch();
     }
 
     // === Edit last turn ===
@@ -986,10 +990,12 @@
         if (!ms || !turn || editedDarts.length === 0) return null;
         const turns = ms.currentLeg.turns;
         const idx = turns.findIndex((t) => t.id === turn.id);
-        const prevRemaining =
-            idx > 0
-                ? turns[idx - 1].remainingScore
-                : ms.config.startingScore;
+        const prevRemaining = computePrevRemainingForPlayer(
+            turns,
+            idx,
+            turn.playerId,
+            ms.config.startingScore,
+        );
         return computeEditedTurnOutcome(prevRemaining, editedDarts);
     });
 

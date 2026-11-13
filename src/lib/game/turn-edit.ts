@@ -160,3 +160,28 @@ export function computeEditedTurnOutcome(
 		isCheckout,
 	};
 }
+
+/**
+ * The edited/deleted player's own pre-turn remaining: the post-turn
+ * remainingScore of the LAST PRIOR turn in the leg by the SAME playerId
+ * (scan backwards from idx-1), or the leg's starting score when this is
+ * that player's first turn.
+ *
+ * Indexing the previous row (turns[idx-1]) is wrong in every leg with two
+ * or more players — that row belongs to the previous thrower, not to the
+ * player whose turn is being edited/restored. A bust row persists the
+ * player's unchanged remaining, so scanning past busts stays correct.
+ */
+export function computePrevRemainingForPlayer(
+	turns: ReadonlyArray<{ playerId: string; remainingScore: number }>,
+	idx: number,
+	playerId: string,
+	legStartingScore: number,
+): number {
+	for (let i = idx - 1; i >= 0; i--) {
+		if (turns[i].playerId === playerId) {
+			return turns[i].remainingScore;
+		}
+	}
+	return legStartingScore;
+}
